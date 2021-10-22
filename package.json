@@ -1,0 +1,67 @@
+{
+  "version": "0.1.0",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=10"
+  },
+  "scripts": {
+    "start": "tsdx watch",
+    "build": "tsdx build",
+    "test": "tsdx test",
+    "lint": "tsdx lint",
+    "prepare": "tsdx build",
+    "size": "size-limit",
+    "analyze": "size-limit --why"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "tsdx lint"
+    }
+  },
+  "prettier": {
+    "printWidth": 120,
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "es5"
+  },
+  "name": "@eyevinn/autoabr",
+  "author": "Jesper Lundqvist",
+  "module": "dist/autoabr.esm.js",
+  "size-limit": [
+    {
+      "path": "dist/autoabr.cjs.production.min.js",
+      "limit": "10 KB"
+    },
+    {
+      "path": "dist/autoabr.esm.js",
+      "limit": "10 KB"
+    }
+  ],
+  "devDependencies": {
+    "@size-limit/preset-small-lib": "^5.0.4",
+    "husky": "^7.0.2",
+    "size-limit": "^5.0.4",
+    "tsdx": "^0.14.1",
+    "tslib": "^2.3.1",
+    "typescript": "^3.9.10"
+  },
+  "dependencies": {
+    "@aws-sdk/client-ecs": "^3.36.0",
+    "@aws-sdk/client-mediaconvert": "^3.36.0",
+    "@aws-sdk/client-s3": "^3.36.0",
+    "@aws-sdk/credential-providers": "^3.36.0",
+    "@aws-sdk/lib-storage": "^3.36.0",
+    "@types/fluent-ffmpeg": "^2.1.18",
+    "@types/papaparse": "^5.3.1",
+    "fluent-ffmpeg": "^2.1.2",
+    "papaparse": "^5.3.1",
+    "winston": "^3.3.3",
+    "yaml": "^1.10.2"
+  }
+}

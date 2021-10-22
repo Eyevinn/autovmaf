@@ -1,0 +1,9 @@
+aws:
+  s3Bucket: bucket
+  mediaConvertRole: arn:aws:iam::role
+  mediaConvertEndpoint: https://endpoint.amazonaws.com
+  ecsSubnet: subnet-1234
+  ecsSecurityGroup: sg-1234
+  ecsContainerName: easyvmaf-s3
+  ecsCluster: abr-analysis-cluster
+  ecsTaskDefinition: easyvmaf-s3:1

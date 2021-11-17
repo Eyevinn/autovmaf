@@ -67,7 +67,6 @@ export default async function runJob(filename: string) {
       'reference.mp4'
     );
 
-    // Run analysis in parallel?
     const modelLadders = await analyze(job.name, reference, pipeline, {
       bitrates: job.bitrates,
       resolutions: job.resolutions?.map(resolutionStr => ({
@@ -76,6 +75,7 @@ export default async function runJob(filename: string) {
       })),
       concurrency: job.concurrency,
       models,
+      filterFunction: job.bitrates !== undefined && job.resolutions !== undefined ? _ => true : undefined,
     });
 
     if (job.output !== undefined) {

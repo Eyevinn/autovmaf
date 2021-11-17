@@ -3,9 +3,13 @@ import { Resolution } from './models/resolution';
 import { isS3URI } from './pipelines/aws/aws-pipeline';
 import path from 'path';
 import logger from './logger';
-import { BitrateResolutionVMAF } from './models/birate-resolution-vmaf';
+import { BitrateResolutionVMAF } from './models/bitrate-resolution-vmaf';
 
-export default async function suggestLadder(directoryWithVmafFiles: string): Promise<BitrateResolutionVMAF[]> {
+export default async function suggestLadder(
+  directoryWithVmafFiles: string,
+  filterFunction: (bitrate: number, resolution: Resolution, vmaf: number) => boolean = () => true,
+  includeAllBitrates: boolean = false
+): Promise<BitrateResolutionVMAF[]> {
   let pairs = new Map<number, { resolution: Resolution; vmaf: number }[]>();
   let optimal: { resolution: Resolution; vmaf: number; bitrate: number }[] = [];
   logger.info('Loading VMAF data...');
@@ -48,10 +52,12 @@ export default async function suggestLadder(directoryWithVmafFiles: string): Pro
         const height = parseInt(heightStr);
         const bitrate = parseInt(bitrateStr);
 
-        if (pairs.has(bitrate)) {
-          pairs.get(bitrate)?.push({ resolution: { width, height }, vmaf });
-        } else {
-          pairs.set(bitrate, [{ resolution: { width, height }, vmaf }]);
+        if (filterFunction(bitrate, { width, height }, vmaf)) {
+          if (pairs.has(bitrate)) {
+            pairs.get(bitrate)?.push({ resolution: { width, height }, vmaf });
+          } else {
+            pairs.set(bitrate, [{ resolution: { width, height }, vmaf }]);
+          }
         }
 
         logger.info(`Finished loading VMAF ${counter}/${getReponses.length}.`);
@@ -75,6 +81,10 @@ export default async function suggestLadder(directoryWithVmafFiles: string): Pro
       optimal.push({ bitrate: bitrate, resolution: bestResolution, vmaf: bestVmaf });
     }
   });
+
+  if (includeAllBitrates) {
+    return optimal.sort((a, b) => a.bitrate - b.bitrate);
+  }
 
   let ladder: { resolution: Resolution; vmaf: number; bitrate: number }[] = [];
   optimal

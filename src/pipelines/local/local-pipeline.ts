@@ -94,6 +94,7 @@ export default class LocalPipeline implements Pipeline {
         break;
     }
 
+    logger.info('Running quality analysis on ' + distorted);
     execSync(
       [
         this.configuration.pythonPath,
@@ -106,6 +107,8 @@ export default class LocalPipeline implements Pipeline {
         ...additionalArgs,
       ].join(' ')
     );
+
+    logger.info('Finished analyzing ' + distorted);
 
     const distortedDetails = path.parse(distorted);
     const vmafFilename = distortedDetails.dir + '/' + distortedDetails.name + '_vmaf.json';

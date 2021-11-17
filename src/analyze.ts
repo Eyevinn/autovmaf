@@ -4,7 +4,7 @@ import { Resolution } from './models/resolution';
 import { Pipeline } from './pipelines/pipeline';
 import suggestLadder from './suggest-ladder';
 import path from 'path';
-import { BitrateResolutionVMAF } from './models/birate-resolution-vmaf';
+import { BitrateResolutionVMAF } from './models/bitrate-resolution-vmaf';
 
 export type AnalysisOptions = {
   models?: QualityAnalysisModel[];

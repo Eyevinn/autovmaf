@@ -1,10 +1,10 @@
-import { BitrateResolutionPair } from './models/bitrate-resolution-pair';
-import { QualityAnalysisModel, qualityAnalysisModelToString } from './models/quality-analysis-model';
-import { Resolution } from './models/resolution';
-import { Pipeline } from './pipelines/pipeline';
-import suggestLadder from './suggest-ladder';
+import { BitrateResolutionPair } from '../models/bitrate-resolution-pair';
+import { QualityAnalysisModel, qualityAnalysisModelToString } from '../models/quality-analysis-model';
+import { Resolution } from '../models/resolution';
+import { Pipeline } from '../pipelines/pipeline';
+import suggestLadder from '../suggest-ladder';
 import path from 'path';
-import { BitrateResolutionVMAF } from './models/bitrate-resolution-vmaf';
+import { BitrateResolutionVMAF } from '../models/bitrate-resolution-vmaf';
 
 export type AnalysisOptions = {
   models?: QualityAnalysisModel[];
@@ -64,12 +64,21 @@ const defaultFilterFunction: (pair: BitrateResolutionPair) => boolean = ({ bitra
 
 const defaultConcurrency = true;
 
-export default async function analyze(
+/**
+ * Runs quality analysis on a file and returns the optimal ABR-ladder.
+ *
+ * @param directory Directory in which to put files.
+ * @param reference Reference video file.
+ * @param pipeline The pipeline to use in analysis.
+ * @param options Options to use in analysis.
+ * @returns The optimal ladder for the reference video.
+ */
+export default async function analyzeBruteForce(
   directory: string,
   reference: string,
   pipeline: Pipeline,
   options: AnalysisOptions = {}
-): Promise<{ model: QualityAnalysisModel; ladder: BitrateResolutionVMAF[] }[]> {
+): Promise<{ model: QualityAnalysisModel; optimalLadder: BitrateResolutionVMAF[] }[]> {
   const models = options.models !== undefined ? options.models : defaultModels;
   const bitrates = options.bitrates !== undefined ? options.bitrates : defaultBitrates;
   const resolutions = options.resolutions !== undefined ? options.resolutions : defaultResolutions;
@@ -142,10 +151,13 @@ export default async function analyze(
     }
   }
 
-  let ladders: { model: QualityAnalysisModel; ladder: BitrateResolutionVMAF[] }[] = [];
+  let ladders: {
+    model: QualityAnalysisModel;
+    optimalLadder: BitrateResolutionVMAF[];
+  }[] = [];
   for (const [model, files] of Array.from(qualityFiles.entries())) {
-    const ladder = await suggestLadder(files.length > 0 ? path.dirname(files[0]) : directory);
-    ladders.push({ model, ladder });
+    const optimalLadder = await suggestLadder(files.length > 0 ? path.dirname(files[0]) : directory);
+    ladders.push({ model, optimalLadder });
   }
 
   return ladders;

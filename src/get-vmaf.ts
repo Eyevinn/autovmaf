@@ -1,34 +1,77 @@
-import { S3, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3, GetObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { isS3URI } from './pipelines/aws/aws-pipeline';
+import path from 'path';
 import fs from 'fs';
+import logger from './logger';
 
-export default async function getVmaf(filename: string): Promise<number> {
-  const streamToString = (stream: any): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const chunks: any[] = [];
-      stream.on('data', (chunk: any) => chunks.push(chunk));
-      stream.on('error', reject);
-      stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
-    });
+function vmafFromJsonString(str: string): number {
+  const data = JSON.parse(str);
+  const vmaf = data['pooled_metrics']['vmaf']['harmonic_mean'];
+  return vmaf;
+}
 
+async function streamToString(stream: any): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const chunks: any[] = [];
+    stream.on('data', (chunk: any) => chunks.push(chunk));
+    stream.on('error', reject);
+    stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+  });
+}
+
+async function dataFromS3(uri: string): Promise<{ filename: string; contents: string }[]> {
+  logger.info('Loading from S3...');
+  const uriObj = new URL(uri);
+  const bucket = uriObj.hostname;
+  const key = uriObj.pathname.substring(1);
+  let s3 = new S3({});
+  const listCommand = new ListObjectsV2Command({ Bucket: bucket, Prefix: key });
+  const listResponse = await s3.send(listCommand);
+
+  let dataList = [];
+
+  if (listResponse.Contents !== undefined) {
+    const getCommands = listResponse.Contents?.map(obj => new GetObjectCommand({ Bucket: bucket, Key: obj.Key }));
+    const getReponses = getCommands
+      .filter(command => command.input.Key?.endsWith('.json'))
+      .map(async command => {
+        const response = await s3.send(command);
+        return { key: command.input.Key!, response };
+      });
+
+    let counter = 1;
+    for (const promise of getReponses) {
+      const { key, response } = await promise;
+      const stream = (await response).Body;
+      const data = await streamToString(stream);
+      dataList.push({ filename: path.basename(key), contents: data });
+      logger.info(`Finished loading VMAF ${counter}/${getReponses.length}.`);
+      counter += 1;
+    }
+  }
+
+  return dataList;
+}
+
+export default async function getVmaf(filename: string): Promise<{ filename: string; vmaf: number }[]> {
   if (isS3URI(filename)) {
-    const s3 = new S3({});
-    const uri = new URL(filename);
-    const bucket = uri.hostname;
-    const key = uri.pathname.substring(1);
-    const command = new GetObjectCommand({ Bucket: bucket, Key: key });
-
-    const response = await s3.send(command);
-    const stream = response.Body;
-    const data = await streamToString(stream);
-    const vmafData = JSON.parse(data);
-
-    const vmaf = vmafData['pooled_metrics']['vmaf']['harmonic_mean'];
-    return vmaf;
+    const list = await dataFromS3(filename);
+    return list.map(({ filename, contents }) => ({ filename, vmaf: vmafFromJsonString(contents) }));
   } else {
-    const file = fs.readFileSync(filename, 'utf-8');
-    const data = JSON.parse(file);
-    const vmaf = data['pooled_metrics']['vmaf']['harmonic_mean'];
-    return vmaf;
+    if (fs.lstatSync(filename).isDirectory()) {
+      logger.info('Loading VMAF from directory...');
+      const files = fs.readdirSync(filename);
+      return await Promise.all(
+        files.map(async f => {
+          const contents = fs.readFileSync(path.join(filename, f), 'utf-8');
+          const vmaf = await vmafFromJsonString(contents);
+          return { filename: f, vmaf };
+        })
+      );
+    } else {
+      const contents = fs.readFileSync(filename, 'utf-8');
+      const vmaf = await vmafFromJsonString(contents);
+      return [{ filename, vmaf }];
+    }
   }
 }

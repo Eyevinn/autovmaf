@@ -1,10 +1,10 @@
 import fs from 'fs';
 import YAML from 'yaml';
-import { LocalPipeline } from '.';
+import LocalPipeline from './pipelines/local/local-pipeline';
 import AWSPipeline from './pipelines/aws/aws-pipeline';
 import { Pipeline } from './pipelines/pipeline';
 
-type PipelineProfile = {
+export type PipelineProfile = {
   aws?: {
     s3Bucket: string;
     mediaConvertRole: string;

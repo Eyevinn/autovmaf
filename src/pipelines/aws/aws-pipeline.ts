@@ -21,7 +21,7 @@ export function isS3URI(url: string): boolean {
 }
 
 export default class AWSPipeline implements Pipeline {
-  private configuration: AWSPipelineConfiguration;
+  configuration: AWSPipelineConfiguration;
   private s3: S3Client;
   private mediaConvert: MediaConvertClient;
   private ecs: ECSClient;

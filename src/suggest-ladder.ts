@@ -5,6 +5,14 @@ import path from 'path';
 import logger from './logger';
 import { BitrateResolutionVMAF } from './models/bitrate-resolution-vmaf';
 
+/**
+ * Suggests an optimal ABR-ladder from a directory of VMAF-files. Only supports loading from S3 at the moment.
+ *
+ * @param directoryWithVmafFiles URI to the directory with VMAF-files.
+ * @param filterFunction Optional function to filter values from the analysis.
+ * @param includeAllBitrates If true, return optimal resolutions for all bitrates.
+ * @returns Returns the optimal ladder.
+ */
 export default async function suggestLadder(
   directoryWithVmafFiles: string,
   filterFunction: (bitrate: number, resolution: Resolution, vmaf: number) => boolean = () => true,
@@ -68,6 +76,7 @@ export default async function suggestLadder(
     // TODO: Load local VMAF-scores
   }
 
+  // Get optimal resolution for each bitrate
   pairs.forEach((bitrateVmafPairs, bitrate) => {
     let bestVmaf = 0;
     let bestResolution: Resolution | undefined;

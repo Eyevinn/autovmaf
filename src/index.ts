@@ -1,4 +1,3 @@
-import analyzeBruteForce from './analysis/brute-force';
 import suggestLadder from './suggest-ladder';
 import { Pipeline } from './pipelines/pipeline';
 import LocalPipeline from './pipelines/local/local-pipeline';
@@ -13,16 +12,15 @@ import {
 import loadPipeline from './load-pipeline';
 
 export {
-  analyzeBruteForce,
-  Pipeline,
-  LocalPipeline,
-  AWSPipeline,
-  suggestLadder,
+  createJob,
   getVmaf,
-  QualityAnalysisModel,
+  suggestLadder,
   qualityAnalysisModelToString,
   stringToQualityAnalysisModel,
   loadPipeline,
-  createJob,
   JobDescription,
+  QualityAnalysisModel,
+  Pipeline,
+  LocalPipeline,
+  AWSPipeline,
 };

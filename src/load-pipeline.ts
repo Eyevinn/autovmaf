@@ -4,7 +4,11 @@ import LocalPipeline from './pipelines/local/local-pipeline';
 import AWSPipeline from './pipelines/aws/aws-pipeline';
 import { Pipeline } from './pipelines/pipeline';
 
+/**
+ * An object representing a pipeline profile.
+ */
 export type PipelineProfile = {
+  /** If this is defined, this profile will use AWS. */
   aws?: {
     s3Bucket: string;
     mediaConvertRole: string;
@@ -16,6 +20,7 @@ export type PipelineProfile = {
     ecsTaskDefinition: string;
   };
 
+  /** If this is defined, this profile will use the local pipeline. */
   local?: {
     easyVmafPath: string;
     ffmpegPath: string;
@@ -24,6 +29,12 @@ export type PipelineProfile = {
   };
 };
 
+/**
+ * Loads a pipeline from a YAML file and an encoding profile from a JSON file.
+ * @param pipelineFilename The local path to the pipeline YAML.
+ * @param encodingProfile The local path to the encoding profile JSON. If left undefined, the encoding profile will be set to an empty object.
+ * @returns A pipeline that can be used to transcode or analyze videos with.
+ */
 export default async function loadPipeline(pipelineFilename: string, encodingProfile?: string): Promise<Pipeline> {
   let encodingProfileData = {};
   if (encodingProfile !== undefined) {

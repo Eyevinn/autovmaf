@@ -1,9 +1,17 @@
+/**
+ * An enum representing the 3 supported quality analysis models by [VMAF](https://github.com/Netflix/vmaf).
+ */
 export enum QualityAnalysisModel {
   PhoneHD,
   HD,
   UHD,
 }
 
+/**
+ * Converts from a QualityAnalysisModel-enum to a readable string.
+ * @param model The model to convert.
+ * @returns A readable string of the model name.
+ */
 export function qualityAnalysisModelToString(model: QualityAnalysisModel): string {
   if (model === QualityAnalysisModel.HD) {
     return 'HD';
@@ -16,7 +24,12 @@ export function qualityAnalysisModelToString(model: QualityAnalysisModel): strin
   }
 }
 
-export function stringToQualityAnalysisModel(model: string): QualityAnalysisModel {
+/**
+ * Converts from a string to a QualityAnalysisModel-enum.
+ * @param model The string to convert. Can be either "HD", "PhoneHD", or "UHD".
+ * @returns A QualityAnalysisModel-enum depending on the input string.
+ */
+export function stringToQualityAnalysisModel(model: 'HD' | 'PhoneHD' | 'UHD'): QualityAnalysisModel {
   if (model === 'HD') {
     return QualityAnalysisModel.HD;
   } else if (model === 'PhoneHD') {

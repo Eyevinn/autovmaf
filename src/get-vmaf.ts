@@ -23,7 +23,10 @@ async function streamToString(stream: any): Promise<string> {
   });
 }
 
-async function dataFromS3(uri: string): Promise<{ filename: string; contents: string }[]> {
+async function dataFromS3(
+  uri: string,
+  onProgress: (index: number, filename: string, total: number) => void
+): Promise<{ filename: string; contents: string }[]> {
   logger.info('Loading from S3...');
   const uriObj = new URL(uri);
   const bucket = uriObj.hostname;
@@ -49,6 +52,7 @@ async function dataFromS3(uri: string): Promise<{ filename: string; contents: st
       const stream = (await response).Body;
       const data = await streamToString(stream);
       dataList.push({ filename: path.basename(key), contents: data });
+      onProgress(counter - 1, path.basename(key), getReponses.length);
       logger.info(`Finished loading VMAF ${counter}/${getReponses.length}.`);
       counter += 1;
     }
@@ -59,7 +63,7 @@ async function dataFromS3(uri: string): Promise<{ filename: string; contents: st
 
 /**
  * Returns the VMAF-values from a JSON-file or a directory of JSON-files. Can be used on both local paths as well as S3-URIs.
- * 
+ *
  * @example **Example of retriving a list of VMAF-scores from S3.**
  * ```javascript
  * const vmafFiles = await getVmaf('s3://path/to/vmaf/');
@@ -67,13 +71,16 @@ async function dataFromS3(uri: string): Promise<{ filename: string; contents: st
  *   console.log(file.filename + ': ' + file.vmaf);
  * });
  * ```
- * 
+ *
  * @param filename The path to the file or directory. Can be a local path or a S3-URI.
  * @returns A list of objects with filename and VMAF-scores.
  */
-export default async function getVmaf(filename: string): Promise<{ filename: string; vmaf: number }[]> {
+export default async function getVmaf(
+  filename: string,
+  onProgress: (index: number, filename: string, total: number) => void = () => {}
+): Promise<{ filename: string; vmaf: number }[]> {
   if (isS3URI(filename)) {
-    const list = await dataFromS3(filename);
+    const list = await dataFromS3(filename, onProgress);
     return list.map(({ filename, contents }) => ({ filename, vmaf: vmafFromJsonString(contents) }));
   } else {
     if (fs.lstatSync(filename).isDirectory()) {

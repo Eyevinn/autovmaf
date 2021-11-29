@@ -10,6 +10,7 @@ import {
   stringToQualityAnalysisModel,
 } from './models/quality-analysis-model';
 import loadPipeline from './load-pipeline';
+import logger from './logger';
 
 export {
   createJob,
@@ -23,4 +24,5 @@ export {
   Pipeline,
   LocalPipeline,
   AWSPipeline,
+  logger,
 };

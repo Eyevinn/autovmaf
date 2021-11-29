@@ -78,7 +78,7 @@ export default async function getVmaf(filename: string): Promise<{ filename: str
   } else {
     if (fs.lstatSync(filename).isDirectory()) {
       logger.info('Loading VMAF from directory...');
-      const files = fs.readdirSync(filename);
+      const files = fs.readdirSync(filename).filter(file => path.extname(file) === '.json');
       return await Promise.all(
         files.map(async f => {
           const contents = fs.readFileSync(path.join(filename, f), 'utf-8');

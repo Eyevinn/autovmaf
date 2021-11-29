@@ -5,9 +5,13 @@ import fs from 'fs';
 import logger from './logger';
 
 function vmafFromJsonString(str: string): number {
-  const data = JSON.parse(str);
-  const vmaf = data['pooled_metrics']['vmaf']['harmonic_mean'];
-  return vmaf;
+  try {
+    const data = JSON.parse(str);
+    const vmaf = data['pooled_metrics']['vmaf']['harmonic_mean'];
+    return vmaf;
+  } catch {
+    return NaN;
+  }
 }
 
 async function streamToString(stream: any): Promise<string> {

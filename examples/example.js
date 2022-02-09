@@ -1,19 +1,17 @@
-const { createJob, JobDescription } = require('@eyevinn/autoabr');
+const { createJob } = require('@eyevinn/autoabr');
 const YAML = require('yaml');
 const fs = require('fs');
 
 const parseResolutions = resolutions => {
-  resolutions.map(resolutionStr => ({
-    width: parseInt(resolutionStr.split('x')[0]),
-    height: parseInt(resolutionStr.split('x')[1]),
-  }));
+  return resolutions.map(resolution => {
+    const [width, height] = resolution.split('x');
+    return { width: parseInt(width), height: parseInt(height) };
+  });
 };
 
 const jobFile = fs.readFileSync('job.yml', 'utf-8');
 const jobData = YAML.parse(jobFile);
-const job = {
-  ...jobData,
-  resolutions: jobData['resolutions'] !== undefined ? parseResolutions(jobData['resolutions']) : undefined,
-};
 
-createJob(job);
+jobData.resolutions = jobData['resolutions'] ? parseResolutions(jobData.resolutions) : undefined;
+
+createJob(jobData);

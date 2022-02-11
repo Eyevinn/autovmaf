@@ -35,7 +35,7 @@ async function dataFromS3(
   const listCommand = new ListObjectsV2Command({ Bucket: bucket, Prefix: key });
   const listResponse = await s3.send(listCommand);
 
-  let dataList = [];
+  let dataList: any = [];
 
   if (listResponse.Contents !== undefined) {
     const getCommands = listResponse.Contents?.map(obj => new GetObjectCommand({ Bucket: bucket, Key: obj.Key }));

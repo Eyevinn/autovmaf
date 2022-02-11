@@ -9,7 +9,7 @@ import {
   qualityAnalysisModelToString,
   stringToQualityAnalysisModel,
 } from './models/quality-analysis-model';
-import loadPipeline from './load-pipeline';
+import { loadPipeline, loadPipelineFromObjects } from './load-pipeline';
 import logger from './logger';
 
 export {
@@ -19,6 +19,7 @@ export {
   qualityAnalysisModelToString,
   stringToQualityAnalysisModel,
   loadPipeline,
+  loadPipelineFromObjects,
   JobDescription,
   QualityAnalysisModel,
   Pipeline,

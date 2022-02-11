@@ -35,7 +35,7 @@ export type PipelineProfile = {
  * @param encodingProfile The local path to the encoding profile JSON. If left undefined, the encoding profile will be set to an empty object.
  * @returns A pipeline that can be used to transcode or analyze videos with.
  */
-export default async function loadPipeline(pipelineFilename: string, encodingProfile?: string): Promise<Pipeline> {
+export async function loadPipeline(pipelineFilename: string, encodingProfile?: string): Promise<Pipeline> {
   let encodingProfileData = {};
   if (encodingProfile !== undefined) {
     const encodingProfileFile = fs.readFileSync(encodingProfile, 'utf-8');
@@ -44,6 +44,18 @@ export default async function loadPipeline(pipelineFilename: string, encodingPro
 
   const pipelineFile = fs.readFileSync(pipelineFilename, 'utf-8');
   const pipelineData = YAML.parse(pipelineFile);
+  const pipelineProfile = pipelineData as PipelineProfile;
+
+  if (pipelineProfile.aws !== undefined) {
+    return new AWSPipeline({ ...pipelineProfile.aws, mediaConvertSettings: encodingProfileData });
+  } else if (pipelineProfile.local !== undefined) {
+    return new LocalPipeline({ ...pipelineProfile.local, ffmpegOptions: encodingProfileData });
+  } else {
+    throw new Error('Method not implemented.');
+  }
+}
+
+export async function loadPipelineFromObjects(pipelineData: any, encodingProfileData?: any): Promise<Pipeline> {
   const pipelineProfile = pipelineData as PipelineProfile;
 
   if (pipelineProfile.aws !== undefined) {

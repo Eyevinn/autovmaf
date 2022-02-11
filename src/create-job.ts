@@ -1,7 +1,7 @@
 import fs from 'fs';
 import analyzeBruteForce from './analysis/brute-force';
 import AWSPipeline from './pipelines/aws/aws-pipeline';
-import loadPipeline from './load-pipeline';
+import { loadPipeline, loadPipelineFromObjects} from './load-pipeline';
 import {
   QualityAnalysisModel,
   qualityAnalysisModelToString,
@@ -88,12 +88,15 @@ export type JobDescription = {
  * @param description An object that describes the job to create.
  * @returns The optimal ladder for each model.
  */
-export default async function createJob(
-  description: JobDescription
-): Promise<{ model: QualityAnalysisModel; optimalLadder: BitrateResolutionVMAF[] }[]> {
+export default async function createJob(description: JobDescription, pipelineData?: any, encodingProfileData?: any): Promise<{ model: QualityAnalysisModel; optimalLadder: BitrateResolutionVMAF[] }[]> {
   logger.info(`Creating job ${description.name}.`);
 
-  const pipeline = (await loadPipeline(description.pipeline, description.encodingProfile)) as AWSPipeline;
+  let pipeline: any = undefined;
+  if (pipelineData) {
+    pipeline = (await loadPipelineFromObjects(pipelineData, encodingProfileData)) as AWSPipeline;
+  } else {
+    pipeline = (await loadPipeline(description.pipeline, description.encodingProfile)) as AWSPipeline;
+  }
 
   if (pipeline === undefined) {
     // Only works on AWS.

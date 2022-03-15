@@ -46,6 +46,7 @@
   "devDependencies": {
     "@size-limit/preset-small-lib": "^5.0.4",
     "@types/aws-sdk": "^2.7.0",
+    "@types/aws-lambda": "^8.10.86",
     "husky": "^7.0.2",
     "size-limit": "^5.0.4",
     "tsdx": "^0.14.1",

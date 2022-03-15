@@ -2239,6 +2239,11 @@
   "resolved" "https://registry.npmjs.org/@trysound/sax/-/sax-0.2.0.tgz"
   "version" "0.2.0"
 
+"@types/aws-lambda@^8.10.86":
+  "integrity" "sha512-Vsyi9ogDAY3REZDjYnXMRJJa62SDvxHXxJI5nGDQdZW058dDE+av/anynN2rLKbCKXDRNw3D/sQmqxVflZFi4A=="
+  "resolved" "https://registry.npmjs.org/@types/aws-lambda/-/aws-lambda-8.10.93.tgz"
+  "version" "8.10.93"
+
 "@types/aws-sdk@^2.7.0":
   "integrity" "sha1-g1iLPRTr3KHUzl4CM4dXdWjOgvM="
   "resolved" "https://registry.npmjs.org/@types/aws-sdk/-/aws-sdk-2.7.0.tgz"

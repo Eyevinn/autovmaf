@@ -88,7 +88,7 @@ export type JobDescription = {
  * @param description An object that describes the job to create.
  * @returns The optimal ladder for each model.
  */
-export default async function createJob(description: JobDescription, pipelineData?: any, encodingProfileData?: any): Promise<{ model: QualityAnalysisModel; optimalLadder: BitrateResolutionVMAF[] }[]> {
+export default async function createJob(description: JobDescription, encodingProfileData?: any, pipelineData?: any): Promise<{ model: QualityAnalysisModel; optimalLadder: BitrateResolutionVMAF[] }[]> {
   logger.info(`Creating job ${description.name}.`);
 
   let pipeline: any = undefined;

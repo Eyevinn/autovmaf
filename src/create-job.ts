@@ -137,6 +137,12 @@ export default async function createJob(description: JobDescription, encodingPro
     modelLadders = data;
   }
 
+  // Skip this step if running in lambda
+  if (process.env.LAMBDA !== undefined) {
+    console.log(modelLadders);
+    return modelLadders;
+  }
+
   if (description.output !== undefined) {
     for (const modelLadder of modelLadders) {
       const modelStr = qualityAnalysisModelToString(modelLadder.model);

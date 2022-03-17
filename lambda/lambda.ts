@@ -7,6 +7,15 @@ import { createJob } from '../src/index';
 export const handler = async (event: ALBEvent): Promise<ALBResult> => {
   if (event.httpMethod === 'POST' && event.path === '/' && event['body']) {
     const body = JSON.parse(event.body);
+    if (!body['job']) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          error: 'Missing job parameter.',
+        }),
+      };
+    }
+
     const job = body.job;
     let pipelineData = body['pipeline'];
     let encodingS3Url = body['encodingSettingsUrl'];
@@ -29,7 +38,7 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
       return {
         statusCode: 200,
         body: JSON.stringify({
-          message: 'Job created.',
+          message: 'Job created successfully! 🎞️',
         }),
       };
     } catch (error) {
@@ -44,7 +53,7 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
     return {
       statusCode: 405,
       body: JSON.stringify({
-        error: 'Method not allowed.',
+        error: 'Method not allowed!',
       }),
     };
   }

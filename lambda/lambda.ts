@@ -27,6 +27,7 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
     if (!encodingS3Url) {
       mediaConvertProfile = default_profile;
     } else {
+      console.log('Loading encoding settings from S3...');
       const s3 = new S3({});
       const getCommand = new GetObjectCommand({ Bucket: encodingS3Url.split('/')[2], Key: encodingS3Url.split('/')[3] });
       mediaConvertProfile = await s3.send(getCommand);

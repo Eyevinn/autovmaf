@@ -1,7 +1,7 @@
 import fs from 'fs';
 import analyzeBruteForce from './analysis/brute-force';
 import AWSPipeline from './pipelines/aws/aws-pipeline';
-import { loadPipeline, loadPipelineFromObjects} from './load-pipeline';
+import { loadPipeline, loadPipelineFromObjects } from './load-pipeline';
 import {
   QualityAnalysisModel,
   qualityAnalysisModelToString,

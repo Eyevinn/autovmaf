@@ -92,11 +92,11 @@ export default class AWSPipeline implements Pipeline {
     // Parse settings
     let settingsStr = JSON.stringify(this.configuration.mediaConvertSettings);
 
-    settingsStr = settingsStr.replaceAll('$INPUT', inputFilename);
-    settingsStr = settingsStr.replaceAll('$OUTPUT', outputURI.replace(path.extname(outputURI), ''));
-    settingsStr = settingsStr.replaceAll('"$WIDTH"', targetResolution.width.toString());
-    settingsStr = settingsStr.replaceAll('"$HEIGHT"', targetResolution.height.toString());
-    settingsStr = settingsStr.replaceAll('"$BITRATE"', targetBitrate.toString());
+    settingsStr = settingsStr.replace(/$INPUT/g, inputFilename);
+    settingsStr = settingsStr.replace(/$OUTPUT/g, outputURI.replace(path.extname(outputURI), ''));
+    settingsStr = settingsStr.replace(/"$WIDTH"/g, targetResolution.width.toString());
+    settingsStr = settingsStr.replace(/"$HEIGHT"/g, targetResolution.height.toString());
+    settingsStr = settingsStr.replace(/"$BITRATE"/g, targetBitrate.toString());
 
     const settings = JSON.parse(settingsStr);
 

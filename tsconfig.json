@@ -4,7 +4,7 @@
   "compilerOptions": {
     "module": "commonjs",
     "esModuleInterop": true,
-    "target": "es2021",
+    "target": "es6",
     "moduleResolution": "node",
     "sourceMap": true,
     "outDir": "dist",
@@ -13,6 +13,6 @@
     "declaration": true,
     "declarationDir": "./dist"
   },
-  "lib": ["es2021"],
+  "lib": ["es2016"],
   "include": ["src", "types"],
 }

@@ -16,6 +16,7 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
     const body = JSON.parse(event.body);
     if (!body['job']) {
       return {
+        headers: responseHeaders,
         statusCode: 400,
         body: JSON.stringify({
           error: 'Missing job parameter.',

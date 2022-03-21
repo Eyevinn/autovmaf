@@ -92,7 +92,7 @@ export default async function createJob(description: JobDescription, encodingPro
   logger.info(`Creating job ${description.name}.`);
 
   let pipeline: any = undefined;
-  if (pipelineData) {
+  if (pipelineData && encodingProfileData) {
     pipeline = (await loadPipelineFromObjects(pipelineData, encodingProfileData)) as AWSPipeline;
   } else {
     pipeline = (await loadPipeline(description.pipeline, description.encodingProfile)) as AWSPipeline;

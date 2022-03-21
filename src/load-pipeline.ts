@@ -35,7 +35,7 @@ export type PipelineProfile = {
  * @param encodingProfile The local path to the encoding profile JSON. If left undefined, the encoding profile will be set to an empty object.
  * @returns A pipeline that can be used to transcode or analyze videos with.
  */
-export async function loadPipeline(pipelineFilename: string, encodingProfile?: string): Promise<Pipeline> {
+async function loadPipeline(pipelineFilename: string, encodingProfile?: string): Promise<Pipeline> {
   let encodingProfileData = {};
   if (encodingProfile !== undefined) {
     const encodingProfileFile = fs.readFileSync(encodingProfile, 'utf-8');
@@ -55,8 +55,18 @@ export async function loadPipeline(pipelineFilename: string, encodingProfile?: s
   }
 }
 
-export async function loadPipelineFromObjects(pipelineData: any, encodingProfileData?: any): Promise<Pipeline> {
+/**
+ * Loads a pipeline  and an encoding profile from a JSON object.
+ * @param pipelineData The object containing the pipeline data.
+ * @param encodingProfile The encoding profile JSON object. If left undefined, the encoding profile will be set to an empty object.
+ * @returns A pipeline that can be used to transcode or analyze videos with.
+ */
+async function loadPipelineFromObjects(pipelineData: any, encodingProfileData?: any): Promise<Pipeline> {
   const pipelineProfile = pipelineData as PipelineProfile;
+
+  if (!encodingProfileData) {
+    encodingProfileData = {};
+  }
 
   if (pipelineProfile.aws !== undefined) {
     return new AWSPipeline({ ...pipelineProfile.aws, mediaConvertSettings: encodingProfileData });
@@ -66,3 +76,5 @@ export async function loadPipelineFromObjects(pipelineData: any, encodingProfile
     throw new Error('Method not implemented.');
   }
 }
+
+export { loadPipeline, loadPipelineFromObjects };

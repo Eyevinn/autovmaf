@@ -5,6 +5,13 @@ import { S3, GetObjectCommand } from '@aws-sdk/client-s3';
 import { createJob } from '../index';
 
 export const handler = async (event: ALBEvent): Promise<ALBResult> => {
+  const responseHeaders = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Origin',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
+
   if (event.httpMethod === 'POST' && event.path === '/' && event['body']) {
     const body = JSON.parse(event.body);
     if (!body['job']) {
@@ -44,6 +51,7 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
       };
     } catch (error) {
       return {
+        headers: responseHeaders,
         statusCode: 500,
         body: JSON.stringify({
           error: error,
@@ -52,6 +60,7 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
     }
   } else {
     return {
+      headers: responseHeaders,
       statusCode: 405,
       body: JSON.stringify({
         error: 'Method not allowed!',

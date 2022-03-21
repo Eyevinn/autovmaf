@@ -11,6 +11,7 @@ import {
 } from './models/quality-analysis-model';
 import { loadPipeline, loadPipelineFromObjects } from './load-pipeline';
 import logger from './logger';
+import * as lambda from './lambda/lambda';
 
 export {
   createJob,
@@ -26,4 +27,5 @@ export {
   LocalPipeline,
   AWSPipeline,
   logger,
+  lambda,
 };

@@ -2,7 +2,7 @@ import { ALBResult, ALBEvent } from 'aws-lambda';
 import { default_profile } from './encodingProfiles/profiles';
 import { default_pipeline } from './pipelines/pipelines';
 import { S3, GetObjectCommand } from '@aws-sdk/client-s3';
-import { createJob } from '../src/index';
+import { createJob } from '../index';
 
 export const handler = async (event: ALBEvent): Promise<ALBResult> => {
   if (event.httpMethod === 'POST' && event.path === '/' && event['body']) {
@@ -46,7 +46,7 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
       return {
         statusCode: 500,
         body: JSON.stringify({
-          error: error.message,
+          error: error,
         }),
       };
     }

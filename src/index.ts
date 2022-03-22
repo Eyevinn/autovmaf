@@ -11,7 +11,8 @@ import {
 } from './models/quality-analysis-model';
 import { loadPipeline, loadPipelineFromObjects } from './load-pipeline';
 import logger from './logger';
-import * as lambda from './lambda/lambda';
+import * as initJobLambda from './lambda/initAutoabrJob';
+import * as startJobLambda from './lambda/startAutoabrJob';
 
 export {
   createJob,
@@ -27,5 +28,6 @@ export {
   LocalPipeline,
   AWSPipeline,
   logger,
-  lambda,
+  initJobLambda,
+  startJobLambda
 };

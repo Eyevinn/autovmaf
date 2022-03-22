@@ -2,7 +2,7 @@ import { ALBResult, ALBEvent } from 'aws-lambda';
 import { default_profile } from './encodingProfiles/profiles';
 import { default_pipeline } from './pipelines/pipelines';
 import { S3, GetObjectCommand } from '@aws-sdk/client-s3';
-import { createJob } from '../index';
+import aws from 'aws-sdk';
 
 export const handler = async (event: ALBEvent): Promise<ALBResult> => {
   const responseHeaders = {
@@ -41,24 +41,23 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
       mediaConvertProfile = await s3.send(getCommand);
     }
     console.log(`Job: ${JSON.stringify(job)} \n Pipeline: ${JSON.stringify(pipelineData)} \n MediaConvertProfile: ${JSON.stringify(mediaConvertProfile)}`);
-
+    let message = 'Job created successfully! 🎞️';
+    let statusCode = 202;
     try {
-      createJob(job, pipelineData, mediaConvertProfile);
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          message: 'Job created successfully! 🎞️',
-        }),
-      };
+      await createJob({
+        job: job, 
+        pipeline: pipelineData, 
+        encodingProfile: mediaConvertProfile 
+      }); 
     } catch (error) {
-      return {
-        headers: responseHeaders,
-        statusCode: 500,
-        body: JSON.stringify({
-          error: error,
-        }),
-      };
+      message = JSON.stringify(error);
+      statusCode = 500;
     }
+    return {
+      headers: responseHeaders,
+      statusCode: statusCode,
+      body: message,
+    };
   } else {
     return {
       headers: responseHeaders,
@@ -68,4 +67,24 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
       }),
     };
   }
+}
+
+async function createJob(data: any): Promise<any> {
+  const lambda = new aws.Lambda({ region: 'eu-north-1' });
+  const params = {
+    FunctionName: "lambda-create-autoabr-job",
+    InvocationType: "Event",
+    Payload: JSON.stringify(data),
+  };
+  return new Promise((resolve, reject) => {
+    lambda.invoke(params, (err, data) => {
+      if (err) {
+        console.error(err);
+        reject(err);
+      } else {
+        console.log(data);
+        resolve(data);
+      }
+    });
+  });
 }

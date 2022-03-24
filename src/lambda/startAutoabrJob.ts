@@ -8,18 +8,18 @@ export const handler = async (event: any): Promise<any> => {
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
   };
   console.log(JSON.stringify(event));
-  if (!event['job'] || !event['pipeline'] || !event['mediaConvertProfile']) {
+  if (!event['job'] || !event['pipeline'] || !event['encodingProfile']) {
     console.error('Missing parameters in event');
     return {
       headers: responseHeaders,
       statusCode: 400,
       body: JSON.stringify({
-        error: 'Missing job, pipeline or mediaConvertProfile parameter.',
+        error: 'Missing job, pipeline or encodingProfile parameter.',
       }),
     };
   }
   try {
-    await createJob(event['job'], event['pipeline'], event['mediaConvertProfile']);
+    await createJob(event['job'], event['pipeline'], event['encodingProfile']);
     return {
       headers: responseHeaders,
       statusCode: 200,
@@ -30,7 +30,7 @@ export const handler = async (event: any): Promise<any> => {
     return {
       headers: responseHeaders,
       statusCode: 500,
-      body: JSON.stringify(error),
+      body: 'Failed to create job',
     };
   }
 }

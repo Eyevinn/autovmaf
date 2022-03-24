@@ -27,7 +27,7 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
     const job = body.job;
     let pipelineData = body['pipeline'];
     let encodingS3Url = body['encodingSettingsUrl'];
-    let mediaConvertProfile = {};
+    let mediaConvertProfile: any;
 
     if (!pipelineData) {
       pipelineData = default_pipeline;
@@ -36,9 +36,20 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
       mediaConvertProfile = default_profile;
     } else {
       console.log(`Loading encoding settings from S3: ${encodingS3Url}`);
-      const s3 = new S3({});
+      const region = process.env.AWS_REGION || 'eu-north-1';
+      const s3 = new S3({ region: region });
+      console.log('Bucket: ' + encodingS3Url.split('/')[2] + ' Key: ' + encodingS3Url.split('/')[3]);
       const getCommand = new GetObjectCommand({ Bucket: encodingS3Url.split('/')[2], Key: encodingS3Url.split('/')[3] });
-      mediaConvertProfile = await s3.send(getCommand);
+      try {
+        mediaConvertProfile = await s3.send(getCommand);
+      } catch (error) {
+        console.error(error);
+        return {
+          headers: responseHeaders,
+          statusCode: 500,
+          body: JSON.stringify({ Message: 'Failed to load encoding settings from S3' }),
+        };
+      }
     }
     console.log(`Job: ${JSON.stringify(job)} \n Pipeline: ${JSON.stringify(pipelineData)} \n MediaConvertProfile: ${JSON.stringify(mediaConvertProfile)}`);
     let message = 'Job created successfully! 🎞️';

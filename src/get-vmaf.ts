@@ -64,7 +64,7 @@ async function dataFromS3(
 /**
  * Returns the VMAF-values from a JSON-file or a directory of JSON-files. Can be used on both local paths as well as S3-URIs.
  *
- * @example **Example of retriving a list of VMAF-scores from S3.**
+ * @example **Example of retrieving a list of VMAF-scores from S3.**
  * ```javascript
  * const vmafFiles = await getVmaf('s3://path/to/vmaf/');
  * vmafFiles.forEach(file => {

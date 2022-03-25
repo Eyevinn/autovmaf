@@ -18,30 +18,26 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
       return {
         headers: responseHeaders,
         statusCode: 400,
-        body: JSON.stringify({
-          error: 'Missing job parameter.',
-        }),
+        body: JSON.stringify({ Error: 'Missing job parameter!' }),
       };
     }
-
     const job = body.job;
     let pipelineData = body['pipeline'];
     let encodingS3Url = body['encodingSettingsUrl'];
     let mediaConvertProfile: any;
-
     if (!pipelineData) {
       pipelineData = default_pipeline;
     }
     if (!encodingS3Url) {
       mediaConvertProfile = default_profile;
     } else {
-      console.log(`Loading encoding settings from S3: ${encodingS3Url}`);
-      const region = process.env.AWS_REGION || 'eu-north-1';
-      const s3 = new S3({ region: region });
-      console.log('Bucket: ' + encodingS3Url.split('/')[2] + ' Key: ' + encodingS3Url.split('/')[3]);
-      const getCommand = new GetObjectCommand({ Bucket: encodingS3Url.split('/')[2], Key: encodingS3Url.split('/')[3] });
       try {
-        mediaConvertProfile = await s3.send(getCommand);
+        const s3 = new S3({ region: (process.env.AWS_REGION || 'eu-north-1') });
+        console.log('Bucket: ' + encodingS3Url.split('/')[2] + ' Key: ' + encodingS3Url.split('/')[3]);
+        const getCommand = new GetObjectCommand({ Bucket: encodingS3Url.split('/')[2], Key: encodingS3Url.split('/')[3] });
+        const response = await s3.send(getCommand);
+        const responseBody = await streamToString(response);
+        mediaConvertProfile = JSON.parse(responseBody);
       } catch (error) {
         console.error(error);
         return {
@@ -55,13 +51,14 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
     let message = 'Job created successfully! 🎞️';
     let statusCode = 202;
     try {
-      await createJob({
+      await createLambdaJob({
         job: job, 
         pipeline: pipelineData, 
         encodingProfile: mediaConvertProfile 
       }); 
     } catch (error) {
-      message = JSON.stringify(error);
+      console.error(error);
+      message = 'Failed to create job!';
       statusCode = 500;
     }
     return {
@@ -73,14 +70,12 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
     return {
       headers: responseHeaders,
       statusCode: 405,
-      body: JSON.stringify({
-        error: 'Method not allowed!',
-      }),
+      body: JSON.stringify({ Error: 'Method not allowed!' }),
     };
   }
 }
 
-async function createJob(data: any): Promise<any> {
+async function createLambdaJob(data: any): Promise<any> {
   const lambda = new aws.Lambda({ region: 'eu-north-1' });
   const params = {
     FunctionName: "lambda-create-autoabr-job",
@@ -97,5 +92,14 @@ async function createJob(data: any): Promise<any> {
         resolve(data);
       }
     });
+  });
+}
+
+async function streamToString(stream: any): Promise<string> {
+  return new Promise(async (resolve, reject) => {
+    let responseDataChunks = []  as  any;
+    stream.Body.once('error', err => reject(err));
+    stream.Body.on('data', chunk => responseDataChunks.push(chunk));
+    stream.Body.once('end', () => resolve(responseDataChunks.join('')));
   });
 }

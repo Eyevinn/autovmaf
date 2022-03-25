@@ -81,6 +81,10 @@ export default class AWSPipeline implements Pipeline {
     return newFilename;
   }
 
+  stringReplacement(input: string, search: string, replacement: string) {
+    return input.split(search).join(replacement);
+  };
+
   async transcode(input: string, targetResolution: Resolution, targetBitrate: number, output: string): Promise<string> {
     const outputBucket = this.configuration.s3Bucket;
     const outputObject = output;
@@ -91,14 +95,16 @@ export default class AWSPipeline implements Pipeline {
 
     // Parse settings
     let settingsStr = JSON.stringify(this.configuration.mediaConvertSettings);
-
-    settingsStr = settingsStr.replace(/$INPUT/g, inputFilename);
-    settingsStr = settingsStr.replace(/$OUTPUT/g, outputURI.replace(path.extname(outputURI), ''));
-    settingsStr = settingsStr.replace(/"$WIDTH"/g, targetResolution.width.toString());
-    settingsStr = settingsStr.replace(/"$HEIGHT"/g, targetResolution.height.toString());
-    settingsStr = settingsStr.replace(/"$BITRATE"/g, targetBitrate.toString());
+    settingsStr = this.stringReplacement(settingsStr, '$INPUT', inputFilename);
+    settingsStr = this.stringReplacement(settingsStr, '$OUTPUT', outputURI.replace(path.extname(outputURI), ''));
+    settingsStr = this.stringReplacement(settingsStr, '$WIDTH', targetResolution.width.toString());
+    settingsStr = this.stringReplacement(settingsStr, '$HEIGHT', targetResolution.height.toString());
+    settingsStr = this.stringReplacement(settingsStr, '$BITRATE', targetBitrate.toString());
+    // HEVC specific settings
+    settingsStr = this.stringReplacement(settingsStr, '$HRDBUFFER', (targetBitrate*2).toString());
 
     const settings = JSON.parse(settingsStr);
+    logger.info('Settings Json: ' + JSON.stringify(settings));
 
     if (await this.fileExists(outputBucket, output)) {
       // File has already been transcoded.

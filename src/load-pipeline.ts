@@ -3,6 +3,7 @@ import YAML from 'yaml';
 import LocalPipeline from './pipelines/local/local-pipeline';
 import AWSPipeline from './pipelines/aws/aws-pipeline';
 import { Pipeline } from './pipelines/pipeline';
+import logger from './logger';
 
 /**
  * An object representing a pipeline profile.

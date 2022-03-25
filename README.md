@@ -47,7 +47,7 @@ vmafFiles.forEach(file => {
 
 ### Running Autoabr in AWS
 
-To be able to run Autoabr in AWS two Lambda functions have been provided. The first Lambda function `iniAutoabrJob` validates the input and will then trigger the `startAutoabrJob` Lambda. It is important that the Lambda functions have access to both MediaConvert and EC2. 
+To be able to run Autoabr in AWS two Lambda functions have been provided. The first Lambda function `iniAutoabrJob` validates the input and will then trigger the `startAutoabrJob` Lambda. It is important that the Lambda functions have access to both MediaConvert and ECS. 
 
 To start a new Autoabr job do a `POST` to the endpoint that is set up with the `iniAutoabrJob` Lambda:
 

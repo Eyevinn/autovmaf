@@ -44,3 +44,46 @@ vmafFiles.forEach(file => {
   console.log(file.filename + ': ' + file.vmaf);
 });
 ```
+
+### Running Autoabr in AWS
+
+To be able to run Autoabr in AWS two Lambda functions have been provided. The first Lambda function `iniAutoabrJob` validates the input and will then trigger the `startAutoabrJob` Lambda. It is important that the Lambda functions have access to both MediaConvert and EC2. 
+
+To start a new Autoabr job do a `POST` to the endpoint that is set up with the `iniAutoabrJob` Lambda:
+
+```json
+{
+   "encodingSettingsUrl": "s3://vmaf-files/encoding-profile-h265.json",
+   "pipeline": {
+      "aws": {
+         "s3Bucket": "vmaf-files",
+         "mediaConvertRole": "your-media-convert-role",
+         "mediaConvertEndpoint": "your-media-convert-endpoint",
+         "ecsSubnet": "subnet-1234d456",
+         "ecsSecurityGroup": "your-ecs-security-group",
+         "ecsContainerName": "easyvmaf-s3",
+         "ecsCluster": "vmaf-runner",
+         "ecsTaskDefinition": "easyvmaf-s3:1"
+      }
+   }, 
+   "job": {
+      "name": "output-name",
+      "reference": "s3://bucket/reference.mov",
+      "models": [
+         "UHD"
+      ],
+      "bitrates": [
+         12800000
+      ],
+      "resolutions": [
+         {
+            "width": 3840,
+            "height": 2160
+         }
+      ],
+      "output": "output-bucket"
+   }
+}
+```
+
+If the `pipeline` and `encodingSettingsUrl` have not been specified in the payload the default values will be used from `src/lambda/pipelines/pipelines.ts` and `src/lambda/encodingProfiles/profiles.ts` respectively.

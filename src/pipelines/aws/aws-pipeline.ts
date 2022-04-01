@@ -168,38 +168,43 @@ export default class AWSPipeline implements Pipeline {
         break;
     }
 
-    this.ecs.send(
-      new RunTaskCommand({
-        taskDefinition: this.configuration.ecsTaskDefinition,
-        cluster: this.configuration.ecsCluster,
-        launchType: 'FARGATE',
-        networkConfiguration: {
-          awsvpcConfiguration: {
-            subnets: [this.configuration.ecsSubnet],
-            securityGroups: [this.configuration.ecsSecurityGroup],
-            assignPublicIp: 'ENABLED',
-          },
-        },
-        overrides: {
-          containerOverrides: [
-            {
-              name: this.configuration.ecsContainerName,
-              command: ['-r', referenceFilename, '-d', distortedFilename, '-o', outputURI, ...additionalArgs],
-              environment: [
-                {
-                  name: 'AWS_ACCESS_KEY_ID',
-                  value: credentials.accessKeyId,
-                },
-                {
-                  name: 'AWS_SECRET_ACCESS_KEY',
-                  value: credentials.secretAccessKey,
-                },
-              ],
+    try {
+      this.ecs.send(
+        new RunTaskCommand({
+          taskDefinition: this.configuration.ecsTaskDefinition,
+          cluster: this.configuration.ecsCluster,
+          launchType: 'FARGATE',
+          networkConfiguration: {
+            awsvpcConfiguration: {
+              subnets: [this.configuration.ecsSubnet],
+              securityGroups: [this.configuration.ecsSecurityGroup],
+              assignPublicIp: process.env.LAMBDA ? 'DISABLED' : 'ENABLED',
             },
-          ],
-        },
-      })
-    );
+          },
+          overrides: {
+            containerOverrides: [
+              {
+                name: this.configuration.ecsContainerName,
+                command: ['-r', referenceFilename, '-d', distortedFilename, '-o', outputURI, ...additionalArgs],
+                environment: [
+                  {
+                    name: 'AWS_ACCESS_KEY_ID',
+                    value: credentials.accessKeyId,
+                  },
+                  {
+                    name: 'AWS_SECRET_ACCESS_KEY',
+                    value: credentials.secretAccessKey,
+                  },
+                ],
+              },
+            ],
+          },
+        })
+      );
+    } catch (error) {
+      logger.error(`Error while starting quality analysis`);
+      throw(error);
+    }
 
     await waitUntilObjectExists({ client: this.s3, maxWaitTime: 3600 }, { Bucket: outputBucket, Key: outputObject });
 

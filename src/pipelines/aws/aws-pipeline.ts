@@ -186,7 +186,7 @@ export default class AWSPipeline implements Pipeline {
             awsvpcConfiguration: {
               subnets: [this.configuration.ecsSubnet],
               securityGroups: [this.configuration.ecsSecurityGroup],
-              assignPublicIp: process.env.LAMBDA ? 'DISABLED' : 'ENABLED',
+              assignPublicIp: 'ENABLED',
             },
           },
           overrides: {

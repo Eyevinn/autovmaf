@@ -22,38 +22,32 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
       };
     }
     const job = body.job;
-    let pipelineData = body['pipeline'];
+    let pipelineS3Url = body['pipelineUrl'];
     let encodingS3Url = body['encodingSettingsUrl'];
-    let mediaConvertProfile: any;
-    if (!pipelineData) {
-      pipelineData = default_pipeline;
-    }
-    if (!encodingS3Url) {
-      mediaConvertProfile = default_profile;
-    } else {
-      try {
-        const s3 = new S3({ region: (process.env.AWS_REGION || 'eu-north-1') });
-        console.log('Bucket: ' + encodingS3Url.split('/')[2] + ' Key: ' + encodingS3Url.split('/')[3]);
-        const getCommand = new GetObjectCommand({ Bucket: encodingS3Url.split('/')[2], Key: encodingS3Url.split('/')[3] });
-        const response = await s3.send(getCommand);
-        const responseBody = await streamToString(response);
-        mediaConvertProfile = JSON.parse(responseBody);
-      } catch (error) {
-        console.error(error);
-        return {
-          headers: responseHeaders,
-          statusCode: 500,
-          body: JSON.stringify({ Message: 'Failed to load encoding settings from S3' }),
-        };
+    let mediaConvertProfile = default_profile;
+    let pipeline = default_pipeline;
+    try {
+      if (pipelineS3Url) {
+        pipeline = JSON.parse(await loadFromS3(pipelineS3Url));
       }
+      if (encodingS3Url) {
+        mediaConvertProfile = JSON.parse(await loadFromS3(encodingS3Url));
+      }
+    } catch (error) {
+      console.error(error);
+      return {
+        headers: responseHeaders,
+        statusCode: 500,
+        body: JSON.stringify({ Message: 'Failed to load settings from S3' }),
+      };
     }
-    console.log(`Job: ${JSON.stringify(job)} \n Pipeline: ${JSON.stringify(pipelineData)} \n MediaConvertProfile: ${JSON.stringify(mediaConvertProfile)}`);
+    console.log(`Job: ${JSON.stringify(job)} \n Pipeline: ${JSON.stringify(pipeline)} \n MediaConvertProfile: ${JSON.stringify(mediaConvertProfile)}`);
     let message = 'Job created successfully! 🎞️';
     let statusCode = 202;
     try {
       await createLambdaJob({
         job: job, 
-        pipeline: pipelineData, 
+        pipeline: pipeline, 
         encodingProfile: mediaConvertProfile 
       }); 
     } catch (error) {
@@ -93,6 +87,14 @@ async function createLambdaJob(data: any): Promise<any> {
       }
     });
   });
+}
+
+async function loadFromS3(encodingS3Url: string): Promise<string> {
+  const s3 = new S3({ region: (process.env.AWS_REGION || 'eu-north-1') });
+  console.log('Bucket: ' + encodingS3Url.split('/')[2] + ' Key: ' + encodingS3Url.split('/')[3]);
+  const getCommand = new GetObjectCommand({ Bucket: encodingS3Url.split('/')[2], Key: encodingS3Url.split('/')[3] });
+  const response = await s3.send(getCommand);
+  return await streamToString(response);
 }
 
 async function streamToString(stream: any): Promise<string> {

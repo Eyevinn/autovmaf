@@ -152,8 +152,16 @@ export default class AWSPipeline implements Pipeline {
     const referenceFilename = await this.uploadIfNeeded(reference, outputBucket, path.dirname(outputObject));
     const distortedFilename = await this.uploadIfNeeded(distorted, outputBucket, path.dirname(outputObject));
 
-    const credentialProvider = fromIni();
-    const credentials = await credentialProvider();
+    let credentials: any = {};
+    if (process.env.LAMBDA) {
+      logger.info('Running in AWS Lambda, loading credentials from environment variables');
+      credentials['accessKeyId'] = process.env.AWS_ACCESS_KEY_ID;
+      credentials['secretAccessKey'] = process.env.AWS_SECRET_ACCESS_KEY;
+    } else {
+      logger.info('Running locally, loading credentials from credentialsProvider ');
+      const credentialProvider = fromIni();
+      credentials = await credentialProvider();
+    }
 
     let additionalArgs: string[] = [];
     switch (model) {

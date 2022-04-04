@@ -54,18 +54,7 @@ To start a new Autoabr job do a `POST` to the endpoint that is set up with the `
 ```json
 {
    "encodingSettingsUrl": "s3://vmaf-files/encoding-profile-h265.json",
-   "pipeline": {
-      "aws": {
-         "s3Bucket": "vmaf-files",
-         "mediaConvertRole": "your-media-convert-role",
-         "mediaConvertEndpoint": "your-media-convert-endpoint",
-         "ecsSubnet": "subnet-1234d456",
-         "ecsSecurityGroup": "your-ecs-security-group",
-         "ecsContainerName": "easyvmaf-s3",
-         "ecsCluster": "vmaf-runner",
-         "ecsTaskDefinition": "easyvmaf-s3:1"
-      }
-   }, 
+   "pipeline": "s3://vmaf-files/pipeline.json", 
    "job": {
       "name": "output-name",
       "reference": "s3://bucket/reference.mov",

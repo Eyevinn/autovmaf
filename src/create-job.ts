@@ -138,8 +138,7 @@ export default async function createJob(description: JobDescription, pipelineDat
     modelLadders = data;
   }
 
-  // Skip this step if running in lambda
-  if (process.env.LAMBDA !== undefined) {
+  if (process.env.SKIP_FILEWRITE !== undefined) {
     logger.info(`Optimal ladder: ${JSON.stringify(modelLadders)}`);
     return modelLadders;
   }

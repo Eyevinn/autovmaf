@@ -138,12 +138,7 @@ export default async function createJob(description: JobDescription, pipelineDat
     modelLadders = data;
   }
 
-  if (process.env.SKIP_FILEWRITE !== undefined) {
-    logger.info(`Optimal ladder: ${JSON.stringify(modelLadders)}`);
-    return modelLadders;
-  }
-
-  if (description.output !== undefined) {
+  if (description.output !== undefined && process.env.SKIP_FILEWRITE === 'undefined') {
     for (const modelLadder of modelLadders) {
       const modelStr = qualityAnalysisModelToString(modelLadder.model);
       const outputFilename = description.output + '_' + modelStr + '.csv';
@@ -158,7 +153,6 @@ export default async function createJob(description: JobDescription, pipelineDat
           vmaf: rung.vmaf,
         }))
       );
-
       fs.writeFileSync(outputFilename, csv);
     }
   }

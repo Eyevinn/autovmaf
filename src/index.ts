@@ -9,8 +9,10 @@ import {
   qualityAnalysisModelToString,
   stringToQualityAnalysisModel,
 } from './models/quality-analysis-model';
-import loadPipeline from './load-pipeline';
+import { loadPipeline, loadPipelineFromObjects } from './load-pipeline';
 import logger from './logger';
+import * as initJobLambda from './lambda/initAutoabrJob';
+import * as startJobLambda from './lambda/startAutoabrJob';
 
 export {
   createJob,
@@ -19,10 +21,13 @@ export {
   qualityAnalysisModelToString,
   stringToQualityAnalysisModel,
   loadPipeline,
+  loadPipelineFromObjects,
   JobDescription,
   QualityAnalysisModel,
   Pipeline,
   LocalPipeline,
   AWSPipeline,
   logger,
+  initJobLambda,
+  startJobLambda
 };

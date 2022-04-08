@@ -3,6 +3,7 @@ import YAML from 'yaml';
 import LocalPipeline from './pipelines/local/local-pipeline';
 import AWSPipeline from './pipelines/aws/aws-pipeline';
 import { Pipeline } from './pipelines/pipeline';
+import logger from './logger';
 
 /**
  * An object representing a pipeline profile.
@@ -35,7 +36,7 @@ export type PipelineProfile = {
  * @param encodingProfile The local path to the encoding profile JSON. If left undefined, the encoding profile will be set to an empty object.
  * @returns A pipeline that can be used to transcode or analyze videos with.
  */
-export default async function loadPipeline(pipelineFilename: string, encodingProfile?: string): Promise<Pipeline> {
+async function loadPipeline(pipelineFilename: string, encodingProfile?: string): Promise<Pipeline> {
   let encodingProfileData = {};
   if (encodingProfile !== undefined) {
     const encodingProfileFile = fs.readFileSync(encodingProfile, 'utf-8');
@@ -54,3 +55,27 @@ export default async function loadPipeline(pipelineFilename: string, encodingPro
     throw new Error('Method not implemented.');
   }
 }
+
+/**
+ * Loads a pipeline  and an encoding profile from a JSON object.
+ * @param pipelineData The object containing the pipeline data.
+ * @param encodingProfile The encoding profile JSON object. If left undefined, the encoding profile will be set to an empty object.
+ * @returns A pipeline that can be used to transcode or analyze videos with.
+ */
+async function loadPipelineFromObjects(pipelineData: any, encodingProfileData?: any): Promise<Pipeline> {
+  const pipelineProfile = pipelineData as PipelineProfile;
+
+  if (!encodingProfileData) {
+    encodingProfileData = {};
+  }
+
+  if (pipelineProfile.aws !== undefined) {
+    return new AWSPipeline({ ...pipelineProfile.aws, mediaConvertSettings: encodingProfileData });
+  } else if (pipelineProfile.local !== undefined) {
+    return new LocalPipeline({ ...pipelineProfile.local, ffmpegOptions: encodingProfileData });
+  } else {
+    throw new Error('Method not implemented.');
+  }
+}
+
+export { loadPipeline, loadPipelineFromObjects };

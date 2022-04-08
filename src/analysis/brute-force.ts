@@ -122,7 +122,7 @@ export default async function analyzeBruteForce(
         }))
       );
     } else {
-      let results = [];
+      let results: any = [];
       for (const model of models) {
         results.push({
           model,

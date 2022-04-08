@@ -81,6 +81,10 @@ export default class AWSPipeline implements Pipeline {
     return newFilename;
   }
 
+  stringReplacement(input: string, search: string, replacement: string) {
+    return input.split(search).join(replacement);
+  };
+
   async transcode(input: string, targetResolution: Resolution, targetBitrate: number, output: string): Promise<string> {
     const outputBucket = this.configuration.s3Bucket;
     const outputObject = output;
@@ -91,14 +95,16 @@ export default class AWSPipeline implements Pipeline {
 
     // Parse settings
     let settingsStr = JSON.stringify(this.configuration.mediaConvertSettings);
-
-    settingsStr = settingsStr.replaceAll('$INPUT', inputFilename);
-    settingsStr = settingsStr.replaceAll('$OUTPUT', outputURI.replace(path.extname(outputURI), ''));
-    settingsStr = settingsStr.replaceAll('"$WIDTH"', targetResolution.width.toString());
-    settingsStr = settingsStr.replaceAll('"$HEIGHT"', targetResolution.height.toString());
-    settingsStr = settingsStr.replaceAll('"$BITRATE"', targetBitrate.toString());
+    settingsStr = this.stringReplacement(settingsStr, '$INPUT', inputFilename);
+    settingsStr = this.stringReplacement(settingsStr, '$OUTPUT', outputURI.replace(path.extname(outputURI), ''));
+    settingsStr = this.stringReplacement(settingsStr, '$WIDTH', targetResolution.width.toString());
+    settingsStr = this.stringReplacement(settingsStr, '$HEIGHT', targetResolution.height.toString());
+    settingsStr = this.stringReplacement(settingsStr, '$BITRATE', targetBitrate.toString());
+    // HEVC specific settings
+    settingsStr = this.stringReplacement(settingsStr, '$HRDBUFFER', (targetBitrate*2).toString());
 
     const settings = JSON.parse(settingsStr);
+    logger.info('Settings Json: ' + JSON.stringify(settings));
 
     if (await this.fileExists(outputBucket, output)) {
       // File has already been transcoded.
@@ -146,8 +152,16 @@ export default class AWSPipeline implements Pipeline {
     const referenceFilename = await this.uploadIfNeeded(reference, outputBucket, path.dirname(outputObject));
     const distortedFilename = await this.uploadIfNeeded(distorted, outputBucket, path.dirname(outputObject));
 
-    const credentialProvider = fromIni();
-    const credentials = await credentialProvider();
+    let credentials: any = {};
+    if (process.env.LAMBDA) {
+      logger.info('Running in AWS Lambda, loading credentials from environment variables');
+      credentials['accessKeyId'] = process.env.AWS_ACCESS_KEY_ID;
+      credentials['secretAccessKey'] = process.env.AWS_SECRET_ACCESS_KEY;
+    } else {
+      logger.info('Running locally, loading credentials from credentialsProvider ');
+      const credentialProvider = fromIni();
+      credentials = await credentialProvider();
+    }
 
     let additionalArgs: string[] = [];
     switch (model) {
@@ -162,38 +176,43 @@ export default class AWSPipeline implements Pipeline {
         break;
     }
 
-    this.ecs.send(
-      new RunTaskCommand({
-        taskDefinition: this.configuration.ecsTaskDefinition,
-        cluster: this.configuration.ecsCluster,
-        launchType: 'FARGATE',
-        networkConfiguration: {
-          awsvpcConfiguration: {
-            subnets: [this.configuration.ecsSubnet],
-            securityGroups: [this.configuration.ecsSecurityGroup],
-            assignPublicIp: 'ENABLED',
-          },
-        },
-        overrides: {
-          containerOverrides: [
-            {
-              name: this.configuration.ecsContainerName,
-              command: ['-r', referenceFilename, '-d', distortedFilename, '-o', outputURI, ...additionalArgs],
-              environment: [
-                {
-                  name: 'AWS_ACCESS_KEY_ID',
-                  value: credentials.accessKeyId,
-                },
-                {
-                  name: 'AWS_SECRET_ACCESS_KEY',
-                  value: credentials.secretAccessKey,
-                },
-              ],
+    try {
+      this.ecs.send(
+        new RunTaskCommand({
+          taskDefinition: this.configuration.ecsTaskDefinition,
+          cluster: this.configuration.ecsCluster,
+          launchType: 'FARGATE',
+          networkConfiguration: {
+            awsvpcConfiguration: {
+              subnets: [this.configuration.ecsSubnet],
+              securityGroups: [this.configuration.ecsSecurityGroup],
+              assignPublicIp: 'ENABLED',
             },
-          ],
-        },
-      })
-    );
+          },
+          overrides: {
+            containerOverrides: [
+              {
+                name: this.configuration.ecsContainerName,
+                command: ['-r', referenceFilename, '-d', distortedFilename, '-o', outputURI, ...additionalArgs],
+                environment: [
+                  {
+                    name: 'AWS_ACCESS_KEY_ID',
+                    value: credentials.accessKeyId,
+                  },
+                  {
+                    name: 'AWS_SECRET_ACCESS_KEY',
+                    value: credentials.secretAccessKey,
+                  },
+                ],
+              },
+            ],
+          },
+        })
+      );
+    } catch (error) {
+      logger.error(`Error while starting quality analysis`);
+      throw(error);
+    }
 
     await waitUntilObjectExists({ client: this.s3, maxWaitTime: 3600 }, { Bucket: outputBucket, Key: outputObject });
 

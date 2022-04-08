@@ -1,7 +1,7 @@
 import fs from 'fs';
 import analyzeBruteForce from './analysis/brute-force';
 import AWSPipeline from './pipelines/aws/aws-pipeline';
-import loadPipeline from './load-pipeline';
+import { loadPipeline, loadPipelineFromObjects } from './load-pipeline';
 import {
   QualityAnalysisModel,
   qualityAnalysisModelToString,
@@ -88,12 +88,16 @@ export type JobDescription = {
  * @param description An object that describes the job to create.
  * @returns The optimal ladder for each model.
  */
-export default async function createJob(
-  description: JobDescription
-): Promise<{ model: QualityAnalysisModel; optimalLadder: BitrateResolutionVMAF[] }[]> {
+export default async function createJob(description: JobDescription, pipelineData?: any, encodingProfileData?: any): Promise<{ model: QualityAnalysisModel; optimalLadder: BitrateResolutionVMAF[] }[]> {
   logger.info(`Creating job ${description.name}.`);
 
-  const pipeline = (await loadPipeline(description.pipeline, description.encodingProfile)) as AWSPipeline;
+  let pipeline: any = undefined;
+  if (pipelineData && encodingProfileData) {
+    pipeline = (await loadPipelineFromObjects(pipelineData, encodingProfileData)) as AWSPipeline;
+    logger.info('AWS pipeline: ' + JSON.stringify(pipeline));
+  } else {
+    pipeline = (await loadPipeline(description.pipeline, description.encodingProfile)) as AWSPipeline;
+  }
 
   if (pipeline === undefined) {
     // Only works on AWS.
@@ -134,7 +138,7 @@ export default async function createJob(
     modelLadders = data;
   }
 
-  if (description.output !== undefined) {
+  if (description.output !== undefined && process.env.SKIP_FILEWRITE === 'undefined') {
     for (const modelLadder of modelLadders) {
       const modelStr = qualityAnalysisModelToString(modelLadder.model);
       const outputFilename = description.output + '_' + modelStr + '.csv';
@@ -149,7 +153,6 @@ export default async function createJob(
           vmaf: rung.vmaf,
         }))
       );
-
       fs.writeFileSync(outputFilename, csv);
     }
   }

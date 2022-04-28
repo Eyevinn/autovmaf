@@ -61,12 +61,7 @@ export default class AWSPipeline implements Pipeline {
     }
   }
 
-  async uploadIfNeeded(
-    filename: string,
-    bucket: string,
-    targetDir: string,
-    targetFilename: string = path.basename(filename)
-  ): Promise<string> {
+  async uploadIfNeeded(filename: string, bucket: string, targetDir: string, targetFilename: string = path.basename(filename)): Promise<string> {
     let newFilename: string;
 
     if (isS3URI(filename)) {
@@ -102,10 +97,10 @@ export default class AWSPipeline implements Pipeline {
     settingsStr = this.stringReplacement(settingsStr, '$HEIGHT', targetResolution.height.toString());
     settingsStr = this.stringReplacement(settingsStr, '$BITRATE', targetBitrate.toString());
     // HEVC specific settings
-    settingsStr = this.stringReplacement(settingsStr, '$HRDBUFFER', (targetBitrate*2).toString());
+    settingsStr = this.stringReplacement(settingsStr, '$HRDBUFFER', (targetBitrate * 2).toString());
 
     const settings = JSON.parse(settingsStr);
-    logger.info('Settings Json: ' + JSON.stringify(settings));
+    logger.debug('Settings Json: ' + JSON.stringify(settings));
 
     if (await this.fileExists(outputBucket, output)) {
       // File has already been transcoded.
@@ -121,7 +116,7 @@ export default class AWSPipeline implements Pipeline {
       })
     );
 
-    // Wait until finished
+    // Do not crash if the MediaConvert job fails and no file is created.
     try {
       await waitUntilObjectExists({ client: this.s3, maxWaitTime: AWSPipeline.MAX_WAIT_TIME }, { Bucket: outputBucket, Key: outputObject });
     } catch (error) {
@@ -132,15 +127,8 @@ export default class AWSPipeline implements Pipeline {
     return outputURI;
   }
 
-  async analyzeQuality(
-    reference: string,
-    distorted: string,
-    output: string,
-    model: QualityAnalysisModel
-  ): Promise<string> {
-    logger.info(`Running quality analysis on ${distorted} with ${qualityAnalysisModelToString(model)}-model...`);
-
-    let outputFilename;
+  async analyzeQuality(reference: string, distorted: string, output: string, model: QualityAnalysisModel): Promise<string> {
+    let outputFilename: string;
     if (isS3URI(output)) {
       const outputUrl = new URL(output);
       // Remove initial '/' in pathname
@@ -158,11 +146,11 @@ export default class AWSPipeline implements Pipeline {
 
     let credentials: any = {};
     if (process.env.LOAD_CREDENTIALS_FROM_ENV) {
-      logger.info('Loading credentials from environment variables');
+      logger.debug('Loading credentials from environment variables');
       credentials['accessKeyId'] = process.env.AWS_ACCESS_KEY_ID;
       credentials['secretAccessKey'] = process.env.AWS_SECRET_ACCESS_KEY;
     } else {
-      logger.info('Loading credentials from ~/.aws/credentials');
+      logger.debug('Loading credentials from ~/.aws/credentials');
       const credentialProvider = fromIni();
       credentials = await credentialProvider();
     }
@@ -180,6 +168,7 @@ export default class AWSPipeline implements Pipeline {
         break;
     }
 
+    logger.info(`Running quality analysis on ${distorted} with ${qualityAnalysisModelToString(model)}-model...`);
     try {
       this.ecs.send(
         new RunTaskCommand({
@@ -193,7 +182,7 @@ export default class AWSPipeline implements Pipeline {
               assignPublicIp: 'ENABLED',
             },
           },
-          tags: [ { key: 'FileName', value: referenceFilename } ],
+          tags: [ { key: 'ReferenceFile', value: referenceFilename } ],
           overrides: {
             containerOverrides: [
               {
@@ -218,7 +207,8 @@ export default class AWSPipeline implements Pipeline {
       logger.error(`Error while starting quality analysis`);
       throw(error);
     }
-    try{
+    // Do not crash if quality analysis fails and no file is created.
+    try {
       await waitUntilObjectExists({ client: this.s3, maxWaitTime: AWSPipeline.MAX_WAIT_TIME }, { Bucket: outputBucket, Key: outputObject });
     } catch (error){
       logger.error(`Error when running tasks in ECS: ${error}`);

@@ -25,7 +25,7 @@ export default class AWSPipeline implements Pipeline {
   private s3: S3Client;
   private mediaConvert: MediaConvertClient;
   private ecs: ECSClient;
-  private static readonly MAX_WAIT_TIME = 28800;
+  private static readonly MAX_WAIT_TIME = 28800; //Max wait time for AWS resources is 28800 seconds (8 hours).
 
   constructor(configuration: AWSPipelineConfiguration) {
     this.configuration = configuration;

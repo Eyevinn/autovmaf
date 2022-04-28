@@ -94,7 +94,6 @@ export default async function createJob(description: JobDescription, pipelineDat
   let pipeline: any = undefined;
   if (pipelineData && encodingProfileData) {
     pipeline = (await loadPipelineFromObjects(pipelineData, encodingProfileData)) as AWSPipeline;
-    logger.info('AWS pipeline: ' + JSON.stringify(pipeline));
   } else {
     pipeline = (await loadPipeline(description.pipeline, description.encodingProfile)) as AWSPipeline;
   }

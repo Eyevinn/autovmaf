@@ -25,6 +25,7 @@ export default class AWSPipeline implements Pipeline {
   private s3: S3Client;
   private mediaConvert: MediaConvertClient;
   private ecs: ECSClient;
+  private static readonly MAX_WAIT_TIME = 28800;
 
   constructor(configuration: AWSPipelineConfiguration) {
     this.configuration = configuration;
@@ -121,10 +122,13 @@ export default class AWSPipeline implements Pipeline {
     );
 
     // Wait until finished
-    await waitUntilObjectExists({ client: this.s3, maxWaitTime: 3600 }, { Bucket: outputBucket, Key: outputObject });
+    try {
+      await waitUntilObjectExists({ client: this.s3, maxWaitTime: AWSPipeline.MAX_WAIT_TIME }, { Bucket: outputBucket, Key: outputObject });
+    } catch (error) {
+      logger.error(`Error when waiting for transcoded files: ${error}`);
+    }
 
     logger.info('Finished transcoding ' + inputFilename + '.');
-
     return outputURI;
   }
 
@@ -153,12 +157,12 @@ export default class AWSPipeline implements Pipeline {
     const distortedFilename = await this.uploadIfNeeded(distorted, outputBucket, path.dirname(outputObject));
 
     let credentials: any = {};
-    if (process.env.LAMBDA) {
-      logger.info('Running in AWS Lambda, loading credentials from environment variables');
+    if (process.env.LOAD_CREDENTIALS_FROM_ENV) {
+      logger.info('Loading credentials from environment variables');
       credentials['accessKeyId'] = process.env.AWS_ACCESS_KEY_ID;
       credentials['secretAccessKey'] = process.env.AWS_SECRET_ACCESS_KEY;
     } else {
-      logger.info('Running locally, loading credentials from credentialsProvider ');
+      logger.info('Loading credentials from ~/.aws/credentials');
       const credentialProvider = fromIni();
       credentials = await credentialProvider();
     }
@@ -189,6 +193,7 @@ export default class AWSPipeline implements Pipeline {
               assignPublicIp: 'ENABLED',
             },
           },
+          tags: [ { key: 'FileName', value: referenceFilename } ],
           overrides: {
             containerOverrides: [
               {
@@ -213,9 +218,11 @@ export default class AWSPipeline implements Pipeline {
       logger.error(`Error while starting quality analysis`);
       throw(error);
     }
-
-    await waitUntilObjectExists({ client: this.s3, maxWaitTime: 3600 }, { Bucket: outputBucket, Key: outputObject });
-
+    try{
+      await waitUntilObjectExists({ client: this.s3, maxWaitTime: AWSPipeline.MAX_WAIT_TIME }, { Bucket: outputBucket, Key: outputObject });
+    } catch (error){
+      logger.error(`Error when running tasks in ECS: ${error}`);
+    }
     logger.info(`Finished analyzing ${distorted}.`);
 
     return outputURI;

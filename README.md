@@ -31,6 +31,13 @@ To generate an ABR-ladder, you will need to define a job which can be created wi
 
 **An example of creating a job from a YAML-file can be seen in the `examples`-folder.**
 
+A few environment variables can be set. These are:
+
+```bash
+SKIP_FILEWRITE=true //Skip writing suggested bitrate ladder to disk
+LOAD_CREDENTIALS_FROM_ENV=true //Load AWS credentials from environment variables
+```
+
 ### Read VMAF-scores
 
 Using `getVmaf()`, you can read VMAF-scores from a JSON-file or a directory of JSON-files. This works on both local paths as well as S3-URIs with a "s3://"-prefix.

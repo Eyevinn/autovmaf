@@ -121,6 +121,7 @@ export default class AWSPipeline implements Pipeline {
       await waitUntilObjectExists({ client: this.s3, maxWaitTime: AWSPipeline.MAX_WAIT_TIME }, { Bucket: outputBucket, Key: outputObject });
     } catch (error) {
       logger.error(`Error when waiting for transcoded files: ${error}`);
+      return '';
     }
 
     logger.info('Finished transcoding ' + inputFilename + '.');
@@ -212,6 +213,7 @@ export default class AWSPipeline implements Pipeline {
       await waitUntilObjectExists({ client: this.s3, maxWaitTime: AWSPipeline.MAX_WAIT_TIME }, { Bucket: outputBucket, Key: outputObject });
     } catch (error){
       logger.error(`Error when running tasks in ECS: ${error}`);
+      return '';
     }
     logger.info(`Finished analyzing ${distorted}.`);
 

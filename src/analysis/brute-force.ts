@@ -5,6 +5,7 @@ import { Pipeline } from '../pipelines/pipeline';
 import suggestLadder from '../suggest-ladder';
 import path from 'path';
 import { BitrateResolutionVMAF } from '../models/bitrate-resolution-vmaf';
+import logger from '../logger';
 
 export type AnalysisOptions = {
   models?: QualityAnalysisModel[];
@@ -107,6 +108,11 @@ export default async function analyzeBruteForce(
       `${directory}/${pair.resolution.width}x${pair.resolution.height}_${pair.bitrate}.mp4`
     );
 
+    if (variant === '') {
+      logger.error(`Error transcoding ${reference}`);
+      return [];
+    }
+
     const qualityFile = variant.replace('.mp4', '_vmaf.json');
 
     if (concurrency) {
@@ -137,6 +143,11 @@ export default async function analyzeBruteForce(
       return results;
     }
   };
+
+  if (analyzePair.length === 0) {
+    logger.error(`No pairs to analyze`);
+    return [];
+  }
 
   let qualityFiles = new Map<QualityAnalysisModel, string[]>();
   if (concurrency === true) {

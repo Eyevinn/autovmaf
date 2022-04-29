@@ -141,7 +141,7 @@ export default class AWSPipeline implements Pipeline {
 
     const outputBucket = this.configuration.outputBucket;
     const outputObject = outputFilename;
-    const outputURI = 's3://results/' + outputBucket + '/' + outputObject;
+    const outputURI = `s3://${outputBucket}/results/${outputObject}`;
 
     const referenceFilename = await this.uploadIfNeeded(reference, outputBucket, path.dirname(outputObject));
     const distortedFilename = await this.uploadIfNeeded(distorted, outputBucket, path.dirname(outputObject));
@@ -184,7 +184,8 @@ export default class AWSPipeline implements Pipeline {
               assignPublicIp: 'ENABLED',
             },
           },
-          tags: [ { key: 'ReferenceFile', value: referenceFilename } ],
+          tags: [ { key: 'ReferenceFile', value: referenceFilename }
+                , { key: 'Output', value: outputObject }],
           overrides: {
             containerOverrides: [
               {
@@ -211,7 +212,7 @@ export default class AWSPipeline implements Pipeline {
     }
     // Do not crash if quality analysis fails and no file is created.
     try {
-      await waitUntilObjectExists({ client: this.s3, maxWaitTime: AWSPipeline.MAX_WAIT_TIME }, { Bucket: outputBucket, Key: outputObject });
+      await waitUntilObjectExists({ client: this.s3, maxWaitTime: AWSPipeline.MAX_WAIT_TIME }, { Bucket: outputBucket, Key: `results/${outputObject}` });
     } catch (error){
       logger.error(`Error when running tasks in ECS: ${error}`);
       return '';

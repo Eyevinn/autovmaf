@@ -82,12 +82,13 @@ export default class AWSPipeline implements Pipeline {
   };
 
   async transcode(input: string, targetResolution: Resolution, targetBitrate: number, output: string): Promise<string> {
-    const outputBucket = this.configuration.s3Bucket;
     const outputObject = output;
-    const outputURI = 's3://' + outputBucket + '/' + output;
+    const outputBucket = this.configuration.outputBucket;
+    const outputFolder = 'encoded-files';
+    const outputURI = `s3://${outputBucket}/${outputFolder}/${outputObject}`;
 
     // Upload if necessary
-    const inputFilename = await this.uploadIfNeeded(input, this.configuration.s3Bucket, path.dirname(outputObject));
+    const inputFilename = await this.uploadIfNeeded(input, this.configuration.inputBucket, path.dirname(outputObject));
 
     // Parse settings
     let settingsStr = JSON.stringify(this.configuration.mediaConvertSettings);
@@ -102,7 +103,7 @@ export default class AWSPipeline implements Pipeline {
     const settings = JSON.parse(settingsStr);
     logger.debug('Settings Json: ' + JSON.stringify(settings));
 
-    if (await this.fileExists(outputBucket, output)) {
+    if (await this.fileExists(`${outputBucket}/${outputFolder}`, outputObject)) {
       // File has already been transcoded.
       return outputURI;
     }
@@ -118,7 +119,7 @@ export default class AWSPipeline implements Pipeline {
 
     // Do not crash if the MediaConvert job fails and no file is created.
     try {
-      await waitUntilObjectExists({ client: this.s3, maxWaitTime: AWSPipeline.MAX_WAIT_TIME }, { Bucket: outputBucket, Key: outputObject });
+      await waitUntilObjectExists({ client: this.s3, maxWaitTime: AWSPipeline.MAX_WAIT_TIME }, { Bucket: outputBucket, Key: `${outputFolder}/${outputObject}` });
     } catch (error) {
       logger.error(`Error when waiting for transcoded files: ${error}`);
       return '';
@@ -138,9 +139,9 @@ export default class AWSPipeline implements Pipeline {
       outputFilename = output;
     }
 
-    const outputBucket = this.configuration.s3Bucket;
+    const outputBucket = this.configuration.outputBucket;
     const outputObject = outputFilename;
-    const outputURI = 's3://' + outputBucket + '/' + outputObject;
+    const outputURI = `s3://${outputBucket}/results/${outputObject}`;
 
     const referenceFilename = await this.uploadIfNeeded(reference, outputBucket, path.dirname(outputObject));
     const distortedFilename = await this.uploadIfNeeded(distorted, outputBucket, path.dirname(outputObject));
@@ -183,7 +184,10 @@ export default class AWSPipeline implements Pipeline {
               assignPublicIp: 'ENABLED',
             },
           },
-          tags: [ { key: 'ReferenceFile', value: referenceFilename } ],
+          tags: [
+            { key: 'ReferenceFile', value: referenceFilename }, 
+            { key: 'Output', value: outputObject }
+          ],
           overrides: {
             containerOverrides: [
               {
@@ -210,7 +214,7 @@ export default class AWSPipeline implements Pipeline {
     }
     // Do not crash if quality analysis fails and no file is created.
     try {
-      await waitUntilObjectExists({ client: this.s3, maxWaitTime: AWSPipeline.MAX_WAIT_TIME }, { Bucket: outputBucket, Key: outputObject });
+      await waitUntilObjectExists({ client: this.s3, maxWaitTime: AWSPipeline.MAX_WAIT_TIME }, { Bucket: outputBucket, Key: `results/${outputObject}` });
     } catch (error){
       logger.error(`Error when running tasks in ECS: ${error}`);
       return '';

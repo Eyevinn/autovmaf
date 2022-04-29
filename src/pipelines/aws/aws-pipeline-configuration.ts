@@ -1,5 +1,6 @@
 export type AWSPipelineConfiguration = {
-  s3Bucket: string;
+  inputBucket: string;
+  outputBucket: string;
   mediaConvertRole: string;
   mediaConvertEndpoint: string;
   mediaConvertSettings: any;

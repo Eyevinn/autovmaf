@@ -1,5 +1,6 @@
 aws:
-  s3Bucket: bucket
+  inputBucket: bucket
+  outputBucket: bucket
   mediaConvertRole: arn:aws:iam::role
   mediaConvertEndpoint: https://endpoint.amazonaws.com
   ecsSubnet: subnet-1234

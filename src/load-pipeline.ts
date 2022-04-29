@@ -11,7 +11,8 @@ import logger from './logger';
 export type PipelineProfile = {
   /** If this is defined, this profile will use AWS. */
   aws?: {
-    s3Bucket: string;
+    inputBucket: string;
+    outputBucket: string;
     mediaConvertRole: string;
     mediaConvertEndpoint: string;
     ecsSubnet: string;

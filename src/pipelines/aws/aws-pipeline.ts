@@ -82,12 +82,12 @@ export default class AWSPipeline implements Pipeline {
   };
 
   async transcode(input: string, targetResolution: Resolution, targetBitrate: number, output: string): Promise<string> {
-    const outputBucket = this.configuration.s3Bucket;
+    const outputBucket = this.configuration.outputBucket;
     const outputObject = output;
     const outputURI = 's3://' + outputBucket + '/' + output;
 
     // Upload if necessary
-    const inputFilename = await this.uploadIfNeeded(input, this.configuration.s3Bucket, path.dirname(outputObject));
+    const inputFilename = await this.uploadIfNeeded(input, this.configuration.inputBucket, path.dirname(outputObject));
 
     // Parse settings
     let settingsStr = JSON.stringify(this.configuration.mediaConvertSettings);
@@ -138,7 +138,7 @@ export default class AWSPipeline implements Pipeline {
       outputFilename = output;
     }
 
-    const outputBucket = this.configuration.s3Bucket;
+    const outputBucket = this.configuration.outputBucket;
     const outputObject = outputFilename;
     const outputURI = 's3://' + outputBucket + '/' + outputObject;
 

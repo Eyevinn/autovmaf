@@ -72,7 +72,7 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
 async function createLambdaJob(data: any): Promise<any> {
   const lambda = new aws.Lambda({ region: 'eu-north-1' });
   const params = {
-    FunctionName: "lambda-create-autoabr-job",
+    FunctionName: "lambda-create-autovmaf-job",
     InvocationType: "Event",
     Payload: JSON.stringify(data),
   };

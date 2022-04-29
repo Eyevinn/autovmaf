@@ -1,4 +1,4 @@
-const { createJob } = require('@eyevinn/autoabr');
+const { createJob } = require('@eyevinn/autovmaf');
 const YAML = require('yaml');
 const fs = require('fs');
 

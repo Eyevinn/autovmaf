@@ -1,4 +1,4 @@
-# @eyevinn/autoabr
+# @eyevinn/autovmaf
 
 Toolkit to automatically generate optimized ABR-ladders for a video using video quality analysis. This is done through [a method developed by Netflix](https://netflixtechblog.com/per-title-encode-optimization-7e99442b62a2) to analyze video to find optimal encodes to provide viewers with the best video quality for their specific viewing conditions.
 

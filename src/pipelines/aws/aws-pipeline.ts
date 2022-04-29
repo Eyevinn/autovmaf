@@ -184,8 +184,10 @@ export default class AWSPipeline implements Pipeline {
               assignPublicIp: 'ENABLED',
             },
           },
-          tags: [ { key: 'ReferenceFile', value: referenceFilename }
-                , { key: 'Output', value: outputObject }],
+          tags: [
+            { key: 'ReferenceFile', value: referenceFilename }, 
+            { key: 'Output', value: outputObject }
+          ],
           overrides: {
             containerOverrides: [
               {

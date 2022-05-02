@@ -166,9 +166,14 @@ export default async function analyzeBruteForce(
     model: QualityAnalysisModel;
     optimalLadder: BitrateResolutionVMAF[];
   }[] = [];
-  for (const [model, files] of Array.from(qualityFiles.entries())) {
-    const optimalLadder = await suggestLadder(files.length > 0 ? path.dirname(files[0]) : directory);
-    ladders.push({ model, optimalLadder });
+
+  // Do not download quality files if not writing result to disk
+  // This is to avoid downloading quality files multiple times
+  if (process.env.SKIP_FILEWRITE === 'undefined') {
+    for (const [model, files] of Array.from(qualityFiles.entries())) {
+      const optimalLadder = await suggestLadder(files.length > 0 ? path.dirname(files[0]) : directory);
+      ladders.push({ model, optimalLadder });
+    }
   }
 
   return ladders;

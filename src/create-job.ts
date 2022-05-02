@@ -48,7 +48,7 @@ export type JobDescription = {
  *
  * @example **Example of creating a job from a job description.**
  * ```javascript
- * const { createJob, qualityAnalysisModelToString } = require('@eyevinn/autoabr');
+ * const { createJob, qualityAnalysisModelToString } = require('@eyevinn/autovmaf');
  *
  * const abrLadder = await = createJob({
  *   name: "hello",
@@ -64,7 +64,7 @@ export type JobDescription = {
  * ```
  * @example **Example of creating a job from a YAML-file.**
  * ```javascript
- * const { createJob, JobDescription } = require('@eyevinn/autoabr');
+ * const { createJob, JobDescription } = require('@eyevinn/autovmaf');
  * const YAML = require('yaml');
  * const fs = require('fs');
  *

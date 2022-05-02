@@ -10,7 +10,7 @@
   "scripts": {
     "build": "tsc --project ./"
   },
-  "name": "@eyevinn/autoabr",
+  "name": "@eyevinn/autovmaf",
   "author": "Eyevinn Technology <work@eyevinn.se>",
   "contributors": [
     "Oscar Nord <oscar.nord@eyevinn.se> (Eyevinn Technology AB)"

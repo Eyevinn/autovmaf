@@ -8,7 +8,8 @@
     "src"
   ],
   "scripts": {
-    "build": "tsc --project ./"
+    "build": "tsc --project ./",
+    "docs": "npx typedoc src/index.ts"
   },
   "name": "@eyevinn/autovmaf",
   "author": "Eyevinn Technology <work@eyevinn.se>",

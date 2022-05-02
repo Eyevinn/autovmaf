@@ -1,6 +1,6 @@
 # Eyevinn AutoVMAF
 
-Toolkit to automatically encode and perform VMAF measurements on a video file.
+Toolkit to automatically encode and perform VMAF measurements on a video file. 
 
 By optimizing ABR-ladders for specific content, you will make sure to not have wasteful rungs and this has been shown to [cut bandwidth usage in half](https://dev.to/video/automating-video-analysis-to-cut-your-streaming-bandwidth-usage-in-half-5hk1).
 
@@ -50,6 +50,25 @@ When creating a job, you can specify:
 
 ### Create job using yaml
 
+```typescript
+const { createJob, JobDescription } = require('@eyevinn/autovmaf');
+const YAML = require('yaml');
+const fs = require('fs');
+const parseResolutions = resolutions => {
+resolutions.map(resolutionStr => ({
+   width: parseInt(resolutionStr.split('x')[0]),
+   height: parseInt(resolutionStr.split('x')[1]),
+  }));
+};
+const jobFile = fs.readFileSync('job.yml', 'utf-8');
+const jobData = YAML.parse(jobFile);
+const job = {
+  ...jobData,
+  resolutions: jobData['resolutions'] !== undefined ?rseResolutions(jobData['resolutions']) : undefined,
+};
+createJob(job);
+```
+
 **An example of creating a job from a YAML-file can be seen in the [`examples`-folder](examples/).**
 
 ### Environment Variables
@@ -59,6 +78,9 @@ A few environment variables can be set. These are:
 ```bash
 SKIP_FILEWRITE=true              //Skip writing suggested bitrate ladder to disk
 LOAD_CREDENTIALS_FROM_ENV=true   //Load AWS credentials from environment variables
+AWS_REGION=eu-north-1
+AWS_ACCESS_KEY_ID=ABCD...
+AWS_SECRET_ACCESS_KEY=EFGH...
 ```
 
 ### Read VMAF-scores

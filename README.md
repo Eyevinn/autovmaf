@@ -6,6 +6,8 @@ By optimizing ABR-ladders for specific content, you will make sure to not have w
 
 ## Usage
 
+Only possible to run in AWS at the moment. You will need a running ECS cluster with a task definition configured to run [easyvmaf-s3](./easyvmaf-s3).
+
 ### Installation
 
 ```

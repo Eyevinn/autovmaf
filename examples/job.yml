@@ -5,4 +5,3 @@ reference: reference.mp4
 models:
   - HD
   - PhoneHD
-output: job-output

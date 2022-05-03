@@ -1,9 +1,7 @@
-import { QualityAnalysisModel } from '../models/quality-analysis-model';
-import { BitrateResolutionVMAF } from '../models/bitrate-resolution-vmaf';
+import logger from "../logger";
 
-export default async function analyzeWalkTheHull(): Promise<
-  { model: QualityAnalysisModel; optimalLadder: BitrateResolutionVMAF[] }[]
-> {
+
+export default async function analyzeWalkTheHull() {
   // TODO: Implement walk the hull https://mux.com/blog/per-title-encoding-scale/
-  return [];
+  logger.warn('Walk the hull analysis is not implemented.');
 }

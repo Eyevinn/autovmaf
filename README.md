@@ -34,7 +34,6 @@ To generate an ABR-ladder, you will need to define a job which can be created wi
 A few environment variables can be set. These are:
 
 ```bash
-SKIP_FILEWRITE=true //Skip writing suggested bitrate ladder to disk
 LOAD_CREDENTIALS_FROM_ENV=true //Load AWS credentials from environment variables
 ```
 

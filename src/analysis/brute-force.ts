@@ -72,14 +72,8 @@ const defaultConcurrency = true;
  * @param reference Reference video file.
  * @param pipeline The pipeline to use in analysis.
  * @param options Options to use in analysis.
- * @returns The optimal ladder for the reference video.
  */
-export default async function analyzeBruteForce(
-  directory: string,
-  reference: string,
-  pipeline: Pipeline,
-  options: AnalysisOptions = {}
-): Promise<{ model: QualityAnalysisModel; optimalLadder: BitrateResolutionVMAF[] }[]> {
+export default async function analyzeBruteForce(directory: string, reference: string, pipeline: Pipeline, options: AnalysisOptions = {}) {
   const models = options.models !== undefined ? options.models : defaultModels;
   const bitrates = options.bitrates !== undefined ? options.bitrates : defaultBitrates;
   const resolutions = options.resolutions !== undefined ? options.resolutions : defaultResolutions;
@@ -161,20 +155,4 @@ export default async function analyzeBruteForce(
       });
     }
   }
-
-  let ladders: {
-    model: QualityAnalysisModel;
-    optimalLadder: BitrateResolutionVMAF[];
-  }[] = [];
-
-  // Do not download quality files if not writing result to disk
-  // This is to avoid downloading quality files multiple times
-  if (process.env.SKIP_FILEWRITE === 'undefined') {
-    for (const [model, files] of Array.from(qualityFiles.entries())) {
-      const optimalLadder = await suggestLadder(files.length > 0 ? path.dirname(files[0]) : directory);
-      ladders.push({ model, optimalLadder });
-    }
-  }
-
-  return ladders;
 }

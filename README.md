@@ -40,7 +40,6 @@ To generate VMAF measurements, you will need to define a job which can be create
     models: ["HD", "PhoneHD"],                       // optional
     resolutions: [{ width: 1280, height: 720 }],     // optional
     bitrates: [600000],                              // optional
-    output: "hello",                                 // optional
     method: "bruteForce"                             // optional
   });
 ```
@@ -61,8 +60,6 @@ When creating a job, you can specify:
     * A list of resolutions to test. By default it will test all resolutions in the example ABR-ladder provided by Apple in the [HLS Authoring Spec](https://developer.apple.com/documentation/http_live_streaming/hls_authoring_specification_for_apple_devices).
  * **Bitrates** (optional)
     * A list of bitrates to test. By default a list of bitrates between 150 kbit/s to 9000 kbit/s.
- * **Output** (optional)
-    * If this parameter is defined, the finished ABR-ladder will be exported to a CSV-file with this name.
  * **Method** (optional)
     * The method to use when analyzing the videos. Either `bruteForce` or `walkTheHull`. By default `bruteForce`. NOTE: `walkTheHull` is not implemented at the moment.
 

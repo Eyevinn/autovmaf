@@ -36,9 +36,6 @@ export type JobDescription = {
   /** A list of bitrates to test. By default a list of bitrates between 150 kbit/s to 9000 kbit/s. */
   bitrates?: number[];
 
-  /** If this parameter is defined, the finished ABR-ladder will be exported to a CSV-file with this name. */
-  output?: string;
-
   /** The method to use when analyzing the videos. Either `bruteForce` or `walkTheHull`. By default `bruteForce`. NOTE: `walkTheHull` is not implemented at the moment. */
   method?: 'bruteForce' | 'walkTheHull';
 };
@@ -58,7 +55,6 @@ export type JobDescription = {
  *   models: ["HD", "PhoneHD"],
  *   resolutions: [{ width: 1280, height: 720 }],
  *   bitrates: [600000],
- *   output: "hello",
  *   method: "bruteForce"
  * });
  * ```

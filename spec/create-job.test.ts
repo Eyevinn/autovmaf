@@ -84,7 +84,14 @@ beforeEach(() => {
   mcMock.reset();
   ecsMock.reset();
   s3Mock.reset();
+
+  process.env.LOAD_CREDENTIALS_FROM_ENV = 'true';
 });
+
+afterEach(() => {
+  delete process.env.LOAD_CREDENTIALS_FROM_ENV;
+});
+
 
 describe('create-job', () => {
   it('should create a job successfully', async () => {

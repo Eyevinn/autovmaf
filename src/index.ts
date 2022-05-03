@@ -2,6 +2,10 @@ import suggestLadder from './suggest-ladder';
 import { Pipeline } from './pipelines/pipeline';
 import LocalPipeline from './pipelines/local/local-pipeline';
 import AWSPipeline from './pipelines/aws/aws-pipeline';
+import { BitrateResolutionVMAF } from './models/bitrate-resolution-vmaf';
+import { AWSPipelineConfiguration } from './pipelines/aws/aws-pipeline-configuration';
+import { LocalPipelineConfiguration } from './pipelines/local/local-pipeline-configuration';
+import { Resolution } from './models/resolution';
 import getVmaf from './get-vmaf';
 import createJob, { JobDescription } from './create-job';
 import {
@@ -27,6 +31,10 @@ export {
   Pipeline,
   LocalPipeline,
   AWSPipeline,
+  BitrateResolutionVMAF,
+  Resolution,
+  LocalPipelineConfiguration,
+  AWSPipelineConfiguration,
   logger,
   initJobLambda,
   startJobLambda

@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "build": "tsc --project ./",
+    "test": "jest",
     "docs": "npx typedoc src/index.ts"
   },
   "name": "@eyevinn/autovmaf",
@@ -18,9 +19,13 @@
     "Jonathan Walter <jonathan.walter@eyevinn.se> (Eyevinn Technology AB)"
   ],
   "devDependencies": {
+    "@babel/preset-typescript": "^7.16.7",
+    "@babel/preset-env": "^7.17.10",
     "@types/fluent-ffmpeg": "^2.1.18",
-    "@types/jest": "^27.4.1",
+    "@types/jest": "^27.5.0",
     "@types/papaparse": "^5.3.1",
+    "aws-sdk-client-mock": "^0.6.2",
+    "jest": "^28.0.3",
     "tslib": "^2.3.1",
     "typescript": "^4.6.2"
   },

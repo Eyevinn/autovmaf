@@ -1,11 +1,27 @@
 # Eyevinn AutoVMAF
 
-Toolkit to automatically encode and perform VMAF measurements on a video file. 
+Toolkit to automatically encode multiple bitrates and perform automated VMAF measurements on all of them. 
 
 By optimizing ABR-ladders for specific content, you will make sure to not have wasteful rungs and this has been shown to [cut bandwidth usage in half](https://dev.to/video/automating-video-analysis-to-cut-your-streaming-bandwidth-usage-in-half-5hk1).
 
 ## Usage
 
+### Installation
+
+```
+npm install --save @eyevinn/autovmaf
+```
+
+### Environment Variables
+
+A few environment variables can be set. These are:
+
+```bash
+LOAD_CREDENTIALS_FROM_ENV=true   //Load AWS credentials from environment variables
+AWS_REGION=eu-north-1
+AWS_ACCESS_KEY_ID=ABCD...
+AWS_SECRET_ACCESS_KEY=EFGH...
+```
 
 ### Generate VMAF measurements
 
@@ -70,18 +86,6 @@ createJob(job);
 ```
 
 **An example of creating a job from a YAML-file can be seen in the [`examples`-folder](examples/).**
-
-### Environment Variables
-
-A few environment variables can be set. These are:
-
-```bash
-SKIP_FILEWRITE=true              //Skip writing suggested bitrate ladder to disk
-LOAD_CREDENTIALS_FROM_ENV=true   //Load AWS credentials from environment variables
-AWS_REGION=eu-north-1
-AWS_ACCESS_KEY_ID=ABCD...
-AWS_SECRET_ACCESS_KEY=EFGH...
-```
 
 ### Read VMAF-scores
 

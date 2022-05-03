@@ -2,59 +2,79 @@
 <a href="#eyevinn-autovmaf" id="eyevinn-autovmaf" style="color: inherit; text-decoration: none;">
   <h1>Eyevinn AutoVMAF</h1>
 </a>
-<p>Toolkit to automatically generate optimized ABR-ladders for a video using video quality analysis. This is done through <a href="https://netflixtechblog.com/per-title-encode-optimization-7e99442b62a2">a method developed by Netflix</a> to analyze video to find optimal encodes to provide viewers with the best video quality for their specific viewing conditions.</p>
+<p>Toolkit to automatically encode multiple bitrates and perform automated VMAF measurements on all of them. </p>
 <p>By optimizing ABR-ladders for specific content, you will make sure to not have wasteful rungs and this has been shown to <a href="https://dev.to/video/automating-video-analysis-to-cut-your-streaming-bandwidth-usage-in-half-5hk1">cut bandwidth usage in half</a>.</p>
 
 <a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
   <h2>Usage</h2>
 </a>
+<p>Only possible to run in AWS at the moment. You will need a running ECS cluster with a task definition configured to run <a href="./easyvmaf-s3">easyvmaf-s3</a>.</p>
 
-<a href="#generate-abr-ladder" id="generate-abr-ladder" style="color: inherit; text-decoration: none;">
-  <h3>Generate ABR-ladder</h3>
+<a href="#installation" id="installation" style="color: inherit; text-decoration: none;">
+  <h3>Installation</h3>
 </a>
-<p>To generate an ABR-ladder, you will need to define a job which can be created with the <code>createJob()</code>-function. When creating a job, you can specify:</p>
+<pre><code><span class="hl-6">npm</span><span class="hl-1"> </span><span class="hl-6">install</span><span class="hl-1"> --</span><span class="hl-6">save</span><span class="hl-1"> @</span><span class="hl-6">eyevinn</span><span class="hl-1">/</span><span class="hl-6">autovmaf</span>
+</code></pre>
+
+<a href="#environment-variables" id="environment-variables" style="color: inherit; text-decoration: none;">
+  <h3>Environment Variables</h3>
+</a>
+<p>A few environment variables can be set. These are:</p>
+<pre><code class="language-bash"><span class="hl-1">LOAD_CREDENTIALS_FROM_ENV=true   //Load AWS credentials from environment variables</span><br/><span class="hl-1">AWS_REGION=eu-north-1</span><br/><span class="hl-1">AWS_ACCESS_KEY_ID=ABCD...</span><br/><span class="hl-1">AWS_SECRET_ACCESS_KEY=EFGH...</span>
+</code></pre>
+
+<a href="#generate-vmaf-measurements" id="generate-vmaf-measurements" style="color: inherit; text-decoration: none;">
+  <h3>Generate VMAF measurements</h3>
+</a>
+<p>To generate VMAF measurements, you will need to define a job which can be created with the <code>createJob()</code>-function. </p>
+<pre><code class="language-typescript"><span class="hl-1">  </span><span class="hl-0">const</span><span class="hl-1"> { </span><span class="hl-2">createJob</span><span class="hl-1">, </span><span class="hl-2">qualityAnalysisModelToString</span><span class="hl-1"> } = </span><span class="hl-3">require</span><span class="hl-1">(</span><span class="hl-4">&#39;@eyevinn/autovmaf&#39;</span><span class="hl-1">);</span><br/><span class="hl-1"> </span><br/><span class="hl-1">  </span><span class="hl-0">const</span><span class="hl-1"> </span><span class="hl-2">vmafScores</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> = </span><span class="hl-3">createJob</span><span class="hl-1">({</span><br/><span class="hl-1">    </span><span class="hl-6">name:</span><span class="hl-1"> </span><span class="hl-4">&quot;MyVMAFmeasurements&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-6">pipeline:</span><span class="hl-1"> </span><span class="hl-4">&quot;pipeline.yml&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-6">encodingProfile:</span><span class="hl-1"> </span><span class="hl-4">&quot;profile.json&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-6">reference:</span><span class="hl-1"> </span><span class="hl-4">&quot;reference.mp4&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-6">models:</span><span class="hl-1"> [</span><span class="hl-4">&quot;HD&quot;</span><span class="hl-1">, </span><span class="hl-4">&quot;PhoneHD&quot;</span><span class="hl-1">],                       </span><span class="hl-8">// optional</span><br/><span class="hl-1">    </span><span class="hl-6">resolutions:</span><span class="hl-1"> [{ </span><span class="hl-6">width:</span><span class="hl-1"> </span><span class="hl-7">1280</span><span class="hl-1">, </span><span class="hl-6">height:</span><span class="hl-1"> </span><span class="hl-7">720</span><span class="hl-1"> }],     </span><span class="hl-8">// optional</span><br/><span class="hl-1">    </span><span class="hl-6">bitrates:</span><span class="hl-1"> [</span><span class="hl-7">600000</span><span class="hl-1">],                              </span><span class="hl-8">// optional</span><br/><span class="hl-1">    </span><span class="hl-6">output:</span><span class="hl-1"> </span><span class="hl-4">&quot;hello&quot;</span><span class="hl-1">,                                 </span><span class="hl-8">// optional</span><br/><span class="hl-1">    </span><span class="hl-6">method:</span><span class="hl-1"> </span><span class="hl-4">&quot;bruteForce&quot;</span><span class="hl-1">                             </span><span class="hl-8">// optional</span><br/><span class="hl-1">  });</span>
+</code></pre>
+<p>When creating a job, you can specify:</p>
 <ul>
-<li>Name<ul>
+<li><strong>Name</strong><ul>
 <li>This will name the folder in which to put the files.</li>
 </ul>
 </li>
-<li>Pipeline<ul>
-<li>Path to a YAML-file that defines the pipeline. See <code>examples/pipeline.yml</code> for an example AWS-pipeline.</li>
+<li><strong>Pipeline</strong><ul>
+<li>Path to a YAML-file that defines the pipeline. See <a href="examples/pipeline.yml"><code>examples/pipeline.yml</code></a> for an example AWS-pipeline. <em>Currently only AWS is supported.</em></li>
 </ul>
 </li>
-<li>Encoding Profile<ul>
-<li>Path to a JSON-file that defines how the reference should be encoded. When using AWS, this is a MediaConvert configuration. For local pipelines, this is key-value pairs that will be passed as command line arguments to FFmpeg. See an example for AWS at <code>examples/encoding-profile.json</code>.</li>
+<li><strong>Encoding Profile</strong><ul>
+<li>Path to a JSON-file that defines how the reference should be encoded. When using AWS, this is a MediaConvert configuration. For local pipelines, this is key-value pairs that will be passed as command line arguments to FFmpeg. See an example for AWS at <a href="examples/encoding-profile.json"><code>examples/encoding-profile.json</code></a>.</li>
 </ul>
 </li>
-<li>Reference<ul>
+<li><strong>Reference</strong><ul>
 <li>Path to the reference video to analyze. Normally a local path, but when using AWS, this can also be an S3-URI.</li>
 </ul>
 </li>
-<li>Models (optional)<ul>
+<li><strong>Models</strong> (optional)<ul>
 <li>A list of VMAF-models to use in evaluation. This can be HD, MobileHD and UHD. HD by default.</li>
 </ul>
 </li>
-<li>Resolutions (optional)<ul>
+<li><strong>Resolutions</strong> (optional)<ul>
 <li>A list of resolutions to test. By default it will test all resolutions in the example ABR-ladder provided by Apple in the <a href="https://developer.apple.com/documentation/http_live_streaming/hls_authoring_specification_for_apple_devices">HLS Authoring Spec</a>.</li>
 </ul>
 </li>
-<li>Bitrates (optional)<ul>
+<li><strong>Bitrates</strong> (optional)<ul>
 <li>A list of bitrates to test. By default a list of bitrates between 150 kbit/s to 9000 kbit/s.</li>
 </ul>
 </li>
-<li>Output (optional)<ul>
+<li><strong>Output</strong> (optional)<ul>
 <li>If this parameter is defined, the finished ABR-ladder will be exported to a CSV-file with this name.</li>
 </ul>
 </li>
-<li>Method (optional)<ul>
+<li><strong>Method</strong> (optional)<ul>
 <li>The method to use when analyzing the videos. Either <code>bruteForce</code> or <code>walkTheHull</code>. By default <code>bruteForce</code>. NOTE: <code>walkTheHull</code> is not implemented at the moment.</li>
 </ul>
 </li>
 </ul>
-<p><strong>An example of creating a job from a YAML-file can be seen in the <code>examples</code>-folder.</strong></p>
-<p>A few environment variables can be set. These are:</p>
-<pre><code class="language-bash"><span class="hl-1">SKIP_FILEWRITE=true //Skip writing suggested bitrate ladder to disk</span><br/><span class="hl-1">LOAD_CREDENTIALS_FROM_ENV=true //Load AWS credentials from environment variables</span>
+
+<a href="#create-job-using-yaml" id="create-job-using-yaml" style="color: inherit; text-decoration: none;">
+  <h3>Create job using yaml</h3>
+</a>
+<pre><code class="language-typescript"><span class="hl-0">const</span><span class="hl-1"> { </span><span class="hl-2">createJob</span><span class="hl-1">, </span><span class="hl-2">JobDescription</span><span class="hl-1"> } = </span><span class="hl-3">require</span><span class="hl-1">(</span><span class="hl-4">&#39;@eyevinn/autovmaf&#39;</span><span class="hl-1">);</span><br/><span class="hl-0">const</span><span class="hl-1"> </span><span class="hl-2">YAML</span><span class="hl-1"> = </span><span class="hl-3">require</span><span class="hl-1">(</span><span class="hl-4">&#39;yaml&#39;</span><span class="hl-1">);</span><br/><span class="hl-0">const</span><span class="hl-1"> </span><span class="hl-2">fs</span><span class="hl-1"> = </span><span class="hl-3">require</span><span class="hl-1">(</span><span class="hl-4">&#39;fs&#39;</span><span class="hl-1">);</span><br/><span class="hl-0">const</span><span class="hl-1"> </span><span class="hl-3">parseResolutions</span><span class="hl-1"> = </span><span class="hl-6">resolutions</span><span class="hl-1"> </span><span class="hl-0">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-6">resolutions</span><span class="hl-1">.</span><span class="hl-3">map</span><span class="hl-1">(</span><span class="hl-6">resolutionStr</span><span class="hl-1"> </span><span class="hl-0">=&gt;</span><span class="hl-1"> ({</span><br/><span class="hl-1">   </span><span class="hl-6">width:</span><span class="hl-1"> </span><span class="hl-3">parseInt</span><span class="hl-1">(</span><span class="hl-6">resolutionStr</span><span class="hl-1">.</span><span class="hl-3">split</span><span class="hl-1">(</span><span class="hl-4">&#39;x&#39;</span><span class="hl-1">)[</span><span class="hl-7">0</span><span class="hl-1">]),</span><br/><span class="hl-1">   </span><span class="hl-6">height:</span><span class="hl-1"> </span><span class="hl-3">parseInt</span><span class="hl-1">(</span><span class="hl-6">resolutionStr</span><span class="hl-1">.</span><span class="hl-3">split</span><span class="hl-1">(</span><span class="hl-4">&#39;x&#39;</span><span class="hl-1">)[</span><span class="hl-7">1</span><span class="hl-1">]),</span><br/><span class="hl-1">  }));</span><br/><span class="hl-1">};</span><br/><span class="hl-0">const</span><span class="hl-1"> </span><span class="hl-2">jobFile</span><span class="hl-1"> = </span><span class="hl-6">fs</span><span class="hl-1">.</span><span class="hl-3">readFileSync</span><span class="hl-1">(</span><span class="hl-4">&#39;job.yml&#39;</span><span class="hl-1">, </span><span class="hl-4">&#39;utf-8&#39;</span><span class="hl-1">);</span><br/><span class="hl-0">const</span><span class="hl-1"> </span><span class="hl-2">jobData</span><span class="hl-1"> = </span><span class="hl-2">YAML</span><span class="hl-1">.</span><span class="hl-3">parse</span><span class="hl-1">(</span><span class="hl-6">jobFile</span><span class="hl-1">);</span><br/><span class="hl-0">const</span><span class="hl-1"> </span><span class="hl-2">job</span><span class="hl-1"> = {</span><br/><span class="hl-1">  ...</span><span class="hl-6">jobData</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-6">resolutions:</span><span class="hl-1"> </span><span class="hl-6">jobData</span><span class="hl-1">[</span><span class="hl-4">&#39;resolutions&#39;</span><span class="hl-1">] !== </span><span class="hl-0">undefined</span><span class="hl-1"> ?</span><span class="hl-3">rseResolutions</span><span class="hl-1">(</span><span class="hl-6">jobData</span><span class="hl-1">[</span><span class="hl-4">&#39;resolutions&#39;</span><span class="hl-1">]) : </span><span class="hl-0">undefined</span><span class="hl-1">,</span><br/><span class="hl-1">};</span><br/><span class="hl-3">createJob</span><span class="hl-1">(</span><span class="hl-6">job</span><span class="hl-1">);</span>
 </code></pre>
+<p><strong>An example of creating a job from a YAML-file can be seen in the <a href="examples/"><code>examples</code>-folder</a>.</strong></p>
 
 <a href="#read-vmaf-scores" id="read-vmaf-scores" style="color: inherit; text-decoration: none;">
   <h3>Read VMAF-scores</h3>
@@ -63,4 +83,11 @@
 <p>Example:</p>
 <pre><code class="language-javascript"><span class="hl-0">const</span><span class="hl-1"> </span><span class="hl-2">vmafFiles</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-3">getVmaf</span><span class="hl-1">(</span><span class="hl-4">&#39;s3://path/to/vmaf/&#39;</span><span class="hl-1">);</span><br/><br/><span class="hl-6">vmafFiles</span><span class="hl-1">.</span><span class="hl-3">forEach</span><span class="hl-1">(</span><span class="hl-6">file</span><span class="hl-1"> </span><span class="hl-0">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-6">console</span><span class="hl-1">.</span><span class="hl-3">log</span><span class="hl-1">(</span><span class="hl-6">file</span><span class="hl-1">.</span><span class="hl-6">filename</span><span class="hl-1"> + </span><span class="hl-4">&#39;: &#39;</span><span class="hl-1"> + </span><span class="hl-6">file</span><span class="hl-1">.</span><span class="hl-6">vmaf</span><span class="hl-1">);</span><br/><span class="hl-1">});</span>
 </code></pre>
+
+<a href="#about-eyevinn-technology" id="about-eyevinn-technology" style="color: inherit; text-decoration: none;">
+  <h1>About Eyevinn Technology</h1>
+</a>
+<p>Eyevinn Technology is an independent consultant firm specialized in video and streaming. Independent in a way that we are not commercially tied to any platform or technology vendor.</p>
+<p>At Eyevinn, every software developer consultant has a dedicated budget reserved for open source development and contribution to the open source community. This give us room for innovation, team building and personal competence development. And also gives us as a company a way to contribute back to the open source community.</p>
+<p>Want to know more about Eyevinn and how it is to work here. Contact us at <a href="mailto:work@eyevinn.se">work@eyevinn.se</a>!</p>
 </div></div><div class="col-4 col-menu menu-sticky-wrap menu-highlight"><nav class="tsd-navigation primary"><ul><li class="current"><a href="modules.html">Exports</a></li><li class=" tsd-kind-namespace"><a href="modules/initJobLambda.html">init<wbr/>Job<wbr/>Lambda</a></li><li class=" tsd-kind-namespace"><a href="modules/startJobLambda.html">start<wbr/>Job<wbr/>Lambda</a></li></ul></nav><nav class="tsd-navigation secondary menu-sticky"><ul><li class="tsd-kind-enum"><a href="enums/QualityAnalysisModel.html" class="tsd-kind-icon">Quality<wbr/>Analysis<wbr/>Model</a></li><li class="tsd-kind-class"><a href="classes/AWSPipeline.html" class="tsd-kind-icon">AWSPipeline</a></li><li class="tsd-kind-class"><a href="classes/LocalPipeline.html" class="tsd-kind-icon">Local<wbr/>Pipeline</a></li><li class="tsd-kind-class"><a href="classes/Pipeline.html" class="tsd-kind-icon">Pipeline</a></li><li class="tsd-kind-type-alias"><a href="modules.html#AWSPipelineConfiguration" class="tsd-kind-icon">AWSPipeline<wbr/>Configuration</a></li><li class="tsd-kind-type-alias"><a href="modules.html#BitrateResolutionVMAF" class="tsd-kind-icon">Bitrate<wbr/>ResolutionVMAF</a></li><li class="tsd-kind-type-alias"><a href="modules.html#JobDescription" class="tsd-kind-icon">Job<wbr/>Description</a></li><li class="tsd-kind-type-alias"><a href="modules.html#LocalPipelineConfiguration" class="tsd-kind-icon">Local<wbr/>Pipeline<wbr/>Configuration</a></li><li class="tsd-kind-type-alias"><a href="modules.html#Resolution" class="tsd-kind-icon">Resolution</a></li><li class="tsd-kind-variable"><a href="modules.html#logger" class="tsd-kind-icon">logger</a></li><li class="tsd-kind-function"><a href="modules.html#createJob" class="tsd-kind-icon">create<wbr/>Job</a></li><li class="tsd-kind-function"><a href="modules.html#getVmaf" class="tsd-kind-icon">get<wbr/>Vmaf</a></li><li class="tsd-kind-function"><a href="modules.html#loadPipeline" class="tsd-kind-icon">load<wbr/>Pipeline</a></li><li class="tsd-kind-function"><a href="modules.html#loadPipelineFromObjects" class="tsd-kind-icon">load<wbr/>Pipeline<wbr/>From<wbr/>Objects</a></li><li class="tsd-kind-function"><a href="modules.html#qualityAnalysisModelToString" class="tsd-kind-icon">quality<wbr/>Analysis<wbr/>Model<wbr/>To<wbr/>String</a></li><li class="tsd-kind-function"><a href="modules.html#stringToQualityAnalysisModel" class="tsd-kind-icon">string<wbr/>To<wbr/>Quality<wbr/>Analysis<wbr/>Model</a></li><li class="tsd-kind-function"><a href="modules.html#suggestLadder" class="tsd-kind-icon">suggest<wbr/>Ladder</a></li></ul></nav></div></div></div><footer class="with-border-bottom"><div class="container"><h2>Legend</h2><div class="tsd-legend-group"><ul class="tsd-legend"><li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li><li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li><li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li></ul></div><h2>Settings</h2><p>Theme <select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></p></div></footer><div class="container tsd-generator"><p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div><div class="overlay"></div><script src="assets/main.js"></script></body></html>

@@ -1,10 +1,9 @@
 import { mockClient } from 'aws-sdk-client-mock';
 import { CreateJobCommand, MediaConvertClient } from '@aws-sdk/client-mediaconvert';
-import { S3Client, waitUntilObjectExists, HeadObjectCommand, HeadBucketCommandOutput } from '@aws-sdk/client-s3';
+import { S3Client, HeadObjectCommand, HeadBucketCommandOutput } from '@aws-sdk/client-s3';
 import { ECSClient, RunTaskCommand } from '@aws-sdk/client-ecs';
 import createJob from '../src/create-job';
 import { JobDescription } from '../src/create-job';
-import { resolve } from 'path';
 
 const mcMock = mockClient(MediaConvertClient);
 const ecsMock = mockClient(ECSClient);
@@ -95,19 +94,10 @@ afterEach(() => {
 
 describe('create-job', () => {
   it('should create a job successfully', async () => {
-    const s3Output: HeadBucketCommandOutput = {
-      $metadata: {
-        attempts: 1,
-        cfId: '',
-        extendedRequestId: '',
-        httpStatusCode: 200,
-        requestId: '',
-        totalRetryDelay: 0,
-      },
-    };
-    s3Mock.on(HeadObjectCommand).resolves(s3Output);
+    s3Mock.on(HeadObjectCommand).resolves({});
     mcMock.on(CreateJobCommand).resolves({});
     ecsMock.on(RunTaskCommand).resolves({});
+
     await createJob(job, pipeline, encodingSettings);
   });
 });

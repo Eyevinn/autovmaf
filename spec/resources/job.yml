@@ -1,0 +1,7 @@
+name: job-name
+pipeline: pipeline.yml
+encodingProfile: encoding-profile.json
+reference: reference.mp4
+models:
+  - HD
+  - PhoneHD

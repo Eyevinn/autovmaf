@@ -1,9 +1,8 @@
 import { mockClient } from 'aws-sdk-client-mock';
 import { CreateJobCommand, MediaConvertClient } from '@aws-sdk/client-mediaconvert';
-import { S3Client, HeadObjectCommand, HeadBucketCommandOutput } from '@aws-sdk/client-s3';
+import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { ECSClient, RunTaskCommand } from '@aws-sdk/client-ecs';
-import createJob from '../src/create-job';
-import { JobDescription } from '../src/create-job';
+import createJob, { JobDescription } from '../src/create-job';
 
 const mcMock = mockClient(MediaConvertClient);
 const ecsMock = mockClient(ECSClient);
@@ -88,6 +87,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  jest.clearAllMocks();
   delete process.env.LOAD_CREDENTIALS_FROM_ENV;
 });
 
@@ -99,5 +99,8 @@ describe('create-job', () => {
     ecsMock.on(RunTaskCommand).resolves({});
 
     await createJob(job, pipeline, encodingSettings);
+
+    expect(ecsMock.send).toHaveBeenCalled;
+    expect(mcMock.send).toHaveBeenCalled;
   });
 });

@@ -61,6 +61,16 @@ export default class AWSPipeline implements Pipeline {
     }
   }
 
+  async waitForObjectInS3(S3Bucket: string, S3Key: string): Promise<boolean> {
+    try {
+      await waitUntilObjectExists({ client: this.s3, maxWaitTime: AWSPipeline.MAX_WAIT_TIME }, { Bucket: S3Bucket, Key: S3Key });
+      return true;
+    } catch (error) {
+      logger.error(`Error waiting for object ${S3Key} in bucket ${S3Bucket}: \n Error: ${error}`);
+      return false;
+    }
+  }
+
   async uploadIfNeeded(filename: string, bucket: string, targetDir: string, targetFilename: string = path.basename(filename)): Promise<string> {
     let newFilename: string;
 
@@ -110,20 +120,15 @@ export default class AWSPipeline implements Pipeline {
 
     // Transcode
     logger.info('Transcoding ' + inputFilename + ' to ' + outputURI + '...');
-    await this.mediaConvert.send(
-      new CreateJobCommand({
-        Role: this.configuration.mediaConvertRole,
-        Settings: settings,
-      })
-    );
-
-    // Do not crash if the MediaConvert job fails and no file is created.
     try {
-      await waitUntilObjectExists({ client: this.s3, maxWaitTime: AWSPipeline.MAX_WAIT_TIME }, { Bucket: outputBucket, Key: `${outputFolder}/${outputObject}` });
+      await this.mediaConvert.send(new CreateJobCommand({ Role: this.configuration.mediaConvertRole, Settings: settings }));
     } catch (error) {
-      logger.error(`Error when waiting for transcoded files: ${error}`);
-      return '';
+      logger.error(`Error transcoding ${inputFilename} to ${outputURI}: \n Error: ${error}`);
+      throw(error);
     }
+
+    const s3Status = await this.waitForObjectInS3(outputBucket, `${outputFolder}/${outputObject}`);
+    if (!s3Status) return '';
 
     logger.info('Finished transcoding ' + inputFilename + '.');
     return outputURI;
@@ -212,13 +217,10 @@ export default class AWSPipeline implements Pipeline {
       logger.error(`Error while starting quality analysis`);
       throw(error);
     }
-    // Do not crash if quality analysis fails and no file is created.
-    try {
-      await waitUntilObjectExists({ client: this.s3, maxWaitTime: AWSPipeline.MAX_WAIT_TIME }, { Bucket: outputBucket, Key: `results/${outputObject}` });
-    } catch (error){
-      logger.error(`Error when running tasks in ECS: ${error}`);
-      return '';
-    }
+
+    const s3Status = await this.waitForObjectInS3(outputBucket, `results/${outputObject}`);
+    if (!s3Status) return '';
+
     logger.info(`Finished analyzing ${distorted}.`);
 
     return outputURI;

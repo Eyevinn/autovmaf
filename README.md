@@ -14,6 +14,12 @@ Only possible to run in AWS at the moment. You will need a running ECS cluster w
 npm install --save @eyevinn/autovmaf
 ```
 
+### Run tests
+
+```
+npm test
+```
+
 ### Environment Variables
 
 A few environment variables can be set. These are:

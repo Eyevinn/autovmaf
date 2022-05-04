@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build": "tsc --project ./",
-    "test": "jest",
+    "test": "jest --coverage",
     "docs": "npx typedoc src/index.ts"
   },
   "name": "@eyevinn/autovmaf",

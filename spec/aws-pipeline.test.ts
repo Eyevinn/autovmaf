@@ -1,8 +1,5 @@
 import { mockClient } from 'aws-sdk-client-mock';
-import {
-  CreateJobCommand,
-  MediaConvertClient,
-} from '@aws-sdk/client-mediaconvert';
+import { CreateJobCommand, MediaConvertClient } from '@aws-sdk/client-mediaconvert';
 import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { ECSClient, RunTaskCommand } from '@aws-sdk/client-ecs';
 import { AWSPipeline } from '../src';
@@ -136,7 +133,7 @@ describe('AWSPipeline', () => {
   });
 
   it('stringReplacement should replace keyword in string', async () => {
-    let str = 'FileInput: $INPUT';
+    const str = 'FileInput: $INPUT';
     expect(pipeline.stringReplacement(str, '$INPUT', 'testFile')).toEqual('FileInput: testFile');
   });
 

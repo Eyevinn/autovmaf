@@ -120,12 +120,12 @@ export default class AWSPipeline implements Pipeline {
 
     // Transcode
     logger.info('Transcoding ' + inputFilename + ' to ' + outputURI + '...');
-    await this.mediaConvert.send(
-      new CreateJobCommand({
-        Role: this.configuration.mediaConvertRole,
-        Settings: settings,
-      })
-    );
+    try {
+      await this.mediaConvert.send(new CreateJobCommand({ Role: this.configuration.mediaConvertRole, Settings: settings }));
+    } catch (error) {
+      logger.error(`Error transcoding ${inputFilename} to ${outputURI}: \n Error: ${error}`);
+      throw(error);
+    }
 
     const s3Status = await this.waitForObjectInS3(outputBucket, `${outputFolder}/${outputObject}`);
     if (!s3Status) return '';

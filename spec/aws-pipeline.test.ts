@@ -3,14 +3,12 @@ import {
   CreateJobCommand,
   MediaConvertClient,
 } from '@aws-sdk/client-mediaconvert';
-import {
-  S3Client,
-  HeadObjectCommand,
-  HeadBucketCommandOutput,
-} from '@aws-sdk/client-s3';
+import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { ECSClient, RunTaskCommand } from '@aws-sdk/client-ecs';
 import { AWSPipeline } from '../src';
 import { AWSPipelineConfiguration } from '../src';
+import { QualityAnalysisModel } from '../src/models/quality-analysis-model';
+import { isS3URI } from '../src/pipelines/aws/aws-pipeline';
 
 const mediaConvertSettings = {
   Inputs: [
@@ -94,16 +92,19 @@ afterEach(() => {
 describe('AWSPipeline', () => {
   it('fileExists should return true if file is found in S3', async () => {
     s3Mock.on(HeadObjectCommand).resolves({});
+
     expect(await pipeline.fileExists('bucket', 'key')).toEqual(true);
   });
 
   it("fileExists should return false if file doesn't exist in S3", async () => {
     s3Mock.on(HeadObjectCommand).rejects({});
+
     expect(await pipeline.fileExists('bucket', 'key')).toEqual(false);
   });
 
   it('waitForObjectInS3 should return true if object exists in S3 bucket', async () => {
     s3Mock.on(HeadObjectCommand).resolves({});
+
     expect(await pipeline.waitForObjectInS3('bucket', 'key')).toEqual(true);
   });
 
@@ -118,6 +119,7 @@ describe('AWSPipeline', () => {
       'bucket',
       's3Dir/file'
     );
+
     expect(pipeline.fileExists).toHaveBeenCalledWith('bucket', 's3Dir/file');
     expect(pipeline.fileExists).toReturnTimes(1);
   });
@@ -131,5 +133,42 @@ describe('AWSPipeline', () => {
     expect(pipeline.uploadToS3).not.toHaveBeenCalled();
     expect(pipeline.fileExists).toHaveBeenCalledWith('bucket', 's3Dir/file');
     expect(pipeline.fileExists).toReturnTimes(1);
+  });
+
+  it('stringReplacement should replace keyword in string', async () => {
+    let str = 'FileInput: $INPUT';
+    expect(pipeline.stringReplacement(str, '$INPUT', 'testFile')).toEqual('FileInput: testFile');
+  });
+
+  it('transcode should start a transcoding job', async () => {
+    s3Mock.on(HeadObjectCommand).resolves({});
+    mcMock.on(CreateJobCommand).resolves({});
+
+    jest.spyOn(pipeline, 'fileExists').mockResolvedValue(true);
+
+    await pipeline.transcode('file', { width: 1280, height: 720 }, 900000, 's3Dir');
+
+    expect(pipeline.fileExists).toReturnTimes(2);
+    expect(mcMock.send).toHaveBeenCalled;
+  });
+
+  it('analyzeQuality should start job in ECS', async () => {
+    jest.spyOn(pipeline, 'waitForObjectInS3').mockResolvedValue(true);
+
+    s3Mock.on(HeadObjectCommand).resolves({});
+    ecsMock.on(RunTaskCommand).resolves({});
+
+    await pipeline.analyzeQuality('referenceFile', 'distortedFile', 's3Dir', QualityAnalysisModel.HD);
+
+    expect(ecsMock.send).toHaveBeenCalled;
+    expect(pipeline.waitForObjectInS3).toHaveBeenCalledWith("vmaf-files", "results/s3Dir");
+  });
+
+  it('isS3URI should return true if string is a valid S3 URI', async () => {
+    expect(isS3URI('s3://bucket/key')).toEqual(true);
+  });
+
+  it('isS3URI should return false if string is not a valid S3 URI', async () => {
+    expect(isS3URI('https://bucket/key')).toEqual(false);
   });
 });

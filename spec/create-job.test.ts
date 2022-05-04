@@ -87,6 +87,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  jest.clearAllMocks();
   delete process.env.LOAD_CREDENTIALS_FROM_ENV;
 });
 

@@ -1,6 +1,6 @@
 <h1 align="center">
   <a href="https://github.com/eyevinn/autovmaf">
-    <img src="./AutoVMAF.svg" alt="Logo" height="100">
+    <img src="https://raw.githubusercontent.com/Eyevinn/autovmaf/main/AutoVMAF.svg" alt="Logo" height="100">
   </a>
 </h1>
 

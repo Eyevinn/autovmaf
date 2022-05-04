@@ -99,5 +99,8 @@ describe('create-job', () => {
     ecsMock.on(RunTaskCommand).resolves({});
 
     await createJob(job, pipeline, encodingSettings);
+
+    expect(ecsMock.send).toHaveBeenCalled;
+    expect(mcMock.send).toHaveBeenCalled;
   });
 });

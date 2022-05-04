@@ -49,9 +49,9 @@ When creating a job, you can specify:
  * **Name**
     -  This will name the folder in which to put the files.
  * **Pipeline**
-    * Path to a YAML-file that defines the pipeline. See [`examples/pipeline.yml`](examples/pipeline.yml) for an example AWS-pipeline. _Currently only AWS is supported._
+    * Path to a YAML-file that defines the pipeline. See [`examples/pipeline.yml`](https://github.com/Eyevinn/autovmaf/blob/main/examples/pipeline.yml) for an example AWS-pipeline. _Currently only AWS is supported._
  * **Encoding Profile**
-    * Path to a JSON-file that defines how the reference should be encoded. When using AWS, this is a MediaConvert configuration. For local pipelines, this is key-value pairs that will be passed as command line arguments to FFmpeg. See an example for AWS at [`examples/encoding-profile.json`](examples/encoding-profile.json). 
+    * Path to a JSON-file that defines how the reference should be encoded. When using AWS, this is a MediaConvert configuration. For local pipelines, this is key-value pairs that will be passed as command line arguments to FFmpeg. See an example for AWS at [`examples/encoding-profile.json`](https://github.com/Eyevinn/autovmaf/blob/main/examples/encoding-profile.json). 
  * **Reference**
     * Path to the reference video to analyze. Normally a local path, but when using AWS, this can also be an S3-URI.
  * **Models** (optional)
@@ -84,7 +84,7 @@ const job = {
 createJob(job);
 ```
 
-**An example of creating a job from a YAML-file can be seen in the [`examples`-folder](examples/).**
+**An example of creating a job from a YAML-file can be seen in the [`examples`-folder](https://github.com/Eyevinn/autovmaf/tree/main/examples/).**
 
 ### Read VMAF-scores
 

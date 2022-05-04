@@ -1,6 +1,13 @@
 import { mockClient } from 'aws-sdk-client-mock';
-import { CreateJobCommand, MediaConvertClient } from '@aws-sdk/client-mediaconvert';
-import { S3Client, HeadObjectCommand, HeadBucketCommandOutput } from '@aws-sdk/client-s3';
+import {
+  CreateJobCommand,
+  MediaConvertClient,
+} from '@aws-sdk/client-mediaconvert';
+import {
+  S3Client,
+  HeadObjectCommand,
+  HeadBucketCommandOutput,
+} from '@aws-sdk/client-s3';
 import { ECSClient, RunTaskCommand } from '@aws-sdk/client-ecs';
 import { AWSPipeline } from '../src';
 import { AWSPipelineConfiguration } from '../src';
@@ -53,16 +60,17 @@ const mediaConvertSettings = {
   },
 };
 const pipelineSettings: AWSPipelineConfiguration = {
-    inputBucket: 'vmaf-files',
-    outputBucket: 'vmaf-files',
-    mediaConvertRole: 'arn:aws:iam::1234:role/MediaConvert_Default_Role',
-    mediaConvertEndpoint: 'https://abc123xyz.mediaconvert.eu-north-1.amazonaws.com',
-    mediaConvertSettings: mediaConvertSettings,
-    ecsSubnet: 'subnet-05d98882c13408e16',
-    ecsSecurityGroup: 'sg-0e444b67a747bf739',
-    ecsContainerName: 'easyvmaf-s3',
-    ecsCluster: 'vmaf-runner',
-    ecsTaskDefinition: 'easyvmaf-s3:1',
+  inputBucket: 'vmaf-files',
+  outputBucket: 'vmaf-files',
+  mediaConvertRole: 'arn:aws:iam::1234:role/MediaConvert_Default_Role',
+  mediaConvertEndpoint:
+    'https://abc123xyz.mediaconvert.eu-north-1.amazonaws.com',
+  mediaConvertSettings: mediaConvertSettings,
+  ecsSubnet: 'subnet-05d98882c13408e16',
+  ecsSecurityGroup: 'sg-0e444b67a747bf739',
+  ecsContainerName: 'easyvmaf-s3',
+  ecsCluster: 'vmaf-runner',
+  ecsTaskDefinition: 'easyvmaf-s3:1',
 };
 const mcMock = mockClient(MediaConvertClient);
 const ecsMock = mockClient(ECSClient);
@@ -79,17 +87,49 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  jest.clearAllMocks();
   delete process.env.LOAD_CREDENTIALS_FROM_ENV;
 });
 
 describe('AWSPipeline', () => {
-  it("waitForObjectInS3 should return true if object exists in S3 bucket", async () => {
+  it('fileExists should return true if file is found in S3', async () => {
+    s3Mock.on(HeadObjectCommand).resolves({});
+    expect(await pipeline.fileExists('bucket', 'key')).toEqual(true);
+  });
+
+  it("fileExists should return false if file doesn't exist in S3", async () => {
+    s3Mock.on(HeadObjectCommand).rejects({});
+    expect(await pipeline.fileExists('bucket', 'key')).toEqual(false);
+  });
+
+  it('waitForObjectInS3 should return true if object exists in S3 bucket', async () => {
     s3Mock.on(HeadObjectCommand).resolves({});
     expect(await pipeline.waitForObjectInS3('bucket', 'key')).toEqual(true);
   });
 
-  /*it("waitForObjectInS3 should return false if object doesn't exists in S3 bucket", async () => {
-    s3Mock.on(HeadObjectCommand).rejects({});
-    expect(await pipeline.waitForObjectInS3('bucket', 'key')).toEqual(false);
-  });*/
+  it('uploadIfNeeded should upload file to S3 if not found', async () => {
+    jest.spyOn(pipeline, 'uploadToS3').mockResolvedValue();
+    jest.spyOn(pipeline, 'fileExists').mockResolvedValue(false);
+
+    await pipeline.uploadIfNeeded('file', 'bucket', 's3Dir');
+
+    expect(pipeline.uploadToS3).toHaveBeenCalledWith(
+      'file',
+      'bucket',
+      's3Dir/file'
+    );
+    expect(pipeline.fileExists).toHaveBeenCalledWith('bucket', 's3Dir/file');
+    expect(pipeline.fileExists).toReturnTimes(1);
+  });
+
+  it('uploadIfNeeded should do nothing if file already exists in S3', async () => {
+    jest.spyOn(pipeline, 'uploadToS3').mockResolvedValue();
+    jest.spyOn(pipeline, 'fileExists').mockResolvedValue(true);
+
+    await pipeline.uploadIfNeeded('file', 'bucket', 's3Dir');
+
+    expect(pipeline.uploadToS3).not.toHaveBeenCalled();
+    expect(pipeline.fileExists).toHaveBeenCalledWith('bucket', 's3Dir/file');
+    expect(pipeline.fileExists).toReturnTimes(1);
+  });
 });

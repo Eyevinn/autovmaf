@@ -63,16 +63,7 @@ export default class AWSPipeline implements Pipeline {
 
   async waitForObjectInS3(S3Bucket: string, S3Key: string): Promise<boolean> {
     try {
-      await waitUntilObjectExists(
-        {
-          client: this.s3,
-          maxWaitTime: AWSPipeline.MAX_WAIT_TIME,
-        },
-        {
-          Bucket: S3Bucket,
-          Key: S3Key
-        }
-      );
+      await waitUntilObjectExists({ client: this.s3, maxWaitTime: AWSPipeline.MAX_WAIT_TIME }, { Bucket: S3Bucket, Key: S3Key });
       return true;
     } catch (error) {
       logger.error(`Error waiting for object ${S3Key} in bucket ${S3Bucket}: \n Error: ${error}`);

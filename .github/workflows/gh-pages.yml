@@ -1,8 +1,7 @@
 name: Generate docs and deploy
 on:
-  push:
-    branches:
-      - main
+  release:
+    types: [published]
 jobs:
   build-and-deploy:
     concurrency: ci-${{ github.ref }}

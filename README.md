@@ -1,6 +1,29 @@
-# Eyevinn AutoVMAF
+<h1 align="center">
+  <a href="https://github.com/eyevinn/autovmaf">
+    <img src="./AutoVMAF.svg" alt="Logo" height="100">
+  </a>
+</h1>
 
-Toolkit to automatically encode multiple bitrates and perform automated VMAF measurements on all of them. 
+<div align="center">
+  autovmaf - A toolkit to automatically encode multiple bitrates and perform automated VMAF measurements on all of them. 
+  <br />
+  <br />
+  <a href="https://github.com/eyevinn/autovmaf/issues/new?assignees=&labels=bug&template=01_BUG_REPORT.md&title=bug%3A+">Report a Bug</a>
+  ·
+  <a href="https://github.com/eyevinn/autovmaf/issues/new?assignees=&labels=enhancement&template=02_FEATURE_REQUEST.md&title=feat%3A+">Request a Feature</a>
+</div>
+
+<div align="center">
+<br />
+
+[![license](https://img.shields.io/npm/v/@eyevinn/autovmaf?style=flat-square)](https://www.npmjs.com/package/@eyevinn/autovmaf)
+[![license](https://img.shields.io/github/v/release/Eyevinn/autovmaf?style=flat-square)](https://github.com/Eyevinn/autovmaf/releases)
+[![license](https://img.shields.io/github/license/eyevinn/autovmaf.svg?style=flat-square)](LICENSE)
+
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg?style=flat-square)](https://github.com/eyevinn/autovmaf/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
+[![made with hearth by Eyevinn](https://img.shields.io/badge/made%20with%20%E2%99%A5%20by-Eyevinn-59cbe8.svg?style=flat-square)](https://github.com/eyevinn)
+
+</div>
 
 By optimizing ABR-ladders for specific content, you will make sure to not have wasteful rungs and this has been shown to [cut bandwidth usage in half](https://dev.to/video/automating-video-analysis-to-cut-your-streaming-bandwidth-usage-in-half-5hk1).
 

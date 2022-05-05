@@ -8,6 +8,9 @@
   autovmaf - A toolkit to automatically encode multiple bitrates and perform automated VMAF measurements on all of them. 
   <br />
   <br />
+  :book: <b><a href="https://eyevinn.github.io/autovmaf/">Read the documentation</a></b> :eyes:
+  <br />
+  <br />
   <a href="https://github.com/eyevinn/autovmaf/issues/new?assignees=&labels=bug&template=01_BUG_REPORT.md&title=bug%3A+">Report a Bug</a>
   ·
   <a href="https://github.com/eyevinn/autovmaf/issues/new?assignees=&labels=enhancement&template=02_FEATURE_REQUEST.md&title=feat%3A+">Request a Feature</a>

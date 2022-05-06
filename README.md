@@ -36,13 +36,13 @@ Only possible to run in AWS at the moment. You will need a running ECS cluster w
 
 ### Installation
 
-```
+```bash
 npm install --save @eyevinn/autovmaf
 ```
 
 ### Run tests
 
-```
+```bash
 npm test
 ```
 
@@ -62,7 +62,7 @@ AWS_SECRET_ACCESS_KEY=EFGH...
 To generate VMAF measurements, you will need to define a job which can be created with the `createJob()`-function. 
 
 ```typescript
-  const { createJob, qualityAnalysisModelToString } = require('@eyevinn/autovmaf');
+  const { createJob } = require('@eyevinn/autovmaf');
  
   const vmafScores = await = createJob({
     name: "MyVMAFmeasurements",
@@ -98,7 +98,7 @@ When creating a job, you can specify:
 ### Create job using yaml
 
 ```typescript
-const { createJob, JobDescription } = require('@eyevinn/autovmaf');
+const { createJob } = require('@eyevinn/autovmaf');
 const YAML = require('yaml');
 const fs = require('fs');
 const parseResolutions = resolutions => {
@@ -116,7 +116,7 @@ const job = {
 createJob(job);
 ```
 
-**An example of creating a job from a YAML-file can be seen in the [`examples`-folder](https://github.com/Eyevinn/autovmaf/tree/main/examples/).**
+**An example of creating a job from a YAML-file can be seen in the [`examples-folder`](https://github.com/Eyevinn/autovmaf/tree/main/examples/).**
 
 ### Read VMAF-scores
 

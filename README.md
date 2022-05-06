@@ -111,7 +111,7 @@ const jobFile = fs.readFileSync('job.yml', 'utf-8');
 const jobData = YAML.parse(jobFile);
 const job = {
   ...jobData,
-  resolutions: jobData['resolutions'] !== undefined ?rseResolutions(jobData['resolutions']) : undefined,
+  resolutions: jobData['resolutions'] !== undefined ? parseResolutions(jobData['resolutions']) : undefined,
 };
 createJob(job);
 ```

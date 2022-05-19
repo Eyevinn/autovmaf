@@ -64,7 +64,7 @@ To generate VMAF measurements, you will need to define a job which can be create
 ```typescript
   const { createJob } = require('@eyevinn/autovmaf');
  
-  const vmafScores = await = createJob({
+  const vmafScores = await createJob({
     name: "MyVMAFmeasurements",
     pipeline: "pipeline.yml",
     encodingProfile: "profile.json",

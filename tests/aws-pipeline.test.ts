@@ -160,7 +160,8 @@ describe('AWSPipeline', () => {
     await pipeline.analyzeQuality('referenceFile', 'distortedFile', 's3Dir', QualityAnalysisModel.HD);
 
     expect(ecsMock.send).toHaveBeenCalled;
-    expect(pipeline.waitForObjectInS3).toHaveBeenCalledWith("vmaf-files", "results/s3Dir");
+    expect(pipeline.fileExists).toHaveBeenCalledWith('vmaf-files', 'results/s3Dir');
+    expect(pipeline.waitForObjectInS3).toHaveBeenCalledWith('vmaf-files', 'results/s3Dir');
   });
 
   it('analyzeQuality should skip job if outputObject already exists in S3', async () => {

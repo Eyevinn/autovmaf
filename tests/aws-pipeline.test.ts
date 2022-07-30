@@ -151,6 +151,8 @@ describe('AWSPipeline', () => {
 
   it('analyzeQuality should start job in ECS', async () => {
     jest.spyOn(pipeline, 'waitForObjectInS3').mockResolvedValue(true);
+    jest.spyOn(pipeline, 'uploadIfNeeded').mockResolvedValue('file'); 
+    jest.spyOn(pipeline, 'fileExists').mockResolvedValue(false);
 
     s3Mock.on(HeadObjectCommand).resolves({});
     ecsMock.on(RunTaskCommand).resolves({});
@@ -159,6 +161,15 @@ describe('AWSPipeline', () => {
 
     expect(ecsMock.send).toHaveBeenCalled;
     expect(pipeline.waitForObjectInS3).toHaveBeenCalledWith("vmaf-files", "results/s3Dir");
+  });
+
+  it('analyzeQuality should skip job if outputObject already exists in S3', async () => {
+    jest.spyOn(pipeline, 'fileExists').mockResolvedValue(false);
+
+    await pipeline.analyzeQuality('referenceFile', 'distortedFile', 'fileInS3', QualityAnalysisModel.HD);
+
+    expect(ecsMock.send).not.toHaveBeenCalled;
+    expect(pipeline.fileExists).toHaveBeenCalledWith('vmaf-files', 'results/fileInS3');
   });
 
   it('isS3URI should return "true" if string is a valid S3 URI', async () => {

@@ -165,7 +165,7 @@ describe('AWSPipeline', () => {
   });
 
   it('analyzeQuality should skip job if outputObject already exists in S3', async () => {
-    jest.spyOn(pipeline, 'fileExists').mockResolvedValue(false);
+    jest.spyOn(pipeline, 'fileExists').mockResolvedValue(true);
 
     await pipeline.analyzeQuality('referenceFile', 'distortedFile', 'fileInS3', QualityAnalysisModel.HD);
 

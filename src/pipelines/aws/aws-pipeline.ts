@@ -148,6 +148,11 @@ export default class AWSPipeline implements Pipeline {
     const outputObject = outputFilename;
     const outputURI = `s3://${outputBucket}/results/${outputObject}`;
 
+    if (await this.fileExists(outputBucket, `results/${outputObject}`)) {
+      logger.info(`Quality analysis already done for ${outputURI}`);
+      return outputURI;
+    }
+
     const referenceFilename = await this.uploadIfNeeded(reference, outputBucket, path.dirname(outputObject));
     const distortedFilename = await this.uploadIfNeeded(distorted, outputBucket, path.dirname(outputObject));
 

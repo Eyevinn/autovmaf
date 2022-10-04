@@ -20,6 +20,7 @@
   ],
   "scripts": {
     "build": "tsc --project ./",
+    "dev": "tsc --watch --project ./",
     "test": "jest",
     "test-coverage": "jest --coverage",
     "docs": "npx typedoc src/index.ts"

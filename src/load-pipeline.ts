@@ -53,7 +53,7 @@ async function loadPipeline(pipelineFilename: string, encodingProfile?: string):
   } else if (pipelineProfile.local !== undefined) {
     return new LocalPipeline({ ...pipelineProfile.local, ffmpegOptions: encodingProfileData });
   } else {
-    throw new Error('Method not implemented.');
+    throw new Error(`Invalid pipeline: ${JSON.stringify(pipelineProfile)}`);
   }
 }
 
@@ -75,7 +75,7 @@ async function loadPipelineFromObjects(pipelineData: any, encodingProfileData?: 
   } else if (pipelineProfile.local !== undefined) {
     return new LocalPipeline({ ...pipelineProfile.local, ffmpegOptions: encodingProfileData });
   } else {
-    throw new Error('Method not implemented.');
+    throw new Error(`Invalid pipeline: ${JSON.stringify(pipelineProfile)}`);
   }
 }
 

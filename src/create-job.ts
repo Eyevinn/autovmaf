@@ -95,8 +95,7 @@ export default async function createJob(description: JobDescription, pipelineDat
   }
 
   if (pipeline === undefined) {
-    // Only works on AWS.
-    throw new Error('Not implemented.');
+    throw new Error(`No pipeline defined for job: ${JSON.stringify(description)}`);
   }
 
   let models: QualityAnalysisModel[];
@@ -126,7 +125,6 @@ export default async function createJob(description: JobDescription, pipelineDat
 
 async function uploadReferenceIfNeeded(description: JobDescription, pipeline: Pipeline) {
   if (pipeline instanceof AWSPipeline) {
-    logger.info('Uploading reference file...');
     return await pipeline.uploadIfNeeded(
       description.reference,
       pipeline.configuration.inputBucket,

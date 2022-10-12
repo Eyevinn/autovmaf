@@ -79,6 +79,7 @@ export default class AWSPipeline implements Pipeline {
     } else {
       const key = targetDir + '/' + targetFilename;
       if (!(await this.fileExists(bucket, key))) {
+        logger.info('Uploading reference file...');
         await this.uploadToS3(filename, bucket, key);
       }
       newFilename = 's3://' + bucket + '/' + key;

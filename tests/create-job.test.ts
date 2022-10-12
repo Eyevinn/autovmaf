@@ -14,8 +14,8 @@ const job: JobDescription = {
   encodingProfile: "profile.json",
   reference: "reference.mp4",
   models: ["HD", "PhoneHD"],
-  resolutions: [{ width: 1280, height: 720 }],
-  bitrates: [600000],
+  resolutions: [{ width: 1280, height: 720, range: {min: 400000, max: 600000}} ],
+  bitrates: [400000, 600000, 800000],
   method: "bruteForce"
 };
 const pipeline = {

@@ -7,7 +7,9 @@
     "type": "git",
     "url": "git+https://github.com/Eyevinn/autovmaf.git"
   },
-  "keywords": ["vmaf"],
+  "keywords": [
+    "vmaf"
+  ],
   "contributors": [
     "Oscar Nord <oscar.nord@eyevinn.se> (Eyevinn Technology AB)",
     "Jonathan Walter <jonathan.walter@eyevinn.se> (Eyevinn Technology AB)"
@@ -26,8 +28,8 @@
     "docs": "npx typedoc src/index.ts"
   },
   "devDependencies": {
-    "@babel/preset-typescript": "^7.16.7",
     "@babel/preset-env": "^7.17.10",
+    "@babel/preset-typescript": "^7.16.7",
     "@types/fluent-ffmpeg": "^2.1.18",
     "@types/jest": "^27.5.0",
     "@types/papaparse": "^5.3.1",
@@ -42,6 +44,7 @@
     "@aws-sdk/client-s3": "^3.36.0",
     "@aws-sdk/credential-providers": "^3.36.0",
     "@aws-sdk/lib-storage": "^3.36.0",
+    "@eyevinn/autovmaf": "^0.3.2",
     "@types/aws-lambda": "^8.10.86",
     "aws-sdk": "^2.1123.0",
     "fluent-ffmpeg": "^2.1.2",

@@ -53,11 +53,11 @@ const defaultBitrates = [
 ];
 
 const defaultResolutions: Resolution[] = [
-  { width: 640, height: 360 },
-  { width: 768, height: 432 },
-  { width: 960, height: 540 },
-  { width: 1280, height: 720 },
-  { width: 1920, height: 1080 },
+  { width: 640, height: 360, range: undefined},
+  { width: 768, height: 432, range: undefined},
+  { width: 960, height: 540, range: undefined},
+  { width: 1280, height: 720, range: undefined},
+  { width: 1920, height: 1080, range: undefined},
 ];
 
 const defaultFilterFunction: (pair: BitrateResolutionPair) => boolean = ({ bitrate, resolution }) =>
@@ -84,7 +84,7 @@ export default async function analyzeBruteForce(directory: string, reference: st
     .flat()
     .flatMap(resolution =>
       bitrates.map(bitrate =>
-        filterFunction({ bitrate, resolution })
+        (filterFunction({ bitrate, resolution }) && checkIfRangeSetAndBitrateInRange(bitrate, resolution)) 
           ? {
               resolution,
               bitrate,
@@ -155,4 +155,15 @@ export default async function analyzeBruteForce(directory: string, reference: st
       });
     }
   }
+}
+
+function checkIfRangeSetAndBitrateInRange(bitrate: number, resolution: Resolution): boolean {
+  if(resolution.range === undefined) {
+    return true;
+  }
+
+  if((bitrate >= resolution.range.min && bitrate <= resolution.range.max)) {
+    return true;
+  } 
+  return false;
 }

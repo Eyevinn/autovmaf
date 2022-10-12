@@ -12,6 +12,7 @@ import Papa from 'papaparse';
 import { Resolution } from './models/resolution';
 import analyzeWalkTheHull from './analysis/walk-the-hull';
 import { BitrateResolutionVMAF } from './models/bitrate-resolution-vmaf';
+import { BitrateRange } from './models/bitrateRange';
 
 /** Describes a ABR-analysis job and can be used to create jobs using the createJob()-function. */
 export type JobDescription = {
@@ -117,8 +118,8 @@ export default async function createJob(description: JobDescription, pipelineDat
     await analyzeWalkTheHull();
   } else {
     await analyzeBruteForce(description.name, reference, pipeline, {
-      bitrates: description.bitrates,
       resolutions: description.resolutions,
+      bitrates: description.bitrates,
       concurrency: true,
       models,
       filterFunction:
@@ -128,3 +129,5 @@ export default async function createJob(description: JobDescription, pipelineDat
 
   logger.info('Finished analysis!');
 }
+
+

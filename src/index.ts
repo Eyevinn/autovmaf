@@ -6,6 +6,7 @@ import { BitrateResolutionVMAF } from './models/bitrate-resolution-vmaf';
 import { AWSPipelineConfiguration } from './pipelines/aws/aws-pipeline-configuration';
 import { LocalPipelineConfiguration } from './pipelines/local/local-pipeline-configuration';
 import { Resolution } from './models/resolution';
+import { BitrateRange } from './models/bitrateRange';
 import getVmaf from './get-vmaf';
 import createJob, { JobDescription } from './create-job';
 import {
@@ -33,6 +34,7 @@ export {
   AWSPipeline,
   BitrateResolutionVMAF,
   Resolution,
+  BitrateRange,
   LocalPipelineConfiguration,
   AWSPipelineConfiguration,
   logger,

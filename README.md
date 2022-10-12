@@ -30,20 +30,15 @@
 
 By optimizing ABR-ladders for specific content, you will make sure to not have wasteful rungs and this has been shown to [cut bandwidth usage in half](https://dev.to/video/automating-video-analysis-to-cut-your-streaming-bandwidth-usage-in-half-5hk1).
 
+
 ## Usage
 
-Only possible to run in AWS at the moment. You will need a running ECS cluster with a task definition configured to run [easyvmaf-s3](https://github.com/Eyevinn/easyvmaf_s3).
+Transcoding and VMAF analysis can either be run in AWS or locally. When running in aws, you will need a running ECS cluster with a task definition configured to run [easyvmaf-s3](https://github.com/Eyevinn/easyvmaf_s3).
 
 ### Installation
 
 ```bash
 npm install --save @eyevinn/autovmaf
-```
-
-### Run tests
-
-```bash
-npm test
 ```
 
 ### Environment Variables
@@ -130,6 +125,64 @@ const vmafFiles = await getVmaf('s3://path/to/vmaf/');
 vmafFiles.forEach(file => {
   console.log(file.filename + ': ' + file.vmaf);
 });
+```
+
+## CLI Usage
+When running with the cli, all transcoding and vmaf analysis will be run locally.
+
+### Requirements
+* [easyVmaf](https://github.com/gdavila/easyVmaf)
+* [FFmpeg](https://www.ffmpeg.org/) >= 5.0, compiled with libvmaf
+* [Python](https://www.python.org) >= 3.0
+
+### Installation
+Installing with `npm -g` will make the `autovmaf` command available in your path
+```bash
+npm install -g @eyevinn/autovmaf
+```
+
+### Environments variables
+* `EASYVMAF_PATH` - needs to point to the file `easyVmaf.py` from your
+easyVmaf installation. 
+* `FFMPEG_PATH` - only needs to be set if ffmpeg is not in your path.
+* `PYTHON_PATH` - only needs to be set if python is not in yur path.
+
+
+### Command line options
+Available command line options for the cli can be listed with the `--help` argument
+
+```bash
+autovmaf <source>
+
+run autovmaf for videofile source
+
+Positionals:
+  source  SOURCEFILE                                                    [string]
+
+Options:
+  --help         Show help                                             [boolean]
+  --version      Show version number                                   [boolean]
+  --resolutions  List of resolutions, ie 1920x1080,1280x720...          [string]
+  --bitrates     List of bitrates, ie 800k,1000k,...                    [string]
+  --name         Name for this autovmaf run
+                                        [string] [default: "MyVMAFMeasurements"]
+  --models       List of VMAF Models to use             [string] [default: "HD"]
+```
+Output files will be stored in a folder corresponding to the argument given to the `--name` option.
+If resolutions and/or bitrates are not specified default values will be used, [See above](#generate-vmaf-measurements).
+
+### Generate VMAF measurements
+```bash
+autovmaf --resolutions 1920x1080,1280x720,960x540 --bitrates 500k,800k,1200k,1600k,2000k,3000k,4000k --name my-autovmaf-test1 my-source-video.mp4
+```
+With the above command, when the run is finished transcoded files will be available in the folder `my-autovmaf-test1`, and vmaf-data in the folder `my-autovmaf-test1/HD`.
+
+## Development
+
+### Run tests
+
+```bash
+npm test
 ```
 
 

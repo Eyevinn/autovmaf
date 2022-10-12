@@ -160,10 +160,9 @@ export default async function analyzeBruteForce(directory: string, reference: st
 function checkIfRangeSetAndBitrateInRange(bitrate: number, resolution: Resolution): boolean {
   if(resolution.range === undefined) {
     return true;
-  }
-
-  if((bitrate >= resolution.range.min && bitrate <= resolution.range.max)) {
+  } else if(bitrate >= resolution.range.min && bitrate <= resolution.range.max) {
     return true;
-  } 
+  } else {
   return false;
+  }
 }

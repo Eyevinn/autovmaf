@@ -32,7 +32,7 @@ By optimizing ABR-ladders for specific content, you will make sure to not have w
 
 ## Usage
 
-Only possible to run in AWS at the moment. You will need a running ECS cluster with a task definition configured to run [easyvmaf-s3](https://github.com/Eyevinn/easyvmaf_s3).
+Transcoding and VMAF analysis can either be run in AWS or locally. For runnong on aws, you will need a running ECS cluster with a task definition configured to run [easyvmaf-s3](https://github.com/Eyevinn/easyvmaf_s3).
 
 ### Installation
 
@@ -40,6 +40,32 @@ Only possible to run in AWS at the moment. You will need a running ECS cluster w
 npm install --save @eyevinn/autovmaf
 ```
 
+### Run locally with the cli
+Install globally to make the cli available in your path.
+```bash
+npm install -g @eyevinn/autovmaf
+```
+When running with the cli, all transcoding and vmaf analysis will be run locally.
+Available command line options for the cli can be listed with the `--help` argument
+
+```bash
+autovmaf <source>
+
+run autovmaf for videofile source
+
+Positionals:
+  source  SOURCEFILE                                                    [string]
+
+Options:
+  --help         Show help                                             [boolean]
+  --version      Show version number                                   [boolean]
+  --resolutions  List of resolutions, ie 1920x1080,1280x720...          [string]
+  --bitrates     List of bitrates, ie 800k,1000k,...                    [string]
+  --name         Name for this autovmaf run
+                                        [string] [default: "MyVMAFMeasurements"]
+  --models       List of VMAF Models to use             [string] [default: "HD"]
+```
+Output files will be stored in a folder corresponding to the argument given to the `--name` option.
 ### Run tests
 
 ```bash

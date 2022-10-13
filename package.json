@@ -13,9 +13,13 @@
   "contributors": [
     "Oscar Nord <oscar.nord@eyevinn.se> (Eyevinn Technology AB)",
     "Jonathan Walter <jonathan.walter@eyevinn.se> (Eyevinn Technology AB)",
+    "Gustav Grusell <gustav.grusell@eyevinn.se> (Eyevinn Technology AB)",
     "Robin Olsson <robin.olsson@eyevinn.se> (Eyevinn Technology AB)"
   ],
   "main": "dist/index.js",
+  "bin": {
+    "autovmaf": "./dist/cli.js"
+  },
   "typings": "dist/index.d.ts",
   "files": [
     "dist",
@@ -34,6 +38,7 @@
     "@types/fluent-ffmpeg": "^2.1.18",
     "@types/jest": "^27.5.0",
     "@types/papaparse": "^5.3.1",
+    "@types/yargs": "^17.0.13",
     "aws-sdk-client-mock": "^0.6.2",
     "jest": "^28.0.3",
     "tslib": "^2.3.1",
@@ -50,7 +55,9 @@
     "fluent-ffmpeg": "^2.1.2",
     "papaparse": "^5.3.1",
     "typedoc": "^0.22.15",
+    "which": "^2.0.2",
     "winston": "^3.3.3",
-    "yaml": "^1.10.2"
+    "yaml": "^1.10.2",
+    "yargs": "^17.6.0"
   }
 }

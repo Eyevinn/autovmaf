@@ -45,7 +45,7 @@ export default class LocalPipeline implements Pipeline {
     };
 
     const ffmpegOptions = Object.entries(Object.assign({}, encodingArguments, this.configuration.ffmpegOptions)).flat();
-
+    logger.info(`ffmpegOptions: ${JSON.stringify(ffmpegOptions)}`)
     await ffmpegAsync(
       ffmpeg(input)
         .addOptions(ffmpegOptions)

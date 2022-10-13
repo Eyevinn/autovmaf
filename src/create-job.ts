@@ -1,5 +1,6 @@
 import fs from 'fs';
 import analyzeBruteForce from './analysis/brute-force';
+import { Pipeline } from './pipelines/pipeline'
 import AWSPipeline from './pipelines/aws/aws-pipeline';
 import { loadPipeline, loadPipelineFromObjects } from './load-pipeline';
 import {
@@ -99,19 +100,18 @@ export type JobDescription = {
  *
  * @param description An object that describes the job to create.
  */
-export default async function createJob(description: JobDescription, pipelineData?: any, encodingProfileData?: any) {
+export default async function createJob(description: JobDescription, pipelineData?: any, encodingProfileData?: any, concurrency: boolean = true) {
   logger.info(`Creating job ${description.name}.`);
 
-  let pipeline: any = undefined;
+  let pipeline: Pipeline | undefined = undefined;
   if (pipelineData && encodingProfileData) {
-    pipeline = (await loadPipelineFromObjects(pipelineData, encodingProfileData)) as AWSPipeline;
+    pipeline = await loadPipelineFromObjects(pipelineData, encodingProfileData);
   } else {
-    pipeline = (await loadPipeline(description.pipeline, description.encodingProfile)) as AWSPipeline;
+    pipeline = await loadPipeline(description.pipeline, description.encodingProfile);
   }
 
   if (pipeline === undefined) {
-    // Only works on AWS.
-    throw new Error('Not implemented.');
+    throw new Error(`No pipeline defined for job: ${JSON.stringify(description)}`);
   }
 
   let models: QualityAnalysisModel[];
@@ -121,13 +121,7 @@ export default async function createJob(description: JobDescription, pipelineDat
     models = description.models.map(modelStr => stringToQualityAnalysisModel(modelStr));
   }
 
-  logger.info('Uploading reference file...');
-  const reference = await pipeline.uploadIfNeeded(
-    description.reference,
-    pipeline.configuration.s3Bucket,
-    description.name,
-    'reference.mp4'
-  );
+  const reference: string = await uploadReferenceIfNeeded(description, pipeline);
 
   if (description.method === 'walkTheHull') {
     await analyzeWalkTheHull();
@@ -135,7 +129,7 @@ export default async function createJob(description: JobDescription, pipelineDat
     await analyzeBruteForce(description.name, reference, pipeline, {
       resolutions: description.resolutions,
       bitrates: description.bitrates,
-      concurrency: true,
+      concurrency,
       models,
       filterFunction:
         description.bitrates !== undefined && description.resolutions !== undefined ? _ => true : undefined,
@@ -143,4 +137,16 @@ export default async function createJob(description: JobDescription, pipelineDat
   }
 
   logger.info('Finished analysis!');
+}
+
+async function uploadReferenceIfNeeded(description: JobDescription, pipeline: Pipeline) {
+  if (pipeline instanceof AWSPipeline) {
+    return await pipeline.uploadIfNeeded(
+      description.reference,
+      pipeline.configuration.inputBucket,
+      description.name,
+      'reference.mp4'
+    )
+  }
+  return description.reference;
 }

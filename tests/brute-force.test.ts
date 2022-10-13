@@ -55,7 +55,6 @@ describe('preparePairs', () => {
 
     test('without bitrates and range set should not filter out any bitrates', () => {
         let testData = prepareTestData(jobWithoutBitratesAndRange);
-        console.log(testData.pairs);
         expect(testData.pairs.length).toEqual(numberOfDefaultBitratesAfterDefaultFilter);
     });
 

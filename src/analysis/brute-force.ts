@@ -2,9 +2,7 @@ import { BitrateResolutionPair } from '../models/bitrate-resolution-pair';
 import { QualityAnalysisModel, qualityAnalysisModelToString } from '../models/quality-analysis-model';
 import { Resolution } from '../models/resolution';
 import { Pipeline } from '../pipelines/pipeline';
-import suggestLadder from '../suggest-ladder';
 import path from 'path';
-import { BitrateResolutionVMAF } from '../models/bitrate-resolution-vmaf';
 import logger from '../logger';
 import { BitrateRange } from '../models/bitrateRange';
 

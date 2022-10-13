@@ -7,6 +7,17 @@ export const defaultFilterFunction: (pair: BitrateResolutionPair) => boolean = (
 
 export const numberOfDefaultBitratesAfterDefaultFilter = 27;
 
+export const jobWithBitratesAndRangeSet: JobDescription = {
+    name: "test-job",
+    pipeline: "pipeline.yml",
+    encodingProfile: "profile.json",
+    reference: "reference.mp4",
+    models: ["HD", "PhoneHD"],
+    resolutions: [{ width: 1280, height: 720, range: {min: 400000, max: 600000}} ],
+    bitrates: [400000, 600000, 800000],
+    method: "bruteForce"
+  };  
+
 export const jobWithoutBitrates: JobDescription = {
     name: "test-job",
     pipeline: "pipeline.yml",
@@ -29,16 +40,28 @@ export const jobWithoutBitratesAndRange: JobDescription = {
     method: "bruteForce"
   };
 
-export const jobWithBitratesAndRangeSet: JobDescription = {
+  export const jobWithBitratesAndMinRangeSet: JobDescription = {
     name: "test-job",
     pipeline: "pipeline.yml",
     encodingProfile: "profile.json",
     reference: "reference.mp4",
     models: ["HD", "PhoneHD"],
-    resolutions: [{ width: 1280, height: 720, range: {min: 400000, max: 600000}} ],
+    resolutions: [{ width: 1280, height: 720, range: {min: 600000, max: undefined}} ],
     bitrates: [400000, 600000, 800000],
     method: "bruteForce"
-  };  
+  }; 
+
+  export const jobWithBitratesAndMaxRangeSet: JobDescription = {
+    name: "test-job",
+    pipeline: "pipeline.yml",
+    encodingProfile: "profile.json",
+    reference: "reference.mp4",
+    models: ["HD", "PhoneHD"],
+    resolutions: [{ width: 1280, height: 720, range: {min: undefined, max: 600000}} ],
+    bitrates: [400000, 600000, 800000],
+    method: "bruteForce"
+  }; 
+
 
 export const defaultBitrates = [
     150000,

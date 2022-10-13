@@ -149,9 +149,9 @@ export default async function analyzeBruteForce(directory: string, reference: st
 /**
  * Prepares the resolution-bitrate pairs to be analyzed.
  *
- * @param resolutions The different resolutions to be analyzed. Also contains the bitrate range
+ * @param resolutions The different resolutions to be analyzed. Also contains the bitrate range.
  * @param bitrates A list of bitrates that can analyzed.
- * @param filterFunction .
+ * @param filterFunction A filter function to be used for filtering out bitrates.
  */
 export function preparePairs(resolutions: Resolution[], bitrates: number[], filterFunction: (pair: BitrateResolutionPair) => boolean): BitrateResolutionPair[] {
   return resolutions

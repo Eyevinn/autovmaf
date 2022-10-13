@@ -2,81 +2,12 @@ import { mockClient } from 'aws-sdk-client-mock';
 import { CreateJobCommand, MediaConvertClient } from '@aws-sdk/client-mediaconvert';
 import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { ECSClient, RunTaskCommand } from '@aws-sdk/client-ecs';
-import createJob, { JobDescription } from '../src/create-job';
+import createJob from '../src/create-job';
+import { job, pipeline, encodingSettings } from './resources/create-job.test.data'
 
 const mcMock = mockClient(MediaConvertClient);
 const ecsMock = mockClient(ECSClient);
 const s3Mock = mockClient(S3Client);
-
-const job: JobDescription = {
-  name: "test-job",
-  pipeline: "pipeline.yml",
-  encodingProfile: "profile.json",
-  reference: "reference.mp4",
-  models: ["HD", "PhoneHD"],
-  resolutions: [{ width: 1280, height: 720, range: {min: 400000, max: 600000}} ],
-  bitrates: [400000, 600000, 800000],
-  method: "bruteForce"
-};
-const pipeline = {
-  aws: {
-    s3Bucket: 'vmaf-files',
-    mediaConvertRole: 'arn:aws:iam::1234:role/MediaConvert_Default_Role',
-    mediaConvertEndpoint: 'https://abc123xyz.mediaconvert.eu-north-1.amazonaws.com',
-    ecsSubnet: 'subnet-05d98882c13408e16',
-    ecsSecurityGroup: 'sg-0e444b67a747bf739',
-    ecsContainerName: 'easyvmaf-s3',
-    ecsCluster: 'vmaf-runner',
-    ecsTaskDefinition: 'easyvmaf-s3:1',
-  },
-};
-const encodingSettings = {
-  Inputs: [
-    {
-      TimecodeSource: 'ZEROBASED',
-      VideoSelector: {},
-      FileInput: '$INPUT',
-    },
-  ],
-  OutputGroups: [
-    {
-      Name: 'File Group',
-      OutputGroupSettings: {
-        Type: 'FILE_GROUP_SETTINGS',
-        FileGroupSettings: {
-          Destination: '$OUTPUT',
-        },
-      },
-      Outputs: [
-        {
-          VideoDescription: {
-            CodecSettings: {
-              Codec: 'H_265',
-              H265Settings: {
-                GopBReference: 'ENABLED',
-                HrdBufferSize: '$HRDBUFFER',
-                Bitrate: '$BITRATE',
-                RateControlMode: 'CBR',
-                CodecProfile: 'MAIN10_HIGH',
-                AdaptiveQuantization: 'AUTO',
-                GopSizeUnits: 'AUTO',
-              },
-            },
-            Width: '$WIDTH',
-            Height: '$HEIGHT',
-          },
-          ContainerSettings: {
-            Container: 'MP4',
-            Mp4Settings: {},
-          },
-        },
-      ],
-    },
-  ],
-  TimecodeConfig: {
-    Source: 'ZEROBASED',
-  },
-};
 
 beforeEach(() => {
   mcMock.reset();
@@ -91,7 +22,6 @@ afterEach(() => {
   delete process.env.LOAD_CREDENTIALS_FROM_ENV;
 });
 
-
 describe('create-job', () => {
   it('should create a job successfully', async () => {
     s3Mock.on(HeadObjectCommand).resolves({});
@@ -104,3 +34,6 @@ describe('create-job', () => {
     expect(mcMock.send).toHaveBeenCalled;
   });
 });
+
+
+

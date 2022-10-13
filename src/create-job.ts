@@ -54,8 +54,23 @@ export type JobDescription = {
  *   encodingProfile: "profile.json",
  *   reference: "reference.mp4",
  *   models: ["HD", "PhoneHD"],
- *   resolutions: [{ width: 1280, height: 720 }],
+ *   resolutions: [{ width: 1280, height: 720, range: undefined }],
  *   bitrates: [600000],
+ *   method: "bruteForce"
+ * });
+ * ```
+ * @example **Example of creating a job from a job description with range set.**
+ * ```javascript
+ * const { createJob, qualityAnalysisModelToString } = require('@eyevinn/autovmaf');
+ *
+ * const abrLadder = await = createJob({
+ *   name: "hello",
+ *   pipeline: "pipeline.yml",
+ *   encodingProfile: "profile.json",
+ *   reference: "reference.mp4",
+ *   models: ["HD", "PhoneHD"],
+ *   resolutions: [{ width: 1280, height: 720, range: { min: 400000, max: 600000} }],
+ *   bitrates: [400000, 600000, 800000],
  *   method: "bruteForce"
  * });
  * ```
@@ -129,5 +144,3 @@ export default async function createJob(description: JobDescription, pipelineDat
 
   logger.info('Finished analysis!');
 }
-
-

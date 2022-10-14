@@ -52,11 +52,11 @@ const defaultBitrates = [
 ];
 
 const defaultResolutions: Resolution[] = [
-  { width: 640, height: 360, range: undefined},
-  { width: 768, height: 432, range: undefined},
-  { width: 960, height: 540, range: undefined},
-  { width: 1280, height: 720, range: undefined},
-  { width: 1920, height: 1080, range: undefined},
+  { width: 640, height: 360},
+  { width: 768, height: 432},
+  { width: 960, height: 540},
+  { width: 1280, height: 720},
+  { width: 1920, height: 1080},
 ];
 
 const defaultFilterFunction: (pair: BitrateResolutionPair) => boolean = ({ bitrate, resolution }) =>
@@ -168,7 +168,7 @@ export function preparePairs(resolutions: Resolution[], bitrates: number[], filt
 }
 
 function checkIfBitrateInRange(bitrate: number, range: BitrateRange): boolean {
-  let minBitrate = range?.min != undefined ? range.min : defaultBitrates[0];
-  let maxBitrate = range?.max != undefined ? range.max : defaultBitrates[defaultBitrates.length - 1];
+  let minBitrate = range.min ? range.min : defaultBitrates[0];
+  let maxBitrate = range.max ? range.max : defaultBitrates[defaultBitrates.length - 1];
   return bitrate >= minBitrate && bitrate <= maxBitrate ? true : false;
 }

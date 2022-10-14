@@ -168,7 +168,7 @@ export function preparePairs(resolutions: Resolution[], bitrates: number[], filt
 }
 
 function checkIfBitrateInRange(bitrate: number, range: BitrateRange): boolean {
-  let minBitrate = range?.min != undefined ? range.min : 0;
-  let maxBitrate = range?.max != undefined ? range.max : 90000000;
+  let minBitrate = range?.min != undefined ? range.min : defaultBitrates[0];
+  let maxBitrate = range?.max != undefined ? range.max : defaultBitrates[defaultBitrates.length - 1];
   return bitrate >= minBitrate && bitrate <= maxBitrate ? true : false;
 }

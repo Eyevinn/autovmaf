@@ -25,7 +25,6 @@ export const jobWithoutBitrates: JobDescription = {
     reference: "reference.mp4",
     models: ["HD", "PhoneHD"],
     resolutions: [{ width: 1280, height: 720, range: {min: 400000, max: 600000}} ],
-    bitrates: undefined,
     method: "bruteForce"
   };
 
@@ -35,8 +34,7 @@ export const jobWithoutBitratesAndRange: JobDescription = {
     encodingProfile: "profile.json",
     reference: "reference.mp4",
     models: ["HD", "PhoneHD"],
-    resolutions: [{ width: 1280, height: 720, range: undefined} ],
-    bitrates: undefined,
+    resolutions: [{ width: 1280, height: 720} ],
     method: "bruteForce"
   };
 
@@ -46,7 +44,7 @@ export const jobWithoutBitratesAndRange: JobDescription = {
     encodingProfile: "profile.json",
     reference: "reference.mp4",
     models: ["HD", "PhoneHD"],
-    resolutions: [{ width: 1280, height: 720, range: {min: 600000, max: undefined}} ],
+    resolutions: [{ width: 1280, height: 720, range: {min: 600000}} ],
     bitrates: [400000, 600000, 800000],
     method: "bruteForce"
   }; 
@@ -57,7 +55,7 @@ export const jobWithoutBitratesAndRange: JobDescription = {
     encodingProfile: "profile.json",
     reference: "reference.mp4",
     models: ["HD", "PhoneHD"],
-    resolutions: [{ width: 1280, height: 720, range: {min: undefined, max: 600000}} ],
+    resolutions: [{ width: 1280, height: 720, range: {max: 600000}} ],
     bitrates: [400000, 600000, 800000],
     method: "bruteForce"
   }; 

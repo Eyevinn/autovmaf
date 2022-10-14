@@ -56,12 +56,13 @@ async function transcodeAndAnalyse(argv) {
 
     const bitrates = parseBitrates(argv.bitrates);
     const resolutions = parseResolutions(argv.resolutions);
+    const models = argv.models.split(',');
 
     const vmafScores = await createJob({
         name: argv.name,
         pipeline: "",
         reference: reference,
-        models: argv.models.split[','],
+        models: models,
         resolutions: resolutions,
         bitrates: bitrates,
         method: "bruteForce"

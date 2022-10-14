@@ -13,7 +13,8 @@
   "contributors": [
     "Oscar Nord <oscar.nord@eyevinn.se> (Eyevinn Technology AB)",
     "Jonathan Walter <jonathan.walter@eyevinn.se> (Eyevinn Technology AB)",
-    "Gustav Grusell <gustav.grusell@eyevinn.se> (Eyevinn Technology AB)"
+    "Gustav Grusell <gustav.grusell@eyevinn.se> (Eyevinn Technology AB)",
+    "Robin Olsson <robin.olsson@eyevinn.se> (Eyevinn Technology AB)"
   ],
   "main": "dist/index.js",
   "bin": {

@@ -2,10 +2,9 @@ import { BitrateResolutionPair } from '../models/bitrate-resolution-pair';
 import { QualityAnalysisModel, qualityAnalysisModelToString } from '../models/quality-analysis-model';
 import { Resolution } from '../models/resolution';
 import { Pipeline } from '../pipelines/pipeline';
-import suggestLadder from '../suggest-ladder';
 import path from 'path';
-import { BitrateResolutionVMAF } from '../models/bitrate-resolution-vmaf';
 import logger from '../logger';
+import { BitrateRange } from '../models/bitrateRange';
 
 export type AnalysisOptions = {
   models?: QualityAnalysisModel[];
@@ -53,11 +52,11 @@ const defaultBitrates = [
 ];
 
 const defaultResolutions: Resolution[] = [
-  { width: 640, height: 360 },
-  { width: 768, height: 432 },
-  { width: 960, height: 540 },
-  { width: 1280, height: 720 },
-  { width: 1920, height: 1080 },
+  { width: 640, height: 360},
+  { width: 768, height: 432},
+  { width: 960, height: 540},
+  { width: 1280, height: 720},
+  { width: 1920, height: 1080},
 ];
 
 const defaultFilterFunction: (pair: BitrateResolutionPair) => boolean = ({ bitrate, resolution }) =>
@@ -80,19 +79,7 @@ export default async function analyzeBruteForce(directory: string, reference: st
   const filterFunction = options.filterFunction !== undefined ? options.filterFunction : defaultFilterFunction;
   const concurrency = options.concurrency !== undefined ? options.concurrency : defaultConcurrency;
 
-  const pairs = resolutions
-    .flat()
-    .flatMap(resolution =>
-      bitrates.map(bitrate =>
-        filterFunction({ bitrate, resolution })
-          ? {
-              resolution,
-              bitrate,
-            }
-          : undefined
-      )
-    )
-    .filter(pair => pair !== undefined) as BitrateResolutionPair[];
+  const pairs = preparePairs(resolutions, bitrates, filterFunction)
 
   const analyzePair = async (pair: BitrateResolutionPair) => {
     const variant = await pipeline.transcode(
@@ -155,4 +142,33 @@ export default async function analyzeBruteForce(directory: string, reference: st
       });
     }
   }
+}
+
+/**
+ * Prepares the resolution-bitrate pairs to be analyzed.
+ *
+ * @param resolutions The different resolutions to be analyzed. Also contains the bitrate range.
+ * @param bitrates A list of bitrates that can analyzed.
+ * @param filterFunction A filter function to be used for filtering out bitrates.
+ */
+export function preparePairs(resolutions: Resolution[], bitrates: number[], filterFunction: (pair: BitrateResolutionPair) => boolean): BitrateResolutionPair[] {
+  return resolutions
+    .flat()
+    .flatMap(resolution =>
+      bitrates.map(bitrate =>
+        (filterFunction({ bitrate, resolution }) && (resolution.range === undefined || checkIfBitrateInRange(bitrate, resolution.range))) 
+          ? {
+              resolution,
+              bitrate,
+            }
+          : undefined
+      )
+    )
+    .filter(pair => pair !== undefined) as BitrateResolutionPair[];
+}
+
+function checkIfBitrateInRange(bitrate: number, range: BitrateRange): boolean {
+  let minBitrate = range.min ? range.min : defaultBitrates[0];
+  let maxBitrate = range.max ? range.max : defaultBitrates[defaultBitrates.length - 1];
+  return bitrate >= minBitrate && bitrate <= maxBitrate ? true : false;
 }

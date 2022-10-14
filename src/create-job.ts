@@ -1,18 +1,14 @@
-import fs from 'fs';
 import analyzeBruteForce from './analysis/brute-force';
 import { Pipeline } from './pipelines/pipeline'
 import AWSPipeline from './pipelines/aws/aws-pipeline';
 import { loadPipeline, loadPipelineFromObjects } from './load-pipeline';
 import {
   QualityAnalysisModel,
-  qualityAnalysisModelToString,
   stringToQualityAnalysisModel,
 } from './models/quality-analysis-model';
 import logger from './logger';
-import Papa from 'papaparse';
 import { Resolution } from './models/resolution';
 import analyzeWalkTheHull from './analysis/walk-the-hull';
-import { BitrateResolutionVMAF } from './models/bitrate-resolution-vmaf';
 
 /** Describes a ABR-analysis job and can be used to create jobs using the createJob()-function. */
 export type JobDescription = {
@@ -54,8 +50,23 @@ export type JobDescription = {
  *   encodingProfile: "profile.json",
  *   reference: "reference.mp4",
  *   models: ["HD", "PhoneHD"],
- *   resolutions: [{ width: 1280, height: 720 }],
+ *   resolutions: [{ width: 1280, height: 720, range: undefined }],
  *   bitrates: [600000],
+ *   method: "bruteForce"
+ * });
+ * ```
+ * @example **Example of creating a job from a job description with range set.**
+ * ```javascript
+ * const { createJob, qualityAnalysisModelToString } = require('@eyevinn/autovmaf');
+ *
+ * const abrLadder = await = createJob({
+ *   name: "hello",
+ *   pipeline: "pipeline.yml",
+ *   encodingProfile: "profile.json",
+ *   reference: "reference.mp4",
+ *   models: ["HD", "PhoneHD"],
+ *   resolutions: [{ width: 1280, height: 720, range: { min: 400000, max: 600000} }],
+ *   bitrates: [400000, 600000, 800000],
  *   method: "bruteForce"
  * });
  * ```
@@ -111,8 +122,8 @@ export default async function createJob(description: JobDescription, pipelineDat
     await analyzeWalkTheHull();
   } else {
     await analyzeBruteForce(description.name, reference, pipeline, {
-      bitrates: description.bitrates,
       resolutions: description.resolutions,
+      bitrates: description.bitrates,
       concurrency,
       models,
       filterFunction:

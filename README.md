@@ -64,10 +64,16 @@ To generate VMAF measurements, you will need to define a job which can be create
     pipeline: "pipeline.yml",
     encodingProfile: "profile.json",
     reference: "reference.mp4",
-    models: ["HD", "PhoneHD"],                       // optional
-    resolutions: [{ width: 1280, height: 720 }],     // optional
-    bitrates: [600000],                              // optional
-    method: "bruteForce"                             // optional
+    models: ["HD", "PhoneHD"],         // optional
+    resolutions: [{                    // optional
+      width: 1280,      
+      height: 720, 
+      range:                           // optional
+         { min: 500000, 
+         max: 600000 } 
+   }],                                                
+    bitrates: [500000, 600000],        // optional
+    method: "bruteForce"               // optional
   });
 ```
 
@@ -85,6 +91,8 @@ When creating a job, you can specify:
     * A list of VMAF-models to use in evaluation. This can be HD, MobileHD and UHD. HD by default.
  * **Resolutions** (optional)
     * A list of resolutions to test. By default it will test all resolutions in the example ABR-ladder provided by Apple in the [HLS Authoring Spec](https://developer.apple.com/documentation/http_live_streaming/hls_authoring_specification_for_apple_devices).
+    * **Range** (optional)
+       * A min and max bitrate for testing a specific resolution. Adding a range will filter out bitrates that are outside of the given range. It is disabled by default. 
  * **Bitrates** (optional)
     * A list of bitrates to test. By default a list of bitrates between 150 kbit/s to 9000 kbit/s.
  * **Method** (optional)

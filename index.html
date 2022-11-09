@@ -31,18 +31,12 @@
 <a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
   <h2>Usage</h2>
 </a>
-<p>Only possible to run in AWS at the moment. You will need a running ECS cluster with a task definition configured to run <a href="https://github.com/Eyevinn/easyvmaf_s3">easyvmaf-s3</a>.</p>
+<p>Transcoding and VMAF analysis can either be run in AWS or locally. When running in aws, you will need a running ECS cluster with a task definition configured to run <a href="https://github.com/Eyevinn/easyvmaf_s3">easyvmaf-s3</a>.</p>
 
 <a href="#installation" id="installation" style="color: inherit; text-decoration: none;">
   <h3>Installation</h3>
 </a>
 <pre><code class="language-bash"><span class="hl-1">npm install --save @eyevinn/autovmaf</span>
-</code></pre>
-
-<a href="#run-tests" id="run-tests" style="color: inherit; text-decoration: none;">
-  <h3>Run tests</h3>
-</a>
-<pre><code class="language-bash"><span class="hl-1">npm </span><span class="hl-3">test</span>
 </code></pre>
 
 <a href="#environment-variables" id="environment-variables" style="color: inherit; text-decoration: none;">
@@ -56,7 +50,7 @@
   <h3>Generate VMAF measurements</h3>
 </a>
 <p>To generate VMAF measurements, you will need to define a job which can be created with the <code>createJob()</code>-function. </p>
-<pre><code class="language-typescript"><span class="hl-1">  </span><span class="hl-0">const</span><span class="hl-1"> { </span><span class="hl-2">createJob</span><span class="hl-1"> } = </span><span class="hl-3">require</span><span class="hl-1">(</span><span class="hl-4">&#39;@eyevinn/autovmaf&#39;</span><span class="hl-1">);</span><br/><span class="hl-1"> </span><br/><span class="hl-1">  </span><span class="hl-0">const</span><span class="hl-1"> </span><span class="hl-2">vmafScores</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-3">createJob</span><span class="hl-1">({</span><br/><span class="hl-1">    </span><span class="hl-6">name:</span><span class="hl-1"> </span><span class="hl-4">&quot;MyVMAFmeasurements&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-6">pipeline:</span><span class="hl-1"> </span><span class="hl-4">&quot;pipeline.yml&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-6">encodingProfile:</span><span class="hl-1"> </span><span class="hl-4">&quot;profile.json&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-6">reference:</span><span class="hl-1"> </span><span class="hl-4">&quot;reference.mp4&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-6">models:</span><span class="hl-1"> [</span><span class="hl-4">&quot;HD&quot;</span><span class="hl-1">, </span><span class="hl-4">&quot;PhoneHD&quot;</span><span class="hl-1">],                       </span><span class="hl-8">// optional</span><br/><span class="hl-1">    </span><span class="hl-6">resolutions:</span><span class="hl-1"> [{ </span><span class="hl-6">width:</span><span class="hl-1"> </span><span class="hl-7">1280</span><span class="hl-1">, </span><span class="hl-6">height:</span><span class="hl-1"> </span><span class="hl-7">720</span><span class="hl-1"> }],     </span><span class="hl-8">// optional</span><br/><span class="hl-1">    </span><span class="hl-6">bitrates:</span><span class="hl-1"> [</span><span class="hl-7">600000</span><span class="hl-1">],                              </span><span class="hl-8">// optional</span><br/><span class="hl-1">    </span><span class="hl-6">method:</span><span class="hl-1"> </span><span class="hl-4">&quot;bruteForce&quot;</span><span class="hl-1">                             </span><span class="hl-8">// optional</span><br/><span class="hl-1">  });</span>
+<pre><code class="language-typescript"><span class="hl-1">  </span><span class="hl-0">const</span><span class="hl-1"> { </span><span class="hl-2">createJob</span><span class="hl-1"> } = </span><span class="hl-3">require</span><span class="hl-1">(</span><span class="hl-4">&#39;@eyevinn/autovmaf&#39;</span><span class="hl-1">);</span><br/><span class="hl-1"> </span><br/><span class="hl-1">  </span><span class="hl-0">const</span><span class="hl-1"> </span><span class="hl-2">vmafScores</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-3">createJob</span><span class="hl-1">({</span><br/><span class="hl-1">    </span><span class="hl-6">name:</span><span class="hl-1"> </span><span class="hl-4">&quot;MyVMAFmeasurements&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-6">pipeline:</span><span class="hl-1"> </span><span class="hl-4">&quot;pipeline.yml&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-6">encodingProfile:</span><span class="hl-1"> </span><span class="hl-4">&quot;profile.json&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-6">reference:</span><span class="hl-1"> </span><span class="hl-4">&quot;reference.mp4&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-6">models:</span><span class="hl-1"> [</span><span class="hl-4">&quot;HD&quot;</span><span class="hl-1">, </span><span class="hl-4">&quot;PhoneHD&quot;</span><span class="hl-1">],         </span><span class="hl-8">// optional</span><br/><span class="hl-1">    </span><span class="hl-6">resolutions:</span><span class="hl-1"> [{                    </span><span class="hl-8">// optional</span><br/><span class="hl-1">      </span><span class="hl-6">width:</span><span class="hl-1"> </span><span class="hl-7">1280</span><span class="hl-1">,      </span><br/><span class="hl-1">      </span><span class="hl-6">height:</span><span class="hl-1"> </span><span class="hl-7">720</span><span class="hl-1">, </span><br/><span class="hl-1">      </span><span class="hl-6">range:</span><span class="hl-1">                           </span><span class="hl-8">// optional</span><br/><span class="hl-1">         { </span><span class="hl-6">min:</span><span class="hl-1"> </span><span class="hl-7">500000</span><span class="hl-1">, </span><br/><span class="hl-1">         </span><span class="hl-6">max:</span><span class="hl-1"> </span><span class="hl-7">600000</span><span class="hl-1"> } </span><br/><span class="hl-1">   }],                                                </span><br/><span class="hl-1">    </span><span class="hl-6">bitrates:</span><span class="hl-1"> [</span><span class="hl-7">500000</span><span class="hl-1">, </span><span class="hl-7">600000</span><span class="hl-1">],        </span><span class="hl-8">// optional</span><br/><span class="hl-1">    </span><span class="hl-6">method:</span><span class="hl-1"> </span><span class="hl-4">&quot;bruteForce&quot;</span><span class="hl-1">               </span><span class="hl-8">// optional</span><br/><span class="hl-1">  });</span>
 </code></pre>
 <p>When creating a job, you can specify:</p>
 <ul>
@@ -82,6 +76,10 @@
 </li>
 <li><strong>Resolutions</strong> (optional)<ul>
 <li>A list of resolutions to test. By default it will test all resolutions in the example ABR-ladder provided by Apple in the <a href="https://developer.apple.com/documentation/http_live_streaming/hls_authoring_specification_for_apple_devices">HLS Authoring Spec</a>.</li>
+<li><strong>Range</strong> (optional)<ul>
+<li>A min and max bitrate for testing a specific resolution. Adding a range will filter out bitrates that are outside of the given range. It is disabled by default.</li>
+</ul>
+</li>
 </ul>
 </li>
 <li><strong>Bitrates</strong> (optional)<ul>
@@ -109,10 +107,67 @@
 <pre><code class="language-javascript"><span class="hl-0">const</span><span class="hl-1"> </span><span class="hl-2">vmafFiles</span><span class="hl-1"> = </span><span class="hl-5">await</span><span class="hl-1"> </span><span class="hl-3">getVmaf</span><span class="hl-1">(</span><span class="hl-4">&#39;s3://path/to/vmaf/&#39;</span><span class="hl-1">);</span><br/><br/><span class="hl-6">vmafFiles</span><span class="hl-1">.</span><span class="hl-3">forEach</span><span class="hl-1">(</span><span class="hl-6">file</span><span class="hl-1"> </span><span class="hl-0">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-6">console</span><span class="hl-1">.</span><span class="hl-3">log</span><span class="hl-1">(</span><span class="hl-6">file</span><span class="hl-1">.</span><span class="hl-6">filename</span><span class="hl-1"> + </span><span class="hl-4">&#39;: &#39;</span><span class="hl-1"> + </span><span class="hl-6">file</span><span class="hl-1">.</span><span class="hl-6">vmaf</span><span class="hl-1">);</span><br/><span class="hl-1">});</span>
 </code></pre>
 
+<a href="#cli-usage" id="cli-usage" style="color: inherit; text-decoration: none;">
+  <h2>CLI Usage</h2>
+</a>
+<p>When running with the cli, all transcoding and vmaf analysis will be run locally.</p>
+
+<a href="#requirements" id="requirements" style="color: inherit; text-decoration: none;">
+  <h3>Requirements</h3>
+</a>
+<ul>
+<li><a href="https://github.com/gdavila/easyVmaf">easyVmaf</a></li>
+<li><a href="https://www.ffmpeg.org/">FFmpeg</a> &gt;= 5.0, compiled with libvmaf</li>
+<li><a href="https://www.python.org">Python</a> &gt;= 3.0</li>
+</ul>
+
+<a href="#installation-1" id="installation-1" style="color: inherit; text-decoration: none;">
+  <h3>Installation</h3>
+</a>
+<p>Installing with <code>npm -g</code> will make the <code>autovmaf</code> command available in your path</p>
+<pre><code class="language-bash"><span class="hl-1">npm install -g @eyevinn/autovmaf</span>
+</code></pre>
+
+<a href="#environments-variables" id="environments-variables" style="color: inherit; text-decoration: none;">
+  <h3>Environments variables</h3>
+</a>
+<ul>
+<li><code>EASYVMAF_PATH</code> - needs to point to the file <code>easyVmaf.py</code> from your
+easyVmaf installation. </li>
+<li><code>FFMPEG_PATH</code> - only needs to be set if ffmpeg is not in your path.</li>
+<li><code>PYTHON_PATH</code> - only needs to be set if python is not in yur path.</li>
+</ul>
+
+<a href="#command-line-options" id="command-line-options" style="color: inherit; text-decoration: none;">
+  <h3>Command line options</h3>
+</a>
+<p>Available command line options for the cli can be listed with the <code>--help</code> argument</p>
+<pre><code class="language-bash"><span class="hl-1">autovmaf &lt;source&gt;</span><br/><br/><span class="hl-1">run autovmaf </span><span class="hl-5">for</span><span class="hl-1"> videofile </span><span class="hl-3">source</span><br/><br/><span class="hl-1">Positionals:</span><br/><span class="hl-1">  </span><span class="hl-3">source</span><span class="hl-1">  SOURCEFILE                                                    [string]</span><br/><br/><span class="hl-1">Options:</span><br/><span class="hl-1">  --help         Show </span><span class="hl-3">help</span><span class="hl-1">                                             [boolean]</span><br/><span class="hl-1">  --version      Show version number                                   [boolean]</span><br/><span class="hl-1">  --resolutions  List of resolutions, ie 1920x1080,1280x720...          [string]</span><br/><span class="hl-1">  --bitrates     List of bitrates, ie 800k,1000k,...                    [string]</span><br/><span class="hl-1">  --name         Name </span><span class="hl-5">for</span><span class="hl-1"> this autovmaf run</span><br/><span class="hl-1">                                        [string] [default: </span><span class="hl-4">&quot;MyVMAFMeasurements&quot;</span><span class="hl-1">]</span><br/><span class="hl-1">  --models       List of VMAF Models to use             [string] [default: </span><span class="hl-4">&quot;HD&quot;</span><span class="hl-1">]</span>
+</code></pre>
+<p>Output files will be stored in a folder corresponding to the argument given to the <code>--name</code> option.
+If resolutions and/or bitrates are not specified default values will be used, <a href="#generate-vmaf-measurements">See above</a>.</p>
+
+<a href="#generate-vmaf-measurements-1" id="generate-vmaf-measurements-1" style="color: inherit; text-decoration: none;">
+  <h3>Generate VMAF measurements</h3>
+</a>
+<pre><code class="language-bash"><span class="hl-1">autovmaf --resolutions 1920x1080,1280x720,960x540 --bitrates 500k,800k,1200k,1600k,2000k,3000k,4000k --name my-autovmaf-test1 my-source-video.mp4</span>
+</code></pre>
+<p>With the above command, when the run is finished transcoded files will be available in the folder <code>my-autovmaf-test1</code>, and vmaf-data in the folder <code>my-autovmaf-test1/HD</code>.</p>
+
+<a href="#development" id="development" style="color: inherit; text-decoration: none;">
+  <h2>Development</h2>
+</a>
+
+<a href="#run-tests" id="run-tests" style="color: inherit; text-decoration: none;">
+  <h3>Run tests</h3>
+</a>
+<pre><code class="language-bash"><span class="hl-1">npm </span><span class="hl-3">test</span>
+</code></pre>
+
 <a href="#about-eyevinn-technology" id="about-eyevinn-technology" style="color: inherit; text-decoration: none;">
   <h1>About Eyevinn Technology</h1>
 </a>
 <p>Eyevinn Technology is an independent consultant firm specialized in video and streaming. Independent in a way that we are not commercially tied to any platform or technology vendor.</p>
 <p>At Eyevinn, every software developer consultant has a dedicated budget reserved for open source development and contribution to the open source community. This give us room for innovation, team building and personal competence development. And also gives us as a company a way to contribute back to the open source community.</p>
 <p>Want to know more about Eyevinn and how it is to work here. Contact us at <a href="mailto:work@eyevinn.se">work@eyevinn.se</a>!</p>
-</div></div><div class="col-4 col-menu menu-sticky-wrap menu-highlight"><nav class="tsd-navigation primary"><ul><li class="current"><a href="modules.html">Exports</a></li><li class=" tsd-kind-namespace"><a href="modules/initJobLambda.html">init<wbr/>Job<wbr/>Lambda</a></li><li class=" tsd-kind-namespace"><a href="modules/startJobLambda.html">start<wbr/>Job<wbr/>Lambda</a></li></ul></nav><nav class="tsd-navigation secondary menu-sticky"><ul><li class="tsd-kind-enum"><a href="enums/QualityAnalysisModel.html" class="tsd-kind-icon">Quality<wbr/>Analysis<wbr/>Model</a></li><li class="tsd-kind-class"><a href="classes/AWSPipeline.html" class="tsd-kind-icon">AWSPipeline</a></li><li class="tsd-kind-class"><a href="classes/LocalPipeline.html" class="tsd-kind-icon">Local<wbr/>Pipeline</a></li><li class="tsd-kind-class"><a href="classes/Pipeline.html" class="tsd-kind-icon">Pipeline</a></li><li class="tsd-kind-type-alias"><a href="modules.html#AWSPipelineConfiguration" class="tsd-kind-icon">AWSPipeline<wbr/>Configuration</a></li><li class="tsd-kind-type-alias"><a href="modules.html#BitrateResolutionVMAF" class="tsd-kind-icon">Bitrate<wbr/>ResolutionVMAF</a></li><li class="tsd-kind-type-alias"><a href="modules.html#JobDescription" class="tsd-kind-icon">Job<wbr/>Description</a></li><li class="tsd-kind-type-alias"><a href="modules.html#LocalPipelineConfiguration" class="tsd-kind-icon">Local<wbr/>Pipeline<wbr/>Configuration</a></li><li class="tsd-kind-type-alias"><a href="modules.html#Resolution" class="tsd-kind-icon">Resolution</a></li><li class="tsd-kind-variable"><a href="modules.html#logger" class="tsd-kind-icon">logger</a></li><li class="tsd-kind-function"><a href="modules.html#createJob" class="tsd-kind-icon">create<wbr/>Job</a></li><li class="tsd-kind-function"><a href="modules.html#getVmaf" class="tsd-kind-icon">get<wbr/>Vmaf</a></li><li class="tsd-kind-function"><a href="modules.html#loadPipeline" class="tsd-kind-icon">load<wbr/>Pipeline</a></li><li class="tsd-kind-function"><a href="modules.html#loadPipelineFromObjects" class="tsd-kind-icon">load<wbr/>Pipeline<wbr/>From<wbr/>Objects</a></li><li class="tsd-kind-function"><a href="modules.html#qualityAnalysisModelToString" class="tsd-kind-icon">quality<wbr/>Analysis<wbr/>Model<wbr/>To<wbr/>String</a></li><li class="tsd-kind-function"><a href="modules.html#stringToQualityAnalysisModel" class="tsd-kind-icon">string<wbr/>To<wbr/>Quality<wbr/>Analysis<wbr/>Model</a></li><li class="tsd-kind-function"><a href="modules.html#suggestLadder" class="tsd-kind-icon">suggest<wbr/>Ladder</a></li></ul></nav></div></div></div><footer class="with-border-bottom"><div class="container"><h2>Legend</h2><div class="tsd-legend-group"><ul class="tsd-legend"><li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li><li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li><li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li></ul></div><h2>Settings</h2><p>Theme <select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></p></div></footer><div class="container tsd-generator"><p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div><div class="overlay"></div><script src="assets/main.js"></script></body></html>
+</div></div><div class="col-4 col-menu menu-sticky-wrap menu-highlight"><nav class="tsd-navigation primary"><ul><li class="current"><a href="modules.html">Exports</a></li><li class=" tsd-kind-namespace"><a href="modules/initJobLambda.html">init<wbr/>Job<wbr/>Lambda</a></li><li class=" tsd-kind-namespace"><a href="modules/startJobLambda.html">start<wbr/>Job<wbr/>Lambda</a></li></ul></nav><nav class="tsd-navigation secondary menu-sticky"><ul><li class="tsd-kind-enum"><a href="enums/QualityAnalysisModel.html" class="tsd-kind-icon">Quality<wbr/>Analysis<wbr/>Model</a></li><li class="tsd-kind-class"><a href="classes/AWSPipeline.html" class="tsd-kind-icon">AWSPipeline</a></li><li class="tsd-kind-class"><a href="classes/LocalPipeline.html" class="tsd-kind-icon">Local<wbr/>Pipeline</a></li><li class="tsd-kind-class"><a href="classes/Pipeline.html" class="tsd-kind-icon">Pipeline</a></li><li class="tsd-kind-type-alias"><a href="modules.html#AWSPipelineConfiguration" class="tsd-kind-icon">AWSPipeline<wbr/>Configuration</a></li><li class="tsd-kind-type-alias"><a href="modules.html#BitrateRange" class="tsd-kind-icon">Bitrate<wbr/>Range</a></li><li class="tsd-kind-type-alias"><a href="modules.html#BitrateResolutionVMAF" class="tsd-kind-icon">Bitrate<wbr/>ResolutionVMAF</a></li><li class="tsd-kind-type-alias"><a href="modules.html#JobDescription" class="tsd-kind-icon">Job<wbr/>Description</a></li><li class="tsd-kind-type-alias"><a href="modules.html#LocalPipelineConfiguration" class="tsd-kind-icon">Local<wbr/>Pipeline<wbr/>Configuration</a></li><li class="tsd-kind-type-alias"><a href="modules.html#Resolution" class="tsd-kind-icon">Resolution</a></li><li class="tsd-kind-variable"><a href="modules.html#logger" class="tsd-kind-icon">logger</a></li><li class="tsd-kind-function"><a href="modules.html#createJob" class="tsd-kind-icon">create<wbr/>Job</a></li><li class="tsd-kind-function"><a href="modules.html#getVmaf" class="tsd-kind-icon">get<wbr/>Vmaf</a></li><li class="tsd-kind-function"><a href="modules.html#loadPipeline" class="tsd-kind-icon">load<wbr/>Pipeline</a></li><li class="tsd-kind-function"><a href="modules.html#loadPipelineFromObjects" class="tsd-kind-icon">load<wbr/>Pipeline<wbr/>From<wbr/>Objects</a></li><li class="tsd-kind-function"><a href="modules.html#qualityAnalysisModelToString" class="tsd-kind-icon">quality<wbr/>Analysis<wbr/>Model<wbr/>To<wbr/>String</a></li><li class="tsd-kind-function"><a href="modules.html#stringToQualityAnalysisModel" class="tsd-kind-icon">string<wbr/>To<wbr/>Quality<wbr/>Analysis<wbr/>Model</a></li><li class="tsd-kind-function"><a href="modules.html#suggestLadder" class="tsd-kind-icon">suggest<wbr/>Ladder</a></li></ul></nav></div></div></div><footer class="with-border-bottom"><div class="container"><h2>Legend</h2><div class="tsd-legend-group"><ul class="tsd-legend"><li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li><li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li><li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li></ul><ul class="tsd-legend"><li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li></ul></div><h2>Settings</h2><p>Theme <select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></p></div></footer><div class="container tsd-generator"><p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div><div class="overlay"></div><script src="assets/main.js"></script></body></html>

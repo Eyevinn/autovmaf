@@ -3,7 +3,7 @@ import { CreateJobCommand, MediaConvertClient } from '@aws-sdk/client-mediaconve
 import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { ECSClient, RunTaskCommand } from '@aws-sdk/client-ecs';
 import createJob from '../src/create-job';
-import { job, pipeline, encodingSettings } from './resources/create-job.test.data'
+import { job, pipeline, encodingSettings, localPipeline, localJob } from './resources/create-job.test.data'
 
 const mcMock = mockClient(MediaConvertClient);
 const ecsMock = mockClient(ECSClient);
@@ -35,5 +35,11 @@ describe('create-job', () => {
   });
 });
 
+describe.only('create-job', () => {
+  jest.setTimeout(60000);
+  it('should create a job successfully', async () => {
+    console.log(JSON.stringify(localJob))
+    const test = await createJob(localJob);
 
-
+  });
+});

@@ -3,5 +3,7 @@ export type LocalPipelineConfiguration = {
   pythonPath: string;
   easyVmafPath: string;
   ffmpegEncoder: 'libx264' | 'h264_videotoolbox';
+  skipDefaultOptions?: boolean;
   ffmpegOptions: { [key: string]: string };
+  onlyOnePass?: boolean;
 };

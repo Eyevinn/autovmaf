@@ -1,4 +1,5 @@
 import { JobDescription } from '../../src/create-job';
+import { PipelineProfile } from '../../src/load-pipeline';
 
 export const job: JobDescription = {
     name: "test-job",
@@ -7,6 +8,17 @@ export const job: JobDescription = {
     reference: "reference.mp4",
     models: ["HD", "PhoneHD"],
     resolutions: [{ width: 1280, height: 720, range: undefined} ],
+    bitrates: [600000],
+    method: "bruteForce"
+  };
+
+  export const localJob: JobDescription = {
+    name: "test-job",
+    pipeline: "./tests/resources/pipeline.yml",
+    encodingProfile: "./tests/resources/profile.json",
+    reference: "./tests/resources/reference.mp4",
+    models: ["HD"],
+    resolutions: [{ width: 1280, height: 720, range: undefined}],
     bitrates: [600000],
     method: "bruteForce"
   };
@@ -21,7 +33,7 @@ export const pipeline = {
       ecsContainerName: 'easyvmaf-s3',
       ecsCluster: 'vmaf-runner',
       ecsTaskDefinition: 'easyvmaf-s3:1',
-    },
+    }
   };
 
 export const encodingSettings = {

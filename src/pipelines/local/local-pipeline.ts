@@ -30,43 +30,47 @@ export default class LocalPipeline implements Pipeline {
   }
 
   async transcode(input: string, targetResolution: Resolution, targetBitrate: number, output: string): Promise<string> {
+    console.log(input);
     const directory = path.dirname(output);
     if (!fs.existsSync(directory)) {
       fs.mkdirSync(directory, { recursive: true });
     }
 
-    const encodingArguments = {
+    const baseEncodingArguments = {
       '-vf': `scale=${targetResolution.width}:${targetResolution.height}`,
-      '-c:v': this.configuration.ffmpegEncoder,
-
-      '-b:v': targetBitrate.toString(),
-      '-maxrate': targetBitrate.toString(),
-      '-bufsize': (targetBitrate * 2).toString(),
+      '-c:v': this.configuration.ffmpegEncoder
     };
 
-    const ffmpegOptions = Object.entries(Object.assign({}, encodingArguments, this.configuration.ffmpegOptions)).flat();
+    if(!this.configuration.skipDefaultOptions) {
+      baseEncodingArguments['-b:v'] = targetBitrate.toString();
+      baseEncodingArguments['-maxrate'] = targetBitrate.toString();
+      baseEncodingArguments['-bufsize'] = (targetBitrate * 2).toString();
+    }
+
+    const ffmpegOptions = Object.entries(Object.assign({}, baseEncodingArguments, this.configuration.ffmpegOptions)).flat();
     logger.info(`ffmpegOptions: ${JSON.stringify(ffmpegOptions)}`)
     await ffmpegAsync(
       ffmpeg(input)
         .addOptions(ffmpegOptions)
         .addOptions(['-pass', '1'])
-        .addOutput('/dev/null')
+        .addOutput(this.configuration.onlyOnePass === undefined ? '/dev/null' : output)
         .outputFormat('mp4'),
       info => {
         logger.info(`Transcoding ${output}: Pass 1 progress: ${Math.round(info.percent * 100) / 100}%`);
       }
     );
-
-    await ffmpegAsync(
-      ffmpeg(input)
-        .addOptions(ffmpegOptions)
-        .addOptions(['-pass', '2'])
-        .addOutput(output),
-      info => {
-        logger.info(`Transcoding ${output}: Pass 2 progress: ${Math.round(info.percent * 100) / 100}%`);
-      }
-    );
-
+    
+    if(!this.configuration.onlyOnePass) {
+      await ffmpegAsync(
+        ffmpeg(input)
+          .addOptions(ffmpegOptions)
+          .addOptions(['-pass', '2'])
+          .addOutput(output),
+        info => {
+          logger.info(`Transcoding ${output}: Pass 2 progress: ${Math.round(info.percent * 100) / 100}%`);
+        }
+      );
+    }
     return output;
   }
 
@@ -116,4 +120,9 @@ export default class LocalPipeline implements Pipeline {
 
     return output;
   }
+
+}
+
+function checkIfOnlyOnePass(onlyOnePass?: string) {
+  return onlyOnePass === undefined || (onlyOnePass.includes("false"));
 }

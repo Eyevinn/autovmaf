@@ -1,10 +1,6 @@
-aws:
-  inputBucket: bucket
-  outputBucket: bucket
-  mediaConvertRole: arn:aws:iam::role
-  mediaConvertEndpoint: https://endpoint.amazonaws.com
-  ecsSubnet: subnet-1234
-  ecsSecurityGroup: sg-1234
-  ecsContainerName: easyvmaf-s3
-  ecsCluster: abr-analysis-cluster
-  ecsTaskDefinition: easyvmaf-s3:1
+local:
+  easyVmafPath: "/home/tom_snooze/dev/work/eyevinn/internal/easyVmaf/easyVmaf.py"
+  ffmpegPath: "/usr/bin/ffmpeg"
+  pythonPath: "/usr/bin/python3"
+  ffmpegEncoder: "libx264"
+  onlyOnePass: true

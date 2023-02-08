@@ -22,6 +22,13 @@ const ffmpegAsync = async (command: ffmpeg.FfmpegCommand, onProgress: (info: any
   });
 };
 
+const timeFormat = `{
+  "cmd": "%C",
+  "realTime": "%E",
+  "cpuUserMode": %U,
+  "cpuKernelMode: %S
+}`;
+
 export default class LocalPipeline implements Pipeline {
   private configuration: LocalPipelineConfiguration;
 
@@ -48,9 +55,10 @@ export default class LocalPipeline implements Pipeline {
     }
 
     const ffmpegOptions = Object.entries(Object.assign({}, baseEncodingArguments, this.configuration.ffmpegOptions)).flat();
+
     logger.info(`ffmpegOptions: ${JSON.stringify(ffmpegOptions)}`)
     await ffmpegAsync(
-      ffmpeg(input)
+      ffmpeg({source: input, measureCpu: {output: `${output}.pass1-cpu-time.txt`, format: timeFormat }})
         .addOptions(ffmpegOptions)
         .addOptions(['-pass', '1'])
         .addOutput(this.configuration.onlyOnePass === undefined ? '/dev/null' : output)
@@ -62,7 +70,7 @@ export default class LocalPipeline implements Pipeline {
     
     if(!this.configuration.onlyOnePass) {
       await ffmpegAsync(
-        ffmpeg(input)
+        ffmpeg({source: input, measureCpu: {output: `${output}.pass2-cpu-time.txt`, format: timeFormat }})
           .addOptions(ffmpegOptions)
           .addOptions(['-pass', '2'])
           .addOutput(output),

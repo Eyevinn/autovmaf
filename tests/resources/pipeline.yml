@@ -1,6 +1,4 @@
 local:
   easyVmafPath: "/home/tom_snooze/dev/work/eyevinn/internal/easyVmaf/easyVmaf.py"
-  ffmpegPath: "/usr/bin/ffmpeg"
-  pythonPath: "/usr/bin/python3"
   ffmpegEncoder: "libx264"
   onlyOnePass: true

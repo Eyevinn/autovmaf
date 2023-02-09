@@ -106,7 +106,7 @@ async function transcodeAndAnalyse(argv) {
 
     //console.log('job: ', job);
     
-    const vmafScores = await createJob(job as JobDescription);
+    const vmafScores = await createJob(job as JobDescription, undefined, undefined, false);
     //const ffmpegOptions = parseFFmpegOptions(argv['ffmpeg-options']) || {};
 /*
     const pipeline = {

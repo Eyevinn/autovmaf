@@ -60,15 +60,15 @@ export default class LocalPipeline implements Pipeline {
     await ffmpegAsync(
       ffmpeg({source: input, measureCpu: {output: `${output}.pass1-cpu-time.txt`, format: timeFormat }})
         .addOptions(ffmpegOptions)
-        .addOptions(['-pass', '1'])
-        .addOutput(this.configuration.onlyOnePass === undefined ? '/dev/null' : output)
+        .addOptions(this.configuration.singlePass ? []: ['-pass', '1'])
+        .addOutput(this.configuration.singlePass === undefined ? '/dev/null' : output)
         .outputFormat('mp4'),
       info => {
         logger.info(`Transcoding ${output}: Pass 1 progress: ${Math.round(info.percent * 100) / 100}%`);
       }
     );
     
-    if(!this.configuration.onlyOnePass) {
+    if(!this.configuration.singlePass) {
       await ffmpegAsync(
         ffmpeg({source: input, measureCpu: {output: `${output}.pass2-cpu-time.txt`, format: timeFormat }})
           .addOptions(ffmpegOptions)
@@ -105,6 +105,8 @@ export default class LocalPipeline implements Pipeline {
         additionalArgs = ['-model', '4K'];
         break;
     }
+
+    additionalArgs.push(...Object.entries(this.configuration.easyVmafExtraArgs || {}).flat())
 
     logger.info('Running quality analysis on ' + distorted);
     execSync(

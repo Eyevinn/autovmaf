@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+import {promises as fs} from 'fs';
+import YAML from 'yaml';
+import * as path from 'path';
 import createJob, { JobDescription } from './create-job';
 import which from 'which';
 import yargs from 'yargs/yargs';
@@ -13,14 +16,15 @@ async function run() {
 
     const argv = await yargs(hideBin(process.argv))
         .scriptName('autovmaf')
-        .command(['* <source>'], 'run transcode and vmaf for videofile source', (yargs) => {
+        .command(['* [source]'], 'run transcode and vmaf for videofile source', (yargs) => {
             return yargs
-                .positional('source', { type: 'string', describe: 'SOURCEFILE', demandOption: true })
+                .positional('source', { type: 'string', describe: 'SOURCEFILE'})
                 .options({
                     resolutions: { type: 'string', description: 'List of resolutions, ie 1920x1080,1280x720...' },
                     bitrates: { type: 'string', description: 'List of bitrates, ie 800k,1000k,...' },
                     name: { type: 'string', description: 'Name for this autovmaf run', default: 'MyVMAFMeasurements' },
                     models: { type: 'string', description: 'List of VMAF Models to use', default: 'HD' },
+                    job: { type: 'string', description: 'File with job definition' },
                     'ffmpeg-options': { type: 'string', description: 'List of options to pass to ffmpeg, on the form key1=value1:key2=value2' }
                 })
         }, transcodeAndAnalyse)
@@ -40,11 +44,53 @@ async function runSuggestLadder(argv) {
     });
 }
 
-async function transcodeAndAnalyse(argv) {
-    const reference: string = argv.source;
-    const { pythonPath, ffmpegPath, easyVmafPath } = await getExecutablePaths();
-    const ffmpegOptions = parseFFmpegOptions(argv['ffmpeg-options']) || {};
+async function readJobDefintion(file) {
+    const text = await fs.readFile(file, {encoding: 'utf-8'})
+    const extension = path.extname(file);
+    const definition = ['.yml', '.yaml'].includes(extension.toLowerCase()) ?
+        YAML.parse(text) : JSON.parse(text);
+    definition.name = definition.name || path.basename(file, extension)
+    return definition;
+}
 
+async function transcodeAndAnalyse(argv) {
+    const job: any = argv.job ? await readJobDefintion(argv.job) : {}
+    if (argv.source) {
+        job.reference = argv.source;
+    }
+    if (argv.reference) {
+        job.reference = argv.reference;
+    }
+    if (argv.models) {
+        job.models = argv.models.split(',')
+    }
+    if (argv.resolutions) {
+        job.resolutions = parseResolutions(argv.resolutions);
+    }
+    if (argv.bitrates) {
+        job.bitrates = parseBitrates(argv.bitrates);
+    }
+    if (!job.pipeline) {
+        job.pipeline = {
+            ffmpegEncoder: "libx264"
+        }
+    }
+    if (argv['ffmpeg-options']) {
+        job.pipeline.ffmpegOptions = parseFFmpegOptions(argv['ffmpeg-options']);
+    }
+
+    //const reference: string = argv.source;
+    const { pythonPath, ffmpegPath, easyVmafPath } = await getExecutablePaths();
+    job.pipeline.pythonPath = job.pipeline.pythonPath || pythonPath;
+    job.pipeline.ffmpegPath = job.pipeline.ffmpegPath || ffmpegPath;
+    job.pipeline.easyVmafPath = job.pipeline.easyVmafPath || easyVmafPath;
+    job.method = job.method || "bruteForce";
+
+    //console.log('job: ', job);
+    
+    const vmafScores = await createJob(job as JobDescription);
+    //const ffmpegOptions = parseFFmpegOptions(argv['ffmpeg-options']) || {};
+/*
     const pipeline = {
         local: {
             ffmpegPath,
@@ -66,12 +112,13 @@ async function transcodeAndAnalyse(argv) {
         bitrates: bitrates,
         method: "bruteForce"
     } as JobDescription, pipeline, ffmpegOptions, false);
+    */
 }
 
 async function getExecutablePaths() {
     const pythonPath = process.env.PYTHON_PATH || await which("python");
     const ffmpegPath = process.env.FFMPEG_PATH || await which("ffmpeg");
-    const easyVmafPath = process.env.EASYVMAF_PATH;
+    const easyVmafPath = process.env.EASYVMAF_PATH || await which("easyVmaf");
     if (!pythonPath) {
         throw new Error("python not found in path and environment variable PYTHON_PATH not set");
     }

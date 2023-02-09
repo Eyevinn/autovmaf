@@ -5,5 +5,6 @@ export type LocalPipelineConfiguration = {
   ffmpegEncoder: 'libx264' | 'h264_videotoolbox';
   skipDefaultOptions?: boolean;
   ffmpegOptions: { [key: string]: string };
-  onlyOnePass?: boolean;
+  singlePass?: boolean;
+  easyVmafExtraArgs?: { [key: string]: string };
 };

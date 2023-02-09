@@ -2,6 +2,7 @@ import analyzeBruteForce from './analysis/brute-force';
 import { Pipeline } from './pipelines/pipeline'
 import AWSPipeline from './pipelines/aws/aws-pipeline';
 import { loadPipeline, loadPipelineFromObjects } from './load-pipeline';
+import LocalPipeline from './pipelines/local/local-pipeline';
 import {
   QualityAnalysisModel,
   stringToQualityAnalysisModel,
@@ -9,17 +10,21 @@ import {
 import logger from './logger';
 import { Resolution } from './models/resolution';
 import analyzeWalkTheHull from './analysis/walk-the-hull';
+import { LocalPipelineConfiguration } from './pipelines/local/local-pipeline-configuration';
 
 /** Describes a ABR-analysis job and can be used to create jobs using the createJob()-function. */
 export type JobDescription = {
   /** This will name the folder in which to put the files. */
   name: string;
 
-  /** Path to a YAML-file that defines the pipeline. See `examples/pipeline.yml` for an example AWS-pipeline. */
-  pipeline: string;
+  /** Path to a YAML-file that defines the pipeline, or an inline local pipeline configuration. See `examples/pipeline.yml` for an example AWS-pipeline. */
+  pipeline: string | LocalPipelineConfiguration;
 
-  /** Path to a JSON-file that defines how the reference should be encoded. When using AWS, this is a MediaConvert configuration. For local pipelines, this is key-value pairs that will be passed as command line arguments to FFmpeg. See an example for AWS at `examples/encoding-profile.json`.  */
-  encodingProfile: string;
+  /** Path to a JSON-file that defines how the reference should be encoded. When using AWS, this is a MediaConvert configuration.
+   *  For local pipelines, this is key-value pairs that will be passed as command line arguments to FFmpeg.
+   *  For inline pipeline definition, this should be key-value pairs
+   *  See an example for AWS at `examples/encoding-profile.json`.  */
+  encodingProfile: string | Record<string,string>;
 
   /** Path to the reference video to analyze. Normally a local path, but when using AWS, this can also be an S3-URI. */
   reference: string;
@@ -101,8 +106,10 @@ export default async function createJob(description: JobDescription, pipelineDat
   let pipeline: Pipeline | undefined = undefined;
   if (pipelineData && encodingProfileData) {
     pipeline = await loadPipelineFromObjects(pipelineData, encodingProfileData);
+  } else if(typeof description.pipeline === 'object') {
+    pipeline = new LocalPipeline({...description.pipeline, ...description.encodingProfile as Record<string,string>} );
   } else {
-    pipeline = await loadPipeline(description.pipeline, description.encodingProfile);
+    pipeline = await loadPipeline(description.pipeline, description.encodingProfile as string);
   }
 
   if (pipeline === undefined) {

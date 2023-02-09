@@ -70,6 +70,9 @@ async function transcodeAndAnalyse(argv) {
     if (argv.bitrates) {
         job.bitrates = parseBitrates(argv.bitrates);
     }
+    if (argv.name) {
+        job.name = argv.name;
+    }
     if (!job.pipeline) {
         job.pipeline = {
             ffmpegEncoder: "libx264"

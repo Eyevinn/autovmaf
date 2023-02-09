@@ -11,6 +11,7 @@ import logger from './logger';
 import suggestLadder from './suggest-ladder';
 import { string } from 'yargs';
 import { ObjectVersion } from '@aws-sdk/client-s3';
+import { pairVmafWithResolutionAndBitrate } from './pairVmaf';
 
 async function run() {
 
@@ -28,12 +29,25 @@ async function run() {
                     'ffmpeg-options': { type: 'string', description: 'List of options to pass to ffmpeg, on the form key1=value1:key2=value2' }
                 })
         }, transcodeAndAnalyse)
+        
         .command('suggest-ladder <folder>', 'Suggest bitrate ladder given vmaf results', (yargs) => {
             return yargs
                 .positional('folder', { type: 'string', describe: 'Folder with vmaf measurement results', demandOption: true });
         }, runSuggestLadder)
+        
+        .command('pairVmaf <folder>', 'Pairs Vmaf-scores with resolution and bitrate and saves it to a .csv file', (yargs) => {
+            return yargs
+                .positional('folder', { type: 'string', describe: 'Folder with vmaf measurement results', demandOption: true });
+        }, runPairVmaf)
 
         .parse();
+}
+
+async function runPairVmaf(argv) {
+    const pairedVmafScores = await pairVmafWithResolutionAndBitrate(argv.folder);
+    ladder.forEach((rung) => {
+        console.log(rung);
+    });
 }
 
 async function runSuggestLadder(argv) {

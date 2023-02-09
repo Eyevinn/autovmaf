@@ -33,30 +33,18 @@ async function run() {
             return yargs
                 .positional('folder', { type: 'string', describe: 'Folder with vmaf measurement results', demandOption: true });
         }, runSuggestLadder)
-        
-        .command('pairVmaf <folder>', 'Pairs Vmaf-scores with resolution and bitrate and saves it to a .csv file', (yargs) => {
-            return yargs
-                .positional('folder', { type: 'string', describe: 'Folder with vmaf measurement results', demandOption: true });
-        }, runPairVmaf)
 
         .parse();
 }
 
-async function runPairVmaf(argv) {
-    const pairedVmafScores = await pairVmafWithResolutionAndBitrate(argv.folder);
-    savePairedVmafScoresAsCsvFile("test", pairedVmafScores);
-    
-    // pairedVmafScores.forEach((rung) => {
-    //     logger.info(rung);
-    // });
-}
-
 async function runSuggestLadder(argv) {
-    const ladder = await suggestLadder(argv.folder);
+    const {ladder, pairs} = await suggestLadder(argv.folder);
     logger.info(`ladder: ${ladder}`);
     ladder.forEach((rung) => {
         logger.info(rung);
     });
+
+    savePairedVmafScoresAsCsvFile("test", pairs);
 }
 
 async function readJobDefintion(file) {

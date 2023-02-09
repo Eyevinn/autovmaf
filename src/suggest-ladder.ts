@@ -1,8 +1,11 @@
 import { Resolution } from './models/resolution';
-import logger from './logger';
 import { BitrateResolutionVMAF } from './models/bitrate-resolution-vmaf';
-import { getVmaf } from '.';
 import { pairVmafWithResolutionAndBitrate } from './pairVmaf';
+
+interface LadderAndVmafPairs {
+  ladder: BitrateResolutionVMAF[],
+  pairs: Map<number, {resolution: Resolution, vmaf: number}[]>
+}
 
 /**
  * Suggests an optimal ABR-ladder from a directory of VMAF-files. Only supports loading from S3 at the moment.
@@ -17,7 +20,7 @@ export default async function suggestLadder(
   filterFunction: (bitrate: number, resolution: Resolution, vmaf: number) => boolean = () => true,
   includeAllBitrates: boolean = false,
   onProgress: (index: number, filename: string, total: number) => void = () => {}
-): Promise<BitrateResolutionVMAF[]> {
+): Promise<LadderAndVmafPairs> {
   const pairs = await pairVmafWithResolutionAndBitrate(directoryWithVmafFiles, filterFunction, onProgress);
   // let pairs = new Map<number, { resolution: Resolution; vmaf: number }[]>();
   let optimal: { resolution: Resolution; vmaf: number; bitrate: number }[] = [];
@@ -61,7 +64,7 @@ export default async function suggestLadder(
   });
 
   if (includeAllBitrates) {
-    return optimal.sort((a, b) => a.bitrate - b.bitrate);
+    return {ladder: optimal.sort((a, b) => a.bitrate - b.bitrate), pairs};
   }
 
   let ladder: { resolution: Resolution; vmaf: number; bitrate: number }[] = [];
@@ -88,5 +91,5 @@ export default async function suggestLadder(
       }
     });
 
-  return ladder.reverse();
+  return {ladder: ladder.reverse(), pairs};
 }

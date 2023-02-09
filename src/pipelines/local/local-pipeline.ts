@@ -132,7 +132,3 @@ export default class LocalPipeline implements Pipeline {
   }
 
 }
-
-function checkIfOnlyOnePass(onlyOnePass?: string) {
-  return onlyOnePass === undefined || (onlyOnePass.includes("false"));
-}

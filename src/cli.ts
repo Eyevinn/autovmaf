@@ -9,9 +9,8 @@ import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
 import logger from './logger';
 import suggestLadder from './suggest-ladder';
-import { string } from 'yargs';
-import { ObjectVersion } from '@aws-sdk/client-s3';
 import { pairVmafWithResolutionAndBitrate } from './pairVmaf';
+import { savePairedVmafScoresAsCsvFile } from './saveAsCsvFile';
 
 async function run() {
 
@@ -45,16 +44,18 @@ async function run() {
 
 async function runPairVmaf(argv) {
     const pairedVmafScores = await pairVmafWithResolutionAndBitrate(argv.folder);
-    ladder.forEach((rung) => {
-        console.log(rung);
-    });
+    savePairedVmafScoresAsCsvFile("test", pairedVmafScores);
+    
+    // pairedVmafScores.forEach((rung) => {
+    //     logger.info(rung);
+    // });
 }
 
 async function runSuggestLadder(argv) {
     const ladder = await suggestLadder(argv.folder);
-    console.log(`ladder: ${ladder}`);
+    logger.info(`ladder: ${ladder}`);
     ladder.forEach((rung) => {
-        console.log(rung);
+        logger.info(rung);
     });
 }
 
@@ -184,4 +185,4 @@ function parseResolutions(resolutions: string | undefined) {
     })
 }
 
-run().then(() => console.log("done"));
+run().then(() => logger.info("done"));

@@ -36,7 +36,7 @@ export default class LocalPipeline implements Pipeline {
     this.configuration = configuration;
   }
 
-  async transcode(input: string, targetResolution: Resolution, targetBitrate: number, output: string): Promise<string> {
+  async transcode(input: string, targetResolution: Resolution, targetBitrate: number, output: string, variables?: Record<string,string>): Promise<string> {
     console.log(input);
     const directory = path.dirname(output);
     if (!fs.existsSync(directory)) {
@@ -54,7 +54,18 @@ export default class LocalPipeline implements Pipeline {
       baseEncodingArguments['-bufsize'] = (targetBitrate * 2).toString();
     }
 
-    const ffmpegOptions = Object.entries(Object.assign({}, baseEncodingArguments, this.configuration.ffmpegOptions)).flat();
+    const ffmpegOptionsWithVariableSubstituted = {...this.configuration.ffmpegOptions};
+    if (variables) {
+      Object.entries(this.configuration.ffmpegOptions).forEach(([key, value]) => {
+        //let value = this.configuration.ffmpegOptions[key];
+        Object.entries(variables!!).forEach(([k,v]) => {
+          value = value.replace(`%${k}%`, v);
+        })
+        ffmpegOptionsWithVariableSubstituted[key] = value;
+      });
+    }
+
+    const ffmpegOptions = Object.entries(Object.assign({}, baseEncodingArguments, ffmpegOptionsWithVariableSubstituted)).flat();
 
     logger.info(`ffmpegOptions: ${JSON.stringify(ffmpegOptions)}`)
     await ffmpegAsync(

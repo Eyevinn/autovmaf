@@ -62,6 +62,7 @@ async function exportWmafResultToCsv(argv) {
 }
 
 async function transcodeAndAnalyse(argv) {
+    console.log("transcodeAndAnalye");
     const job: any = await updateJobDefinition(argv);
     
     const vmafScores = await createJob(job as JobDescription, undefined, undefined, false);

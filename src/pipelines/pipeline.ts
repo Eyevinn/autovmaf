@@ -11,6 +11,7 @@ export abstract class Pipeline {
     targetResolution: Resolution,
     targetBitrate: number,
     output: string,
+    variables?: Record<string,string>
   ): Promise<string>;
   // Output should contain file ending. Directory in output should be created if it does not exist.
   abstract analyzeQuality(

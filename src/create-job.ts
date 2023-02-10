@@ -40,6 +40,9 @@ export type JobDescription = {
 
   /** The method to use when analyzing the videos. Either `bruteForce` or `walkTheHull`. By default `bruteForce`. NOTE: `walkTheHull` is not implemented at the moment. */
   method?: 'bruteForce' | 'walkTheHull';
+
+  /** Values that will be substituted into the encoding options. Currently only supported for local pipeline */
+  pipelineVariables?: { [key: string]: string[] };
 };
 
 /**
@@ -133,6 +136,7 @@ export default async function createJob(description: JobDescription, pipelineDat
       bitrates: description.bitrates,
       concurrency,
       models,
+      pipelineVariables: description.pipelineVariables,
       filterFunction:
         description.bitrates !== undefined && description.resolutions !== undefined ? _ => true : undefined,
     });

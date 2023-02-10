@@ -9,8 +9,6 @@ import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
 import logger from './logger';
 import suggestLadder from './suggest-ladder';
-import { pairVmafWithResolutionAndBitrate } from './pairVmaf';
-import { savePairedVmafScoresAsCsvFile } from './saveAsCsvFile';
 
 async function run() {
 
@@ -25,6 +23,7 @@ async function run() {
                     name: { type: 'string', description: 'Name for this autovmaf run', default: 'MyVMAFMeasurements' },
                     models: { type: 'string', description: 'List of VMAF Models to use', default: 'HD' },
                     job: { type: 'string', description: 'File with job definition' },
+                    saveAsCsv: { type: 'boolean', description: 'Save VMAF measurements as a .csv file in addition to a JSON file', default: false },
                     'ffmpeg-options': { type: 'string', description: 'List of options to pass to ffmpeg, on the form key1=value1:key2=value2' }
                 })
         }, transcodeAndAnalyse)
@@ -38,52 +37,53 @@ async function run() {
 }
 
 async function runSuggestLadder(argv) {
+    const job: any = updateJobDefinition(argv);
     const {ladder, pairs} = await suggestLadder(argv.folder);
     logger.info(`ladder: ${ladder}`);
     ladder.forEach((rung) => {
         logger.info(rung);
     });
-
-    savePairedVmafScoresAsCsvFile("test", pairs);
+    
+    if(job.saveAsCsv) {
+        const csvObject = require('objects-to-csv');
+        new csvObject(pairs).toDisk(job.name, { allColumns: true })
+    }
 }
 
-async function readJobDefintion(file) {
-    const text = await fs.readFile(file, {encoding: 'utf-8'})
-    const extension = path.extname(file);
-    const definition = ['.yml', '.yaml'].includes(extension.toLowerCase()) ?
-        YAML.parse(text) : JSON.parse(text);
-    definition.name = definition.name || path.basename(file, extension)
-    return definition;
-}
+
 
 async function transcodeAndAnalyse(argv) {
-    const job: any = argv.job ? await readJobDefintion(argv.job) : {}
-    if (argv.source) {
-        job.reference = argv.source;
-    }
-    if (argv.reference) {
-        job.reference = argv.reference;
-    }
-    if (argv.models) {
-        job.models = argv.models.split(',')
-    }
-    if (argv.resolutions) {
-        job.resolutions = parseResolutions(argv.resolutions);
-    }
-    if (argv.bitrates) {
-        job.bitrates = parseBitrates(argv.bitrates);
-    }
-    if (argv.name) {
-        job.name = argv.name;
-    }
-    if (!job.pipeline) {
-        job.pipeline = {
-            ffmpegEncoder: "libx264"
-        }
-    }
-    if (argv['ffmpeg-options']) {
-        job.pipeline.ffmpegOptions = parseFFmpegOptions(argv['ffmpeg-options']);
-    }
+    const job: any = updateJobDefinition(argv);
+    // const job: any = argv.job ? await readJobDefintion(argv.job) : {}
+    // if (argv.source) {
+    //     job.reference = argv.source;
+    // }
+    // if (argv.reference) {
+    //     job.reference = argv.reference;
+    // }
+    // if (argv.models) {
+    //     job.models = argv.models.split(',')
+    // }
+    // if (argv.resolutions) {
+    //     job.resolutions = parseResolutions(argv.resolutions);
+    // }
+    // if (argv.bitrates) {
+    //     job.bitrates = parseBitrates(argv.bitrates);
+    // }
+    // if (argv.name) {
+    //     job.name = argv.name;
+    // }
+    // if (argv.saveAsCsv) {
+    //     job.saveAsCsv = argv.saveAsCsv;
+    // }
+    // if (!job.pipeline) {
+    //     job.pipeline = {
+    //         ffmpegEncoder: "libx264"
+    //     }
+    // }
+    // if (argv['ffmpeg-options']) {
+    //     job.pipeline.ffmpegOptions = parseFFmpegOptions(argv['ffmpeg-options']);
+    // }
 
     //const reference: string = argv.source;
     const { pythonPath, ffmpegPath, easyVmafPath } = await getExecutablePaths();
@@ -119,6 +119,49 @@ async function transcodeAndAnalyse(argv) {
         method: "bruteForce"
     } as JobDescription, pipeline, ffmpegOptions, false);
     */
+}
+
+async function updateJobDefinition(argv) {
+    const job: any = argv.job ? await readJobDefintion(argv.job) : {}
+    if (argv.source) {
+        job.reference = argv.source;
+    }
+    if (argv.reference) {
+        job.reference = argv.reference;
+    }
+    if (argv.models) {
+        job.models = argv.models.split(',')
+    }
+    if (argv.resolutions) {
+        job.resolutions = parseResolutions(argv.resolutions);
+    }
+    if (argv.bitrates) {
+        job.bitrates = parseBitrates(argv.bitrates);
+    }
+    if (argv.name) {
+        job.name = argv.name;
+    }
+    if (argv.saveAsCsv) {
+        job.saveAsCsv = argv.saveAsCsv;
+    }
+    if (!job.pipeline) {
+        job.pipeline = {
+            ffmpegEncoder: "libx264"
+        }
+    }
+    if (argv['ffmpeg-options']) {
+        job.pipeline.ffmpegOptions = parseFFmpegOptions(argv['ffmpeg-options']);
+    }
+    return job;
+}
+
+async function readJobDefintion(file) {
+    const text = await fs.readFile(file, {encoding: 'utf-8'})
+    const extension = path.extname(file);
+    const definition = ['.yml', '.yaml'].includes(extension.toLowerCase()) ?
+        YAML.parse(text) : JSON.parse(text);
+    definition.name = definition.name || path.basename(file, extension)
+    return definition;
 }
 
 async function getExecutablePaths() {

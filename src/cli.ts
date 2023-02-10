@@ -86,11 +86,11 @@ async function transcodeAndAnalyse(argv) {
     // }
 
     //const reference: string = argv.source;
-    const { pythonPath, ffmpegPath, easyVmafPath } = await getExecutablePaths();
-    job.pipeline.pythonPath = job.pipeline.pythonPath || pythonPath;
-    job.pipeline.ffmpegPath = job.pipeline.ffmpegPath || ffmpegPath;
-    job.pipeline.easyVmafPath = job.pipeline.easyVmafPath || easyVmafPath;
-    job.method = job.method || "bruteForce";
+    // const { pythonPath, ffmpegPath, easyVmafPath } = await getExecutablePaths();
+    // job.pipeline.pythonPath = job.pipeline.pythonPath || pythonPath;
+    // job.pipeline.ffmpegPath = job.pipeline.ffmpegPath || ffmpegPath;
+    // job.pipeline.easyVmafPath = job.pipeline.easyVmafPath || easyVmafPath;
+    // job.method = job.method || "bruteForce";
 
     //console.log('job: ', job);
     
@@ -152,6 +152,13 @@ async function updateJobDefinition(argv) {
     if (argv['ffmpeg-options']) {
         job.pipeline.ffmpegOptions = parseFFmpegOptions(argv['ffmpeg-options']);
     }
+
+    const { pythonPath, ffmpegPath, easyVmafPath } = await getExecutablePaths();
+    job.pipeline.pythonPath = job.pipeline.pythonPath || pythonPath;
+    job.pipeline.ffmpegPath = job.pipeline.ffmpegPath || ffmpegPath;
+    job.pipeline.easyVmafPath = job.pipeline.easyVmafPath || easyVmafPath;
+    job.method = job.method || "bruteForce";
+
     return job;
 }
 

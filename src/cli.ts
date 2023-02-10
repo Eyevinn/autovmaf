@@ -41,24 +41,17 @@ async function run() {
 }
 
 async function runSuggestLadder(argv) {
-    const job: any = await updateJobDefinition(argv);
     const {ladder, pairs} = await suggestLadder(argv.folder);
     console.log(`ladder: ${ladder}`);
     ladder.forEach((rung) => {
         console.log(rung);
     });
-    console.log(`saveAsCsv: ${job.saveAsCsv}, ` + job.saveAsCsv ? `also saving results as a .csv file.` : `will not save results as a .csv file.`);
-    if(job.saveAsCsv) {
-        const csvObject = require('objects-to-csv');
-        await new csvObject(pairs).toDisk(job.name, { allColumns: true });
-    }
 }
 
-async function exportWmafResultToCsv(argv, job?: any) {
-    job = job || await updateJobDefinition(argv);
+async function exportWmafResultToCsv(argv) {
     const pairs = await pairVmafWithResolutionAndBitrate(argv.folder);
     const csvObject = require('objects-to-csv');
-    await new csvObject(pairs).toDisk(job.name, { allColumns: true });
+    await new csvObject(pairs).toDisk(`${argv.folder}/results.csv`, { allColumns: true });
 }
 
 
@@ -69,7 +62,7 @@ async function transcodeAndAnalyse(argv) {
 
     console.log(`saveAsCsv: ${job.saveAsCsv}, ` + job.saveAsCsv ? `also saving results as a .csv file.` : `will not save results as a .csv file.`);
     if(job.saveAsCsv) {
-        exportWmafResultToCsv(argv, job);
+        exportWmafResultToCsv({folder:job.name});
     }
     //const ffmpegOptions = parseFFmpegOptions(argv['ffmpeg-options']) || {};
 /*

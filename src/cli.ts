@@ -37,7 +37,7 @@ async function run() {
 }
 
 async function runSuggestLadder(argv) {
-    const job: any = updateJobDefinition(argv);
+    const job: any = await updateJobDefinition(argv);
     const {ladder, pairs} = await suggestLadder(argv.folder);
     logger.info(`ladder: ${ladder}`);
     ladder.forEach((rung) => {
@@ -53,7 +53,7 @@ async function runSuggestLadder(argv) {
 
 
 async function transcodeAndAnalyse(argv) {
-    const job: any = updateJobDefinition(argv);
+    const job: any = await updateJobDefinition(argv);
     // const job: any = argv.job ? await readJobDefintion(argv.job) : {}
     // if (argv.source) {
     //     job.reference = argv.source;

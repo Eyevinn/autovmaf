@@ -7,10 +7,13 @@ import logger from './logger';
 function vmafFromJsonString(str: string): number {
   try {
     const data = JSON.parse(str);
-    if (data['pooled_metrics']['vmaf']) {
+    if (data?.['pooled_metrics']?.['vmaf']) {
       return data['pooled_metrics']['vmaf']['harmonic_mean'];
     }
-    return data['pooled_metrics']['vmaf_hd']['harmonic_mean'];
+    if (data?.['VMAF score']) {
+      return data['VMAF score'];
+    }
+    return data?.['pooled_metrics']?.['vmaf_hd']?.['harmonic_mean'];
   } catch {
     return NaN;
   }

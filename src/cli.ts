@@ -9,6 +9,7 @@ import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
 import logger from './logger';
 import suggestLadder from './suggest-ladder';
+import ObjectsToCsv from 'objects-to-csv';
 import { pairVmafWithResolutionAndBitrate } from './pairVmaf';
 
 async function run() {
@@ -35,7 +36,7 @@ async function run() {
         .command('export-csv <folder>', 'Export Vmaf results as csv', (yargs) => {
             return yargs
                 .positional('folder', { type: 'string', describe: 'Folder with vmaf measurement results', demandOption: true });
-        }, runSuggestLadder)
+        }, exportWmafResultToCsv)
 
         .parse();
 }
@@ -49,11 +50,16 @@ async function runSuggestLadder(argv) {
 }
 
 async function exportWmafResultToCsv(argv) {
-    const pairs = await pairVmafWithResolutionAndBitrate(argv.folder);
-    const csvObject = require('objects-to-csv');
-    await new csvObject(pairs).toDisk(`${argv.folder}/results.csv`, { allColumns: true });
+    const pairs = Array.from(await pairVmafWithResolutionAndBitrate(argv.folder)).flatMap((result) => {
+        return result[1].map((resolutionVmaf => ({
+            resolution: `${resolutionVmaf.resolution.width}X${resolutionVmaf.resolution.height}`,
+            vmaf: resolutionVmaf.vmaf,
+            bitrate: result[0]
+        })))
+    });
+    
+    await new ObjectsToCsv(pairs).toDisk(`${argv.folder}/results.csv`, { allColumns: true });
 }
-
 
 async function transcodeAndAnalyse(argv) {
     const job: any = await updateJobDefinition(argv);

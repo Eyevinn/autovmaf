@@ -43,10 +43,11 @@ async function runSuggestLadder(argv) {
     ladder.forEach((rung) => {
         logger.info(rung);
     });
-    
+    logger.info(`saveAsCsv: ${job.saveAsCsv}, ` + job.saveAsCsv ? `also saving results as a .csv file.` : `will not save results as a .csv file.`);
     if(job.saveAsCsv) {
+        
         const csvObject = require('objects-to-csv');
-        new csvObject(pairs).toDisk(job.name, { allColumns: true })
+        await new csvObject(pairs).toDisk(job.name, { allColumns: true })
     }
 }
 

@@ -9,6 +9,7 @@ import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
 import logger from './logger';
 import suggestLadder from './suggest-ladder';
+import { pairVmafWithResolutionAndBitrate } from './pairVmaf';
 
 async function run() {
 
@@ -31,6 +32,10 @@ async function run() {
             return yargs
                 .positional('folder', { type: 'string', describe: 'Folder with vmaf measurement results', demandOption: true });
         }, runSuggestLadder)
+        .command('export-csv <folder>', 'Export Vmaf results as csv', (yargs) => {
+            return yargs
+                .positional('folder', { type: 'string', describe: 'Folder with vmaf measurement results', demandOption: true });
+        }, runSuggestLadder)
 
         .parse();
 }
@@ -45,16 +50,27 @@ async function runSuggestLadder(argv) {
     console.log(`saveAsCsv: ${job.saveAsCsv}, ` + job.saveAsCsv ? `also saving results as a .csv file.` : `will not save results as a .csv file.`);
     if(job.saveAsCsv) {
         const csvObject = require('objects-to-csv');
-        await new csvObject(pairs).toDisk(job.name, { allColumns: true })
+        await new csvObject(pairs).toDisk(job.name, { allColumns: true });
     }
 }
 
+async function exportWmafResultToCsv(argv, job?: any) {
+    job = job || await updateJobDefinition(argv);
+    const pairs = await pairVmafWithResolutionAndBitrate(argv.folder);
+    const csvObject = require('objects-to-csv');
+    await new csvObject(pairs).toDisk(job.name, { allColumns: true });
+}
 
 
 async function transcodeAndAnalyse(argv) {
     const job: any = await updateJobDefinition(argv);
     
     const vmafScores = await createJob(job as JobDescription, undefined, undefined, false);
+
+    console.log(`saveAsCsv: ${job.saveAsCsv}, ` + job.saveAsCsv ? `also saving results as a .csv file.` : `will not save results as a .csv file.`);
+    if(job.saveAsCsv) {
+        exportWmafResultToCsv(argv, job);
+    }
     //const ffmpegOptions = parseFFmpegOptions(argv['ffmpeg-options']) || {};
 /*
     const pipeline = {

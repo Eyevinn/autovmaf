@@ -26,8 +26,7 @@ async function run() {
                     saveAsCsv: { type: 'boolean', description: 'Save VMAF measurements as a .csv file in addition to a JSON file', default: false },
                     'ffmpeg-options': { type: 'string', description: 'List of options to pass to ffmpeg, on the form key1=value1:key2=value2' }
                 })
-        }, transcodeAndAnalyse)
-        
+        }, transcodeAndAnalyse)       
         .command('suggest-ladder <folder>', 'Suggest bitrate ladder given vmaf results', (yargs) => {
             return yargs
                 .positional('folder', { type: 'string', describe: 'Folder with vmaf measurement results', demandOption: true });
@@ -39,13 +38,12 @@ async function run() {
 async function runSuggestLadder(argv) {
     const job: any = await updateJobDefinition(argv);
     const {ladder, pairs} = await suggestLadder(argv.folder);
-    logger.info(`ladder: ${ladder}`);
+    console.log(`ladder: ${ladder}`);
     ladder.forEach((rung) => {
-        logger.info(rung);
+        console.log(rung);
     });
-    logger.info(`saveAsCsv: ${job.saveAsCsv}, ` + job.saveAsCsv ? `also saving results as a .csv file.` : `will not save results as a .csv file.`);
+    console.log(`saveAsCsv: ${job.saveAsCsv}, ` + job.saveAsCsv ? `also saving results as a .csv file.` : `will not save results as a .csv file.`);
     if(job.saveAsCsv) {
-        
         const csvObject = require('objects-to-csv');
         await new csvObject(pairs).toDisk(job.name, { allColumns: true })
     }
@@ -55,45 +53,6 @@ async function runSuggestLadder(argv) {
 
 async function transcodeAndAnalyse(argv) {
     const job: any = await updateJobDefinition(argv);
-    // const job: any = argv.job ? await readJobDefintion(argv.job) : {}
-    // if (argv.source) {
-    //     job.reference = argv.source;
-    // }
-    // if (argv.reference) {
-    //     job.reference = argv.reference;
-    // }
-    // if (argv.models) {
-    //     job.models = argv.models.split(',')
-    // }
-    // if (argv.resolutions) {
-    //     job.resolutions = parseResolutions(argv.resolutions);
-    // }
-    // if (argv.bitrates) {
-    //     job.bitrates = parseBitrates(argv.bitrates);
-    // }
-    // if (argv.name) {
-    //     job.name = argv.name;
-    // }
-    // if (argv.saveAsCsv) {
-    //     job.saveAsCsv = argv.saveAsCsv;
-    // }
-    // if (!job.pipeline) {
-    //     job.pipeline = {
-    //         ffmpegEncoder: "libx264"
-    //     }
-    // }
-    // if (argv['ffmpeg-options']) {
-    //     job.pipeline.ffmpegOptions = parseFFmpegOptions(argv['ffmpeg-options']);
-    // }
-
-    //const reference: string = argv.source;
-    // const { pythonPath, ffmpegPath, easyVmafPath } = await getExecutablePaths();
-    // job.pipeline.pythonPath = job.pipeline.pythonPath || pythonPath;
-    // job.pipeline.ffmpegPath = job.pipeline.ffmpegPath || ffmpegPath;
-    // job.pipeline.easyVmafPath = job.pipeline.easyVmafPath || easyVmafPath;
-    // job.method = job.method || "bruteForce";
-
-    //console.log('job: ', job);
     
     const vmafScores = await createJob(job as JobDescription, undefined, undefined, false);
     //const ffmpegOptions = parseFFmpegOptions(argv['ffmpeg-options']) || {};

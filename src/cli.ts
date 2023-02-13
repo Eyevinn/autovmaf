@@ -27,6 +27,7 @@ async function run() {
                     job: { type: 'string', description: 'File with job definition' },
                     saveAsCsv: { type: 'boolean', description: 'Save VMAF measurements as a .csv file in addition to a JSON file', default: false },
                     skipTranscode: { type: 'boolean', description: 'Skip transcode and run vmaf on allready transcoded files', default: false},
+                    probeBitrate: {type: 'boolean', description: 'Read bitrate of transcoded file with ffprobe', default: false},
                     'ffmpeg-options': { type: 'string', description: 'List of options to pass to ffmpeg, on the form key1=value1:key2=value2' }
                 })
         }, transcodeAndAnalyse)       
@@ -36,7 +37,10 @@ async function run() {
         }, runSuggestLadder)
         .command('export-csv <folder>', 'Export Vmaf results as csv', (yargs) => {
             return yargs
-                .positional('folder', { type: 'string', describe: 'Folder with vmaf measurement results', demandOption: true });
+                .positional('folder', { type: 'string', describe: 'Folder with vmaf measurement results', demandOption: true })
+                .options({
+                    probeBitrate: {type: 'boolean', description: 'Read bitrate of transcoded file with ffprobe', default: false}
+                });
         }, exportWmafResultToCsv)
 
         .parse();
@@ -51,8 +55,10 @@ async function runSuggestLadder(argv) {
 }
 
 async function exportWmafResultToCsv(argv) {
-    const pairs = Array.from(await pairVmafWithResolutionAndBitrate(argv.folder)).flatMap((result) => {
+    const folder = argv.folder.split("/").slice("-2").join("/");
+    const pairs = Array.from(await pairVmafWithResolutionAndBitrate(argv.folder, () => true, () => {}, argv.probeBitrate)).flatMap((result) => {
         return result[1].map((resolutionVmaf => ({
+            folder,
             resolution: `${resolutionVmaf.resolution.width}X${resolutionVmaf.resolution.height}`,
             vmaf: resolutionVmaf.vmaf,
             bitrate: result[0]
@@ -72,7 +78,7 @@ async function transcodeAndAnalyse(argv) {
 
     console.log(`saveAsCsv: ${job.saveAsCsv}, ` + job.saveAsCsv ? `also saving results as a .csv file.` : `will not save results as a .csv file.`);
     if(job.saveAsCsv) {
-        exportWmafResultToCsv({folder:job.name});
+        exportWmafResultToCsv({folder:job.name, probeBitrate: argv.probeBitrate});
     }
     //const ffmpegOptions = parseFFmpegOptions(argv['ffmpeg-options']) || {};
 /*

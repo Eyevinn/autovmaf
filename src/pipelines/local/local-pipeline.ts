@@ -27,7 +27,7 @@ const timeFormat = `{
   "cmd": "%C",
   "realTime": "%E",
   "cpuUserMode": %U,
-  "cpuKernelMode: %S
+  "cpuKernelMode": %S
 }`;
 
 export default class LocalPipeline implements Pipeline {

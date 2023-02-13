@@ -71,7 +71,6 @@ async function exportWmafResultToCsv(argv) {
 async function transcodeAndAnalyse(argv) {
     console.log("transcodeAndAnalye");
     const job: any = await updateJobDefinition(argv);
-    console.log(job.models);
     const models: string[] = job.models;
     console.log("Running job: ", job);
     
@@ -80,7 +79,6 @@ async function transcodeAndAnalyse(argv) {
     console.log(`saveAsCsv: ${job.saveAsCsv}, ` + (job.saveAsCsv ? `also saving results as a .csv file.` : `will not save results as a .csv file.`));
     if(job.saveAsCsv) {
         models.forEach(model => exportWmafResultToCsv({folder:`${job.name}/${model}`, probeBitrate: argv.probeBitrate}));
-        // exportWmafResultToCsv({folder:job.name, probeBitrate: argv.probeBitrate});
     }
     //const ffmpegOptions = parseFFmpegOptions(argv['ffmpeg-options']) || {};
 /*

@@ -5,6 +5,7 @@ import { Pipeline } from '../pipelines/pipeline';
 import path from 'path';
 import logger from '../logger';
 import { BitrateRange } from '../models/bitrateRange';
+import * as fs from 'fs';
 
 export type AnalysisOptions = {
   models?: QualityAnalysisModel[];
@@ -13,7 +14,8 @@ export type AnalysisOptions = {
   filterFunction?: (pair: BitrateResolutionPair) => boolean;
   concurrency?: boolean;
   pipelineVariables?: { [key: string]: string[] };
-  skipTranscode?: boolean
+  skipTranscode?: boolean,
+  skipExisting?: boolean
 };
 
 const defaultModels = [QualityAnalysisModel.HD];
@@ -107,7 +109,13 @@ export default async function analyzeBruteForce(directory: string, reference: st
       });
     }
     outFile = outFile + ".mp4";
-    const variant = options.skipTranscode ? outFile : await pipeline.transcode(
+    const skip = options.skipTranscode || (options.skipExisting && fs.existsSync(outFile));
+    if (options.skipTranscode) {
+      console.log(`Skipping transcode for ${outFile}`);
+    } else if (options.skipExisting && fs.existsSync(outFile)) {
+      console.log(`Skipping transcode for ${outFile} because file exists`);
+    }
+    const variant = skip ? outFile : await pipeline.transcode(
       reference,
       pair.resolution,
       pair.bitrate,

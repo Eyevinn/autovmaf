@@ -27,6 +27,7 @@ async function run() {
                     job: { type: 'string', description: 'File with job definition' },
                     saveAsCsv: { type: 'boolean', description: 'Save VMAF measurements as a .csv file in addition to a JSON file', default: false },
                     skipTranscode: { type: 'boolean', description: 'Skip transcode and run vmaf on allready transcoded files', default: false},
+                    skipExisting: { type: 'boolean', description: 'Skip transcode for allready transcoded files', default: true},
                     probeBitrate: {type: 'boolean', description: 'Read bitrate of transcoded file with ffprobe', default: false},
                     'ffmpeg-options': { type: 'string', description: 'List of options to pass to ffmpeg, on the form key1=value1:key2=value2' }
                 })
@@ -109,6 +110,7 @@ async function transcodeAndAnalyse(argv) {
 async function updateJobDefinition(argv) {
     const job: any = argv.job ? await readJobDefintion(argv.job) : {}
     job.skipTranscode = argv.skipTranscode;
+    job.skipExisting = argv.skipExisting;
     if (argv.source) {
         job.reference = argv.source;
     }

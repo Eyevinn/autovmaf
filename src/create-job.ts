@@ -46,6 +46,9 @@ export type JobDescription = {
 
   /** Skip transcode and run analysis only, files are assumed to be allready present */
   skipTranscode?: boolean;
+
+  /** Skip transcode if outfile allready exists */
+  skipExisting?: boolean;
 };
 
 /**
@@ -141,6 +144,7 @@ export default async function createJob(description: JobDescription, pipelineDat
       models,
       pipelineVariables: description.pipelineVariables,
       skipTranscode: !!description.skipTranscode,
+      skipExisting: !!description.skipExisting,
       filterFunction:
         description.bitrates !== undefined && description.resolutions !== undefined ? _ => true : undefined,
     });

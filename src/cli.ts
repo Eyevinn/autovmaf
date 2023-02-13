@@ -71,14 +71,15 @@ async function exportWmafResultToCsv(argv) {
 async function transcodeAndAnalyse(argv) {
     console.log("transcodeAndAnalye");
     const job: any = await updateJobDefinition(argv);
-
+    const models: string[] = argv.models;
     console.log("Running job: ", job);
     
     const vmafScores = await createJob(job as JobDescription, undefined, undefined, false);
 
     console.log(`saveAsCsv: ${job.saveAsCsv}, ` + (job.saveAsCsv ? `also saving results as a .csv file.` : `will not save results as a .csv file.`));
     if(job.saveAsCsv) {
-        exportWmafResultToCsv({folder:job.name, probeBitrate: argv.probeBitrate});
+        models.forEach(model => exportWmafResultToCsv({folder:`${job.name}/${model}`, probeBitrate: argv.probeBitrate}));
+        // exportWmafResultToCsv({folder:job.name, probeBitrate: argv.probeBitrate});
     }
     //const ffmpegOptions = parseFFmpegOptions(argv['ffmpeg-options']) || {};
 /*

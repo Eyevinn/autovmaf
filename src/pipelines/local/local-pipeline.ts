@@ -11,6 +11,7 @@ import logger from '../../logger';
 const ffmpegAsync = async (command: ffmpeg.FfmpegCommand, onProgress: (info: any) => void) => {
   return new Promise<void>((resolve, reject) => {
     command
+      .on('start', (cmdLine) => console.log(`Starting ffmpeg: ${cmdLine}`))
       .on('progress', onProgress)
       .on('end', () => {
         resolve();

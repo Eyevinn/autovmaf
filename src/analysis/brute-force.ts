@@ -13,6 +13,7 @@ export type AnalysisOptions = {
   filterFunction?: (pair: BitrateResolutionPair) => boolean;
   concurrency?: boolean;
   pipelineVariables?: { [key: string]: string[] };
+  skipTranscode?: boolean
 };
 
 const defaultModels = [QualityAnalysisModel.HD];
@@ -106,7 +107,7 @@ export default async function analyzeBruteForce(directory: string, reference: st
       });
     }
     outFile = outFile + ".mp4";
-    const variant = await pipeline.transcode(
+    const variant = options.skipTranscode ? outFile : await pipeline.transcode(
       reference,
       pair.resolution,
       pair.bitrate,

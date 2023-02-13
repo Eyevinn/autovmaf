@@ -22,10 +22,11 @@ async function run() {
                 .options({
                     resolutions: { type: 'string', description: 'List of resolutions, ie 1920x1080,1280x720...' },
                     bitrates: { type: 'string', description: 'List of bitrates, ie 800k,1000k,...' },
-                    name: { type: 'string', description: 'Name for this autovmaf run', default: 'MyVMAFMeasurements' },
-                    models: { type: 'string', description: 'List of VMAF Models to use', default: 'HD' },
+                    name: { type: 'string', description: 'Name for this autovmaf run'},
+                    models: { type: 'string', description: 'List of VMAF Models to use'},
                     job: { type: 'string', description: 'File with job definition' },
                     saveAsCsv: { type: 'boolean', description: 'Save VMAF measurements as a .csv file in addition to a JSON file', default: false },
+                    skipTranscode: { type: 'boolean', description: 'Skip transcode and run vmaf on allready transcoded files', default: false},
                     'ffmpeg-options': { type: 'string', description: 'List of options to pass to ffmpeg, on the form key1=value1:key2=value2' }
                 })
         }, transcodeAndAnalyse)       
@@ -64,6 +65,8 @@ async function exportWmafResultToCsv(argv) {
 async function transcodeAndAnalyse(argv) {
     console.log("transcodeAndAnalye");
     const job: any = await updateJobDefinition(argv);
+
+    console.log("Running job: ", job);
     
     const vmafScores = await createJob(job as JobDescription, undefined, undefined, false);
 
@@ -99,6 +102,7 @@ async function transcodeAndAnalyse(argv) {
 
 async function updateJobDefinition(argv) {
     const job: any = argv.job ? await readJobDefintion(argv.job) : {}
+    job.skipTranscode = argv.skipTranscode;
     if (argv.source) {
         job.reference = argv.source;
     }
@@ -126,13 +130,21 @@ async function updateJobDefinition(argv) {
         }
     }
     if (argv['ffmpeg-options']) {
-        job.pipeline.ffmpegOptions = parseFFmpegOptions(argv['ffmpeg-options']);
+        job.pipeline.ffmpegOptions = {...job.pipeline.ffmpegOptions || {}, ...parseFFmpegOptions(argv['ffmpeg-options'])};
+    }
+    job.name = job.name || "MyVmafMeasurements";
+    job.models = job.models || ["HD"];
+    if (!job.reference) {
+        throw new Error("No input file selected");
     }
 
     const { pythonPath, ffmpegPath, easyVmafPath } = await getExecutablePaths();
     job.pipeline.pythonPath = job.pipeline.pythonPath || pythonPath;
     job.pipeline.ffmpegPath = job.pipeline.ffmpegPath || ffmpegPath;
     job.pipeline.easyVmafPath = job.pipeline.easyVmafPath || easyVmafPath;
+    console.log("Python path: ", pythonPath);
+    console.log("FFmpeg path: ", ffmpegPath);
+    console.log("EasyVmaf path: ", easyVmafPath);
     job.method = job.method || "bruteForce";
 
     return job;
@@ -144,13 +156,29 @@ async function readJobDefintion(file) {
     const definition = ['.yml', '.yaml'].includes(extension.toLowerCase()) ?
         YAML.parse(text) : JSON.parse(text);
     definition.name = definition.name || path.basename(file, extension)
+    const baseName = definition.name;
+    let i = 1;
+    while (await pathExists(definition.name)) {
+        console.log(definition.name);
+        definition.name = `${baseName}-${i}`
+        i++;
+    }
     return definition;
+}
+
+async function pathExists(path: string) {
+    try {
+        await fs.access(path);
+        return true;
+    } catch {
+        return false;
+    }
 }
 
 async function getExecutablePaths() {
     const pythonPath = process.env.PYTHON_PATH || await which("python");
     const ffmpegPath = process.env.FFMPEG_PATH || await which("ffmpeg");
-    const easyVmafPath = process.env.EASYVMAF_PATH || await which("easyVmaf");
+    const easyVmafPath = process.env.EASYVMAF_PATH;
     if (!pythonPath) {
         throw new Error("python not found in path and environment variable PYTHON_PATH not set");
     }

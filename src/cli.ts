@@ -76,7 +76,7 @@ async function transcodeAndAnalyse(argv) {
     
     const vmafScores = await createJob(job as JobDescription, undefined, undefined, false);
 
-    console.log(`saveAsCsv: ${job.saveAsCsv}, ` + job.saveAsCsv ? `also saving results as a .csv file.` : `will not save results as a .csv file.`);
+    console.log(`saveAsCsv: ${job.saveAsCsv}, ` + (job.saveAsCsv ? `also saving results as a .csv file.` : `will not save results as a .csv file.`));
     if(job.saveAsCsv) {
         exportWmafResultToCsv({folder:job.name, probeBitrate: argv.probeBitrate});
     }

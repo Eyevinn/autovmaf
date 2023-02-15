@@ -53,7 +53,7 @@ async function getCpuTime(file: string) {
   let timeFile = file.replace("_vmaf.json", ".mp4.pass1-cpu-time.txt");
   if (!fileExists(timeFile)) {
     // Look in parent folder
-    timeFile = path.resolve(path.dirname(timeFile), `${path.basename(timeFile)}`);
+    timeFile = path.resolve(path.dirname(timeFile), `../${path.basename(timeFile)}`);
   }
   if (!fileExists(timeFile)) {
     throw new Error(`Unable to find corresponding cpu-time file for vmaf file: ${file}`);

@@ -62,7 +62,9 @@ async function exportWmafResultToCsv(argv) {
             folder,
             resolution: `${resolutionVmaf.resolution.width}X${resolutionVmaf.resolution.height}`,
             vmaf: resolutionVmaf.vmaf,
-            bitrate: result[0]
+            bitrate: result[0],
+            realTime: resolutionVmaf.cpuTime?.realTime,
+            cpuTime: resolutionVmaf.cpuTime?.cpuTime
         })))
     });
     

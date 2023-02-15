@@ -46,7 +46,6 @@ async function getCpuTimes(vmafFiles: string[]) {
   for (const filename of vmafFiles) {
     cpuTimes[path.basename(filename)] = await getCpuTime(filename);
   }
-  console.log(JSON.stringify(cpuTimes));
   return cpuTimes;
 }
 

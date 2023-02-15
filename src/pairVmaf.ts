@@ -46,6 +46,7 @@ async function getCpuTimes(vmafFiles: string[]) {
   for (const filename of vmafFiles) {
     cpuTimes[path.basename(filename)] = await getCpuTime(filename);
   }
+  console.log(JSON.stringify(cpuTimes));
   return cpuTimes;
 }
 
@@ -64,7 +65,7 @@ async function getCpuTime(file: string) {
   const cpuUserMode = metadata.cpuUserMode as number;
   const cpuKernelMode = metadata.cpuKernelMode as number;
   console.log(`Got time data realTime: ${realTime}, cpuUserMode: ${cpuUserMode}, cpuKernelMode: ${cpuKernelMode} from file ${timeFile}`);
-  return {realTime, cpuTime: cpuUserMode+cpuKernelMode};
+  return {realTime, cpuTime: parseFloat((cpuUserMode+cpuKernelMode).toFixed(2))};
 }
 
 async function getBitrates(filenames: string[]): Promise<Record<string,number>> {

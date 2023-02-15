@@ -56,7 +56,7 @@ async function getCpuTime(file: string) {
     timeFile = path.resolve(path.dirname(timeFile), `../${path.basename(timeFile)}`);
   }
   if (!fileExists(timeFile)) {
-    throw new Error(`Unable to find corresponding cpu-time file for vmaf file: ${file}`);
+    throw new Error(`Unable to find corresponding cpu-time file: ${timeFile} for vmaf file: ${file}`);
   }
   
   const metadata = JSON.parse(fs.readFileSync(timeFile, 'utf8'));

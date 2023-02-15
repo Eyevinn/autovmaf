@@ -58,7 +58,7 @@ async function getCpuTime(file: string) {
   if (!fileExists(timeFile)) {
     throw new Error(`Unable to find corresponding cpu-time file for vmaf file: ${file}`);
   }
-  const metadata = JSON.parse(timeFile);
+  const metadata = JSON.parse(fs.readFileSync(timeFile));
   const realTime = metadata.realTime as number;
   const cpuUserMode = metadata.cpuUserMode as number;
   const cpuKernelMode = metadata.cpuKernelMode as number;

@@ -11,7 +11,7 @@ export async function pairVmafWithResolutionAndBitrate(
   onProgress: (index: number, filename: string, total: number) => void = () => {},
   probeBitrate: boolean = false) {
 
-  let pairs = new Map<number, { resolution: Resolution; vmaf: number, cpuTime?: {realTime: number, cpuTime: number}}[]>();
+  let pairs = new Map<number, { resolution: Resolution; vmaf: number, cpuTime?: {realTime: number, cpuTime: number}, vmafFile: string }[]>();
   logger.info(`Loading VMAF data from ${directoryWithVmafFiles}...`);
   const vmafs = await getVmaf(directoryWithVmafFiles, onProgress);
   let counter = 1;
@@ -29,9 +29,9 @@ export async function pairVmafWithResolutionAndBitrate(
 
     if (filterFunction(bitrate, { width, height }, vmaf)) {
       if (pairs.has(bitrate)) {
-        pairs.get(bitrate)?.push({ resolution: { width, height }, vmaf, cpuTime });
+        pairs.get(bitrate)?.push({ resolution: { width, height }, vmaf, cpuTime, vmafFile: filename });
       } else {
-        pairs.set(bitrate, [{ resolution: { width, height }, vmaf, cpuTime }]);
+        pairs.set(bitrate, [{ resolution: { width, height }, vmaf, cpuTime, vmafFile: filename }]);
       }
     }
 

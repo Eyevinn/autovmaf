@@ -60,6 +60,7 @@ async function exportWmafResultToCsv(argv) {
     const pairs = Array.from(await pairVmafWithResolutionAndBitrate(argv.folder, () => true, () => {}, argv.probeBitrate)).flatMap((result) => {
         return result[1].map((resolutionVmaf => ({
             folder,
+            filename: resolutionVmaf.vmafFile,
             resolution: `${resolutionVmaf.resolution.width}X${resolutionVmaf.resolution.height}`,
             vmaf: resolutionVmaf.vmaf,
             bitrate: result[0],

@@ -12,6 +12,7 @@ import { Resolution } from './models/resolution';
 import analyzeWalkTheHull from './analysis/walk-the-hull';
 import { LocalPipelineConfiguration } from './pipelines/local/local-pipeline-configuration';
 
+
 /** Describes a ABR-analysis job and can be used to create jobs using the createJob()-function. */
 export type JobDescription = {
   /** This will name the folder in which to put the files. */

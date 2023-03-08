@@ -30,7 +30,6 @@
 
 By optimizing ABR-ladders for specific content, you will make sure to not have wasteful rungs and this has been shown to [cut bandwidth usage in half](https://dev.to/video/automating-video-analysis-to-cut-your-streaming-bandwidth-usage-in-half-5hk1).
 
-
 ## Usage
 
 Transcoding and VMAF analysis can either be run in AWS or locally. When running in aws, you will need a running ECS cluster with a task definition configured to run [easyvmaf-s3](https://github.com/Eyevinn/easyvmaf_s3).
@@ -54,11 +53,11 @@ AWS_SECRET_ACCESS_KEY=EFGH...
 
 ### Generate VMAF measurements
 
-To generate VMAF measurements, you will need to define a job which can be created with the `createJob()`-function. 
+To generate VMAF measurements, you will need to define a job which can be created with the `createJob()`-function.
 
 ```typescript
   const { createJob } = require('@eyevinn/autovmaf');
- 
+
   const vmafScores = await createJob({
     name: "MyVMAFmeasurements",
     pipeline: "pipeline.yml",
@@ -66,13 +65,18 @@ To generate VMAF measurements, you will need to define a job which can be create
     reference: "reference.mp4",
     models: ["HD", "PhoneHD"],         // optional
     resolutions: [{                    // optional
-      width: 1280,      
-      height: 720, 
-      range:                           // optional
-         { min: 500000, 
-         max: 600000 } 
-   }],                                                
-    bitrates: [500000, 600000],        // optional
+      width: 1280,
+      height: 720,
+      range: {                         // optional
+        min: 500000,
+        max: 600000
+      }
+   }],
+    bitrates: [                        // optional
+      500000,
+      600000,
+      800000
+    ],
     method: "bruteForce"               // optional
   });
 ```
@@ -140,27 +144,31 @@ vmafFiles.forEach(file => {
 ```
 
 ## CLI Usage
+
 When running with the cli, all transcoding and vmaf analysis will be run locally.
 
 ### Requirements
+
 * [easyVmaf](https://github.com/gdavila/easyVmaf)
 * [FFmpeg](https://www.ffmpeg.org/) >= 5.0, compiled with libvmaf
 * [Python](https://www.python.org) >= 3.0
 
 ### Installation
+
 Installing with `npm -g` will make the `autovmaf` command available in your path
 ```bash
 npm install -g @eyevinn/autovmaf
 ```
 
 ### Environments variables
+
 * `EASYVMAF_PATH` - needs to point to the file `easyVmaf.py` from your
-easyVmaf installation. 
+easyVmaf installation.
 * `FFMPEG_PATH` - only needs to be set if ffmpeg is not in your path.
 * `PYTHON_PATH` - only needs to be set if python is not in yur path.
 
-
 ### Command line options
+
 Available command line options for the cli can be listed with the `--help` argument
 
 ```bash
@@ -196,6 +204,7 @@ Options:
   --ffmpeg-options  List of options to pass to ffmpeg, on the form
                     key1=value1:key2=value2                             [string]
 ```
+
 Output files will be stored in a folder corresponding to the argument given to the `--name` option.
 If resolutions and/or bitrates are not specified default values will be used, [See above](#generate-vmaf-measurements).
 
@@ -242,9 +251,11 @@ be set to avoid injecting bitrate options to ffmpeg. Also note that the cli need
 option to get the correct bitrate from the transcoded files.
 
 ### Generate VMAF measurements example
+
 ```bash
 autovmaf --resolutions 1920x1080,1280x720,960x540 --bitrates 500k,800k,1200k,1600k,2000k,3000k,4000k --name my-autovmaf-test1 my-source-video.mp4
 ```
+
 With the above command, when the run is finished transcoded files will be available in the folder `my-autovmaf-test1`, and vmaf-data in the folder `my-autovmaf-test1/HD`.
 
 ## Development
@@ -254,7 +265,6 @@ With the above command, when the run is finished transcoded files will be availa
 ```bash
 npm test
 ```
-
 
 # About Eyevinn Technology
 

@@ -99,8 +99,6 @@ export default async function analyzeBruteForce(directory: string, reference: st
     })
   }
 
-
-
   const analyzePair = async (pair: BitrateResolutionPair) => {
     let outFile = `${directory}/${pair.resolution.width}x${pair.resolution.height}_${pair.bitrate}`;
     if (pair.ffmpegOptionVariables) {

@@ -114,7 +114,7 @@ export default class AWSPipeline implements Pipeline {
     const settings = JSON.parse(settingsStr);
     logger.debug('Settings Json: ' + JSON.stringify(settings));
 
-    if (await this.fileExists(`${outputBucket}/${outputFolder}`, outputObject)) {
+    if (await this.fileExists(outputBucket, `${outputFolder}/${outputObject}`)) {
       // File has already been transcoded.
       return outputURI;
     }

@@ -84,30 +84,6 @@ async function transcodeAndAnalyse(argv) {
     if(job.saveAsCsv) {
         models.forEach(model => exportWmafResultToCsv({folder:`${job.name}/${model}`, probeBitrate: argv.probeBitrate}));
     }
-    //const ffmpegOptions = parseFFmpegOptions(argv['ffmpeg-options']) || {};
-/*
-    const pipeline = {
-        local: {
-            ffmpegPath,
-            pythonPath,
-            easyVmafPath,
-            ffmpegEncoder: "libx264"
-        }
-    };
-
-    const bitrates = parseBitrates(argv.bitrates);
-    const resolutions = parseResolutions(argv.resolutions);
-
-    const vmafScores = await createJob({
-        name: argv.name,
-        pipeline: "",
-        reference: reference,
-        models: argv.models.split[','],
-        resolutions: resolutions,
-        bitrates: bitrates,
-        method: "bruteForce"
-    } as JobDescription, pipeline, ffmpegOptions, false);
-    */
 }
 
 async function updateJobDefinition(argv) {

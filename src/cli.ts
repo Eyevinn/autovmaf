@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import {promises as fs} from 'fs';
+import { promises as fs } from 'fs';
 import YAML from 'yaml';
 import * as path from 'path';
 import createJob, { JobDescription } from './create-job';
@@ -12,26 +12,44 @@ import suggestLadder from './suggest-ladder';
 import ObjectsToCsv from 'objects-to-csv';
 import { pairVmafWithResolutionAndBitrate } from './pairVmaf';
 
+class ValidationError extends Error {
+    constructor(message) {
+        super(message);
+    }
+}
+
 async function run() {
 
     const argv = await yargs(hideBin(process.argv))
         .scriptName('autovmaf')
+        .fail(function (msg, err, yargs) {
+            console.error(yargs.help())
+            console.error()
+            if (err instanceof ValidationError) {
+                console.error(err.message);
+            } else if (err) {
+                throw err;
+            } else {
+                console.error(msg)
+            }
+            process.exit(1)
+        })
         .command(['* [source]'], 'run transcode and vmaf for videofile source', (yargs) => {
             return yargs
-                .positional('source', { type: 'string', describe: 'SOURCEFILE'})
+                .positional('source', { type: 'string', describe: 'SOURCEFILE' })
                 .options({
                     resolutions: { type: 'string', description: 'List of resolutions, ie 1920x1080,1280x720...' },
                     bitrates: { type: 'string', description: 'List of bitrates, ie 800k,1000k,...' },
-                    name: { type: 'string', description: 'Name for this autovmaf run'},
-                    models: { type: 'string', description: 'List of VMAF Models to use'},
+                    name: { type: 'string', description: 'Name for this autovmaf run' },
+                    models: { type: 'string', description: 'List of VMAF Models to use' },
                     job: { type: 'string', description: 'File with job definition' },
                     saveAsCsv: { type: 'boolean', description: 'Save VMAF measurements as a .csv file in addition to a JSON file', default: false },
-                    skipTranscode: { type: 'boolean', description: 'Skip transcode and run vmaf on allready transcoded files', default: false},
-                    skipExisting: { type: 'boolean', description: 'Skip transcode for allready transcoded files', default: true},
-                    probeBitrate: {type: 'boolean', description: 'Read bitrate of transcoded file with ffprobe', default: false},
+                    skipTranscode: { type: 'boolean', description: 'Skip transcode and run vmaf on allready transcoded files', default: false },
+                    skipExisting: { type: 'boolean', description: 'Skip transcode for allready transcoded files', default: true },
+                    probeBitrate: { type: 'boolean', description: 'Read bitrate of transcoded file with ffprobe', default: false },
                     'ffmpeg-options': { type: 'string', description: 'List of options to pass to ffmpeg, on the form key1=value1:key2=value2' }
                 })
-        }, transcodeAndAnalyse)       
+        }, transcodeAndAnalyse)
         .command('suggest-ladder <folder>', 'Suggest bitrate ladder given vmaf results', (yargs) => {
             return yargs
                 .positional('folder', { type: 'string', describe: 'Folder with vmaf measurement results', demandOption: true });
@@ -40,7 +58,7 @@ async function run() {
             return yargs
                 .positional('folder', { type: 'string', describe: 'Folder with vmaf measurement results', demandOption: true })
                 .options({
-                    probeBitrate: {type: 'boolean', description: 'Read bitrate of transcoded file with ffprobe', default: false}
+                    probeBitrate: { type: 'boolean', description: 'Read bitrate of transcoded file with ffprobe', default: false }
                 });
         }, exportWmafResultToCsv)
 
@@ -48,7 +66,7 @@ async function run() {
 }
 
 async function runSuggestLadder(argv) {
-    const {ladder, pairs} = await suggestLadder(argv.folder);
+    const { ladder, pairs } = await suggestLadder(argv.folder);
     console.log(`ladder: ${ladder}`);
     ladder.forEach((rung) => {
         console.log(rung);
@@ -57,7 +75,7 @@ async function runSuggestLadder(argv) {
 
 async function exportWmafResultToCsv(argv) {
     const folder = argv.folder.split("/").slice("-2").join("/");
-    const pairs = Array.from(await pairVmafWithResolutionAndBitrate(argv.folder, () => true, () => {}, argv.probeBitrate)).flatMap((result) => {
+    const pairs = Array.from(await pairVmafWithResolutionAndBitrate(argv.folder, () => true, () => { }, argv.probeBitrate)).flatMap((result) => {
         return result[1].map((resolutionVmaf => ({
             folder,
             filename: resolutionVmaf.vmafFile,
@@ -68,7 +86,7 @@ async function exportWmafResultToCsv(argv) {
             cpuTime: resolutionVmaf.cpuTime?.cpuTime
         })))
     });
-    
+
     await new ObjectsToCsv(pairs).toDisk(`${argv.folder}/results.csv`, { allColumns: true });
 }
 
@@ -77,12 +95,12 @@ async function transcodeAndAnalyse(argv) {
     const job: any = await updateJobDefinition(argv);
     const models: string[] = job.models;
     console.log("Running job: ", job);
-    
+
     const vmafScores = await createJob(job as JobDescription, undefined, undefined, false);
 
     console.log(`saveAsCsv: ${job.saveAsCsv}, ` + (job.saveAsCsv ? `also saving results as a .csv file.` : `will not save results as a .csv file.`));
-    if(job.saveAsCsv) {
-        models.forEach(model => exportWmafResultToCsv({folder:`${job.name}/${model}`, probeBitrate: argv.probeBitrate}));
+    if (job.saveAsCsv) {
+        models.forEach(model => exportWmafResultToCsv({ folder: `${job.name}/${model}`, probeBitrate: argv.probeBitrate }));
     }
 }
 
@@ -117,12 +135,12 @@ async function updateJobDefinition(argv) {
         }
     }
     if (argv['ffmpeg-options']) {
-        job.pipeline.ffmpegOptions = {...job.pipeline.ffmpegOptions || {}, ...parseFFmpegOptions(argv['ffmpeg-options'])};
+        job.pipeline.ffmpegOptions = { ...job.pipeline.ffmpegOptions || {}, ...parseFFmpegOptions(argv['ffmpeg-options']) };
     }
     job.name = job.name || "MyVmafMeasurements";
     job.models = job.models || ["HD"];
     if (!job.reference) {
-        throw new Error("No input file selected");
+        throw new ValidationError("No input file selected");
     }
 
     const { pythonPath, ffmpegPath, easyVmafPath } = await getExecutablePaths();
@@ -138,7 +156,7 @@ async function updateJobDefinition(argv) {
 }
 
 async function readJobDefintion(file) {
-    const text = await fs.readFile(file, {encoding: 'utf-8'})
+    const text = await fs.readFile(file, { encoding: 'utf-8' })
     const extension = path.extname(file);
     const definition = ['.yml', '.yaml'].includes(extension.toLowerCase()) ?
         YAML.parse(text) : JSON.parse(text);
@@ -195,7 +213,7 @@ function parseBitrates(bitrates: string | undefined) {
         return undefined;
     }
     return bitrates.split(',')
-        .map(bitrateStr => 
+        .map(bitrateStr =>
             bitrateStr.replace(/[Kk]$/, '000')
                 .replace(/[mM]$/, '000000'))
         .map(b => parseInt(b, 10));

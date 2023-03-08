@@ -52,7 +52,7 @@
     "@aws-sdk/lib-storage": "^3.36.0",
     "@types/aws-lambda": "^8.10.86",
     "aws-sdk": "^2.1123.0",
-    "fluent-ffmpeg": "git@github.com:eyevinn/node-fluent-ffmpeg#measure-cpu",
+    "fluent-ffmpeg": "https://github.com/Eyevinn/node-fluent-ffmpeg.git#measure-cpu",
     "objects-to-csv": "^1.3.6",
     "papaparse": "^5.3.1",
     "typedoc": "^0.22.15",

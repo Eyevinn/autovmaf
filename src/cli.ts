@@ -34,7 +34,7 @@ async function run() {
             }
             process.exit(1)
         })
-        .command(['* [source]'], 'run transcode and vmaf for videofile source', (yargs) => {
+        .command(['* [source]'], 'run transcode and vmaf analysis for videofile source', (yargs) => {
             return yargs
                 .positional('source', { type: 'string', describe: 'SOURCEFILE' })
                 .options({
@@ -61,7 +61,7 @@ async function run() {
                     probeBitrate: { type: 'boolean', description: 'Read bitrate of transcoded file with ffprobe', default: false }
                 });
         }, exportWmafResultToCsv)
-
+        .help()
         .parse();
 }
 
@@ -91,7 +91,6 @@ async function exportWmafResultToCsv(argv) {
 }
 
 async function transcodeAndAnalyse(argv) {
-    console.log("transcodeAndAnalye");
     const job: any = await updateJobDefinition(argv);
     const models: string[] = job.models;
     console.log("Running job: ", job);

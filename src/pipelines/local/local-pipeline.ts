@@ -11,6 +11,7 @@ import logger from '../../logger';
 const ffmpegAsync = async (command: ffmpeg.FfmpegCommand, onProgress: (info: any) => void) => {
   return new Promise<void>((resolve, reject) => {
     command
+      .on('start', (cmdLine) => console.log(`Starting ffmpeg: ${cmdLine}`))
       .on('progress', onProgress)
       .on('end', () => {
         resolve();
@@ -22,6 +23,13 @@ const ffmpegAsync = async (command: ffmpeg.FfmpegCommand, onProgress: (info: any
   });
 };
 
+const timeFormat = `{
+  "cmd": "%C",
+  "realTime": "%E",
+  "cpuUserMode": %U,
+  "cpuKernelMode": %S
+}`;
+
 export default class LocalPipeline implements Pipeline {
   private configuration: LocalPipelineConfiguration;
 
@@ -29,44 +37,60 @@ export default class LocalPipeline implements Pipeline {
     this.configuration = configuration;
   }
 
-  async transcode(input: string, targetResolution: Resolution, targetBitrate: number, output: string): Promise<string> {
+  async transcode(input: string, targetResolution: Resolution, targetBitrate: number, output: string, variables?: Record<string,string>): Promise<string> {
+    console.log(input);
     const directory = path.dirname(output);
     if (!fs.existsSync(directory)) {
       fs.mkdirSync(directory, { recursive: true });
     }
 
-    const encodingArguments = {
+    const baseEncodingArguments = {
       '-vf': `scale=${targetResolution.width}:${targetResolution.height}`,
-      '-c:v': this.configuration.ffmpegEncoder,
-
-      '-b:v': targetBitrate.toString(),
-      '-maxrate': targetBitrate.toString(),
-      '-bufsize': (targetBitrate * 2).toString(),
+      '-c:v': this.configuration.ffmpegEncoder
     };
 
-    const ffmpegOptions = Object.entries(Object.assign({}, encodingArguments, this.configuration.ffmpegOptions)).flat();
+    if(!this.configuration.skipDefaultOptions) {
+      baseEncodingArguments['-b:v'] = targetBitrate.toString();
+      baseEncodingArguments['-maxrate'] = targetBitrate.toString();
+      baseEncodingArguments['-bufsize'] = (targetBitrate * 2).toString();
+    }
+
+    const ffmpegOptionsWithVariableSubstituted = {...this.configuration.ffmpegOptions};
+    if (variables) {
+      Object.entries(this.configuration.ffmpegOptions).forEach(([key, value]) => {
+        //let value = this.configuration.ffmpegOptions[key];
+        Object.entries(variables!!).forEach(([k,v]) => {
+          value = value.replace(`%${k}%`, v);
+        })
+        ffmpegOptionsWithVariableSubstituted[key] = value;
+      });
+    }
+
+    const ffmpegOptions = Object.entries(Object.assign({}, baseEncodingArguments, ffmpegOptionsWithVariableSubstituted)).flat();
+
     logger.info(`ffmpegOptions: ${JSON.stringify(ffmpegOptions)}`)
     await ffmpegAsync(
-      ffmpeg(input)
+      ffmpeg({source: input, measureCpu: {output: `${output}.pass1-cpu-time.txt`, format: timeFormat }})
         .addOptions(ffmpegOptions)
-        .addOptions(['-pass', '1'])
-        .addOutput('/dev/null')
+        .addOptions(this.configuration.singlePass ? []: ['-pass', '1'])
+        .addOutput(this.configuration.singlePass === undefined ? '/dev/null' : output)
         .outputFormat('mp4'),
       info => {
         logger.info(`Transcoding ${output}: Pass 1 progress: ${Math.round(info.percent * 100) / 100}%`);
       }
     );
-
-    await ffmpegAsync(
-      ffmpeg(input)
-        .addOptions(ffmpegOptions)
-        .addOptions(['-pass', '2'])
-        .addOutput(output),
-      info => {
-        logger.info(`Transcoding ${output}: Pass 2 progress: ${Math.round(info.percent * 100) / 100}%`);
-      }
-    );
-
+    
+    if(!this.configuration.singlePass) {
+      await ffmpegAsync(
+        ffmpeg({source: input, measureCpu: {output: `${output}.pass2-cpu-time.txt`, format: timeFormat }})
+          .addOptions(ffmpegOptions)
+          .addOptions(['-pass', '2'])
+          .addOutput(output),
+        info => {
+          logger.info(`Transcoding ${output}: Pass 2 progress: ${Math.round(info.percent * 100) / 100}%`);
+        }
+      );
+    }
     return output;
   }
 
@@ -94,6 +118,8 @@ export default class LocalPipeline implements Pipeline {
         break;
     }
 
+    additionalArgs.push(...Object.entries(this.configuration.easyVmafExtraArgs || {}).flat())
+
     logger.info('Running quality analysis on ' + distorted);
     execSync(
       [
@@ -116,4 +142,5 @@ export default class LocalPipeline implements Pipeline {
 
     return output;
   }
+
 }

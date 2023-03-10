@@ -5,6 +5,7 @@ import { Pipeline } from '../pipelines/pipeline';
 import path from 'path';
 import logger from '../logger';
 import { BitrateRange } from '../models/bitrateRange';
+import * as fs from 'fs';
 
 export type AnalysisOptions = {
   models?: QualityAnalysisModel[];
@@ -12,6 +13,9 @@ export type AnalysisOptions = {
   resolutions?: Resolution[];
   filterFunction?: (pair: BitrateResolutionPair) => boolean;
   concurrency?: boolean;
+  pipelineVariables?: { [key: string]: string[] };
+  skipTranscode?: boolean,
+  skipExisting?: boolean
 };
 
 const defaultModels = [QualityAnalysisModel.HD];
@@ -79,14 +83,42 @@ export default async function analyzeBruteForce(directory: string, reference: st
   const filterFunction = options.filterFunction !== undefined ? options.filterFunction : defaultFilterFunction;
   const concurrency = options.concurrency !== undefined ? options.concurrency : defaultConcurrency;
 
-  const pairs = preparePairs(resolutions, bitrates, filterFunction)
+  let pairs = preparePairs(resolutions, bitrates, filterFunction)
+
+  if (options.pipelineVariables) {
+    // Create all combinations of bitrate, resolution, and variables
+    Object.entries(options.pipelineVariables).forEach(([variableName, values]) => {
+      //console.log(`variableName: ${variableName}`);
+      pairs = pairs.flatMap(pair =>
+        values.map( value => {
+          const variables = pair.ffmpegOptionVariables ? {...pair.ffmpegOptionVariables} : {};
+          variables[variableName] = value;
+          return {...pair, ffmpegOptionVariables: variables}
+        }) as BitrateResolutionPair[]
+      )  
+    })
+  }
 
   const analyzePair = async (pair: BitrateResolutionPair) => {
-    const variant = await pipeline.transcode(
+    let outFile = `${directory}/${pair.resolution.width}x${pair.resolution.height}_${pair.bitrate}`;
+    if (pair.ffmpegOptionVariables) {
+      Object.entries(pair.ffmpegOptionVariables).forEach(([variable, value]) => {
+        outFile = outFile + `_${variable}_${value}`;
+      });
+    }
+    outFile = outFile + ".mp4";
+    const skip = options.skipTranscode || (options.skipExisting && fs.existsSync(outFile));
+    if (options.skipTranscode) {
+      console.log(`Skipping transcode for ${outFile}`);
+    } else if (options.skipExisting && fs.existsSync(outFile)) {
+      console.log(`Skipping transcode for ${outFile} because file exists`);
+    }
+    const variant = skip ? outFile : await pipeline.transcode(
       reference,
       pair.resolution,
       pair.bitrate,
-      `${directory}/${pair.resolution.width}x${pair.resolution.height}_${pair.bitrate}.mp4`
+      outFile,
+      pair.ffmpegOptionVariables
     );
 
     if (variant === '') {

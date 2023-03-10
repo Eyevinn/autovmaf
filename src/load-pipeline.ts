@@ -4,6 +4,7 @@ import LocalPipeline from './pipelines/local/local-pipeline';
 import AWSPipeline from './pipelines/aws/aws-pipeline';
 import { Pipeline } from './pipelines/pipeline';
 import logger from './logger';
+import { LocalPipelineConfiguration } from './pipelines/local/local-pipeline-configuration';
 
 /**
  * An object representing a pipeline profile.

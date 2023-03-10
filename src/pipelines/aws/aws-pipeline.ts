@@ -92,7 +92,7 @@ export default class AWSPipeline implements Pipeline {
     return input.split(search).join(replacement);
   };
 
-  async transcode(input: string, targetResolution: Resolution, targetBitrate: number, output: string): Promise<string> {
+  async transcode(input: string, targetResolution: Resolution, targetBitrate: number, output: string, variables?: Record<string,string>): Promise<string> {
     const outputObject = output;
     const outputBucket = this.configuration.outputBucket;
     const outputFolder = 'encoded-files';

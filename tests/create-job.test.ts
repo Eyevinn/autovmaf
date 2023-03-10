@@ -3,7 +3,7 @@ import { CreateJobCommand, MediaConvertClient } from '@aws-sdk/client-mediaconve
 import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { ECSClient, RunTaskCommand } from '@aws-sdk/client-ecs';
 import createJob from '../src/create-job';
-import { job, pipeline, encodingSettings } from './resources/create-job.test.data'
+import { job, pipeline, encodingSettings, localJob } from './resources/create-job.test.data'
 
 const mcMock = mockClient(MediaConvertClient);
 const ecsMock = mockClient(ECSClient);
@@ -36,4 +36,10 @@ describe('create-job', () => {
 });
 
 
-
+// Make sure LD_LIBRARY_PATH env variable is available -> export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/x86_64-linux-gnu
+describe.skip('create-job', () => {
+  jest.setTimeout(60000);
+  it('runs a local test. Skipped since it takes a long time.', async () => {
+    await createJob(localJob);
+  });
+});

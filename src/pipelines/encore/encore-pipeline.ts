@@ -6,11 +6,6 @@ import { QualityAnalysisModel, qualityAnalysisModelToString } from '../../models
 import { EncoreInstance } from '../../models/encoreInstance';
 import logger from '../../logger';
 
-interface Response {
-  status: number;
-  body: string;
-}
-
 function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -23,28 +18,7 @@ export default class EncorePipeline implements Pipeline {
     this.configuration = configuration;
   }
 
-  async transcode(input: string, targetResolution: Resolution, targetBitrate: number, output: string, variables?: Record<string, string>): Promise<string> {
-    const response: Response = await this.createEncoreInstance(this.configuration.apiAddress)
-    logger.info(`createEncoreInstanceStatus: ${response.status}`);
-    logger.debug(`createEncoreInstanceBody: ${response.body}`);
-    const encoreInstance: EncoreInstance = JSON.parse(response.body);
-
-    let pollAttempts: number = 0;
-    while (true) {
-      if (pollAttempts >= 5) {
-        throw new Error("Exceeded maximum polling attempts");
-      }
-      await delay(5000);
-      const getResponse: Response = await this.getEncoreInstance(encoreInstance.url);
-      if (getResponse.status == 200) {
-        const jobResponse: Response = await this.createEncoreJob(input, encoreInstance.resources.enqueueJob.url);
-        logger.info(`createEncoreJobStatus: ${jobResponse.status}`);
-        logger.debug(`createEncoreJobBody: ${jobResponse.body}`);
-        break
-      }
-      pollAttempts += 1;
-    }
-    // TODO: Poll or check jobs are done and have been analyzed. Then deleteEncoreInstance(instanceId: string).
+  async transcode(input: string, targetResolution: Resolution, targetBitrate: number, output: string, variables?: Record<string, string>, encoreInstance?: EncoreInstance): Promise<string> {
     return "todo"
   }
 
@@ -52,100 +26,61 @@ export default class EncorePipeline implements Pipeline {
     return "todo"
   }
 
-  async createEncoreInstance(apiAddress: string, curlInstance?: Curl): Promise<Response> {
-    const url = `${apiAddress}`;
-    const headers = [
-      'accept: application/json',
-      `x-jwt: Bearer ${this.configuration.token}`,
-      'Content-Type: application/json',
-    ];
+  async createEncoreInstance(apiAddress: string, token: string, instanceId: string, profile: string): Promise<any> {
+
+    const url = `${apiAddress}/encoreinstance`;
+    const headerObj = {
+      'accept': 'application/json',
+      'x-jwt': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+    const headers = new Headers(headerObj);
     const data = JSON.stringify({
-      "name": this.configuration.instanceId,
-      "profile": this.configuration.profile,
+      "name": instanceId,
+      "profile": profile,
     });
 
-    return new Promise<Response>((resolve) => {
-      if (curlInstance === undefined){
-        curlInstance = new Curl();
-      }
-      curlInstance.setOpt('URL', url);
-      curlInstance.setOpt('HTTPHEADER', headers);
-      curlInstance.setOpt('POSTFIELDS', data);
-
-      curlInstance.on('end', function (statusCode: number, body: string | Buffer) {
-        resolve({ status: statusCode, body: body.toString() });
-        this.close();
-      });
-      curlInstance.on('error', curlInstance.close.bind(curlInstance));
-      curlInstance.perform();
-    })
-  }
-
-  async getEncoreInstance(instanceUrl: string, curlInstance?: Curl): Promise<Response> {
-    const url = instanceUrl;
-    const headers = [
-      'accept: application/json',
-      `x-jwt: Bearer ${this.configuration.token}`,
-      'Content-Type: application/json',
-    ];
-
-    return new Promise<Response>((resolve) => {
-      if (curlInstance === undefined){
-        curlInstance = new Curl();
-      }
-      curlInstance.setOpt('URL', url);
-      curlInstance.setOpt('HTTPHEADER', headers);
-      curlInstance.setOpt('CUSTOMREQUEST', 'GET');
-
-      curlInstance.on('end', function (statusCode: number, body: string | Buffer) {
-        resolve({ status: statusCode, body: body.toString() });
-        this.close();
-      });
-      curlInstance.on('error', curlInstance.close.bind(curlInstance));
-      curlInstance.perform();
-    })
-  }
-
-  async deleteEncoreInstance(apiAddress: string, instanceId: string, curlInstance?: Curl): Promise<boolean> {
-    if (curlInstance === undefined){
-      curlInstance = new Curl();
-    }
-    const url = `${apiAddress}/encoreinstance/${instanceId}`;
-    const headers = [
-      'accept: application/json',
-      `x-jwt: Bearer ${this.configuration.token}`,
-      'Content-Type: application/json',
-    ];
-
-    curlInstance.setOpt('URL', url);
-    curlInstance.setOpt('HTTPHEADER', headers);
-    curlInstance.setOpt('CUSTOMREQUEST', 'DELETE');
-
-    curlInstance.on('end', function (statusCode) {
-      logger.info(statusCode);
-      this.close();
+    const request = new Request(url, {
+      method: "POST",
+      headers: headers,
+      body: data,
     });
 
-    curlInstance.on('error', curlInstance.close.bind(curlInstance));
-    curlInstance.perform();
-
-    return true
+    fetch(request).then(response => {
+      logger.info(`Create Encore Instance Status: ${response.status}`);
+      return response.json()
+    })
+      .then(data => {
+        const encoreInstance: EncoreInstance = data;
+        return encoreInstance;
+      }).then(encoreInstance => {
+        logger.info(encoreInstance.name);
+        setTimeout(() => {
+          this.createEncoreJob(encoreInstance);
+        }, 5000);
+      })
+      .catch(error => {
+        logger.error(error);
+      });
   }
 
-  async createEncoreJob(input: string, enqueueJobUrl: string, curlInstance?: Curl): Promise<Response> {
-    const url = enqueueJobUrl;
-    const headers = [
-      'accept: application/json',
-      `x-jwt: Bearer ${this.configuration.token}`,
-      'Content-Type: application/json',
-    ];
+  async createEncoreJob(encoreInstance: EncoreInstance): Promise<any> {
+
+    const url = encoreInstance.resources.enqueueJob.url;
+    logger.info(url);
+    const headerObj = {
+      'accept': 'application/json',
+      'x-jwt': `Bearer ${this.configuration.token}`,
+      'Content-Type': 'application/json',
+    };
+    const headers = new Headers(headerObj);
     const data = JSON.stringify({
       "profile": this.configuration.profile,
       "outputFolder": this.configuration.outputFolder,
       "baseName": this.configuration.baseName,
       "inputs": [
         {
-          "uri": input,
+          "uri": this.configuration.inputs[0],
           "type": "AudioVideo"
         }
       ],
@@ -153,20 +88,19 @@ export default class EncorePipeline implements Pipeline {
       "priority": this.configuration.priority
     });
 
-    return new Promise<Response>((resolve) => {
-      if (curlInstance === undefined){
-        curlInstance = new Curl();
-      }
-      curlInstance.setOpt('URL', url);
-      curlInstance.setOpt('HTTPHEADER', headers);
-      curlInstance.setOpt('POSTFIELDS', data);
+    const request = new Request(url, {
+      method: "POST",
+      headers: headers,
+      body: data,
+    });
 
-      curlInstance.on('end', function (statusCode: number, body: string | Buffer) {
-        resolve({ status: statusCode, body: body.toString() });
-        this.close();
-      });
-      curlInstance.on('error', curlInstance.close.bind(curlInstance));
-      curlInstance.perform();
+    logger.info(await request.text());
+
+    fetch(request).then(response => {
+      logger.info(`Create Encore Job Status: ${response.status}`);
     })
+    .catch(error => {
+        logger.error(error);
+      });
   }
 }

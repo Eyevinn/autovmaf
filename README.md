@@ -58,6 +58,7 @@ To generate VMAF measurements, you will need to define a job which can be create
 ```typescript
   const { createJob } = require('@eyevinn/autovmaf');
 
+  // AWS or Local pipeline
   const vmafScores = await createJob({
     name: "MyVMAFmeasurements",
     pipeline: "pipeline.yml",
@@ -79,6 +80,30 @@ To generate VMAF measurements, you will need to define a job which can be create
     ],
     method: "bruteForce"               // optional
   });
+
+  // Encore pipeline
+  const configuration: EncorePipelineConfiguration = {
+  apiAddress: "https://api-address.io",
+  token: "",
+  instanceId: "myEncoreInstance",
+  profile: "program",
+  outputFolder: "/usercontent/demo",
+  baseName: "_demo",
+  inputs: ["myInputPath.mp4"],
+  duration: 120,
+  priority: 0,
+  encorePollingInterval_ms: 60000,
+  encoreInstancePostCreationDelay_ms: 10000
+};
+
+const job: JobDescription = {
+  name: "encorePipelineJob",
+  pipeline: configuration,
+  encodingProfile: "null", // Transcoding profile is set in the profile parameter of pipeline configuration as seen above.
+  reference: "null" // Reference media file will be downloaded from the address given in inputs[] parameter.
+}
+
+createJob(job);
 ```
 
 When creating a job, you can specify:

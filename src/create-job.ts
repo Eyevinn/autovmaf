@@ -11,7 +11,9 @@ import logger from './logger';
 import { Resolution } from './models/resolution';
 import analyzeWalkTheHull from './analysis/walk-the-hull';
 import { LocalPipelineConfiguration } from './pipelines/local/local-pipeline-configuration';
-
+import { EncorePipelineConfiguration } from './pipelines/encore/encore-pipeline-configuration';
+import { instanceOfEncorePipelineConfiguration, instanceOfLocalPipelineConfiguration } from './interfaceGuards';
+import { EncorePipeline } from './pipelines/encore/encore-pipeline';
 
 /** Describes a ABR-analysis job and can be used to create jobs using the createJob()-function. */
 export type JobDescription = {
@@ -19,7 +21,7 @@ export type JobDescription = {
   name: string;
 
   /** Path to a YAML-file that defines the pipeline, or an inline local pipeline configuration. See `examples/pipeline.yml` for an example AWS-pipeline. */
-  pipeline: string | LocalPipelineConfiguration;
+  pipeline: string | LocalPipelineConfiguration | EncorePipelineConfiguration;
 
   /** Path to a JSON-file that defines how the reference should be encoded. When using AWS, this is a MediaConvert configuration.
    *  For local pipelines, this is key-value pairs that will be passed as command line arguments to FFmpeg.
@@ -111,15 +113,17 @@ export type JobDescription = {
  * @param description An object that describes the job to create.
  */
 export default async function createJob(description: JobDescription, pipelineData?: any, encodingProfileData?: any, concurrency: boolean = true) {
-  logger.info(`Creating job ${description.name}.`);
+  logger.info(`Creating job ${description.name}`);
 
   let pipeline: Pipeline | undefined = undefined;
   if (pipelineData && encodingProfileData) {
     pipeline = await loadPipelineFromObjects(pipelineData, encodingProfileData);
-  } else if(typeof description.pipeline === 'object') {
+  } else if(instanceOfLocalPipelineConfiguration(description.pipeline)) {
     pipeline = new LocalPipeline({...description.pipeline, ...description.encodingProfile as Record<string,string>} );
-  } else {
+  } else if(typeof description.pipeline === 'string'){
     pipeline = await loadPipeline(description.pipeline, description.encodingProfile as string);
+  } else if(instanceOfEncorePipelineConfiguration(description.pipeline)){
+    pipeline = new EncorePipeline(description.pipeline);
   }
 
   if (pipeline === undefined) {

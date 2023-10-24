@@ -2,6 +2,7 @@ import { BitrateResolutionPair } from '../models/bitrate-resolution-pair';
 import { QualityAnalysisModel, qualityAnalysisModelToString } from '../models/quality-analysis-model';
 import { Resolution } from '../models/resolution';
 import { Pipeline } from '../pipelines/pipeline';
+import { EncorePipeline } from '../pipelines/encore/encore-pipeline';
 import path from 'path';
 import logger from '../logger';
 import { BitrateRange } from '../models/bitrateRange';
@@ -157,13 +158,71 @@ export default async function analyzeBruteForce(directory: string, reference: st
     }
   };
 
+  const analyzePairs = async (pairs: BitrateResolutionPair[]) => {
+    let outDir = `${directory}`;
+
+    let variant: any = undefined;
+    if(pipeline instanceof EncorePipeline){
+      logger.info("entering brute force encore");
+      variant = await pipeline.transcode(
+        reference,
+        {
+          width: 0,
+          height: 0,
+        },
+        0,
+        outDir,
+        undefined,
+        pairs
+      );
+    }
+
+    if (variant === '') {
+      logger.error(`Error transcoding ${reference}`);
+      return [];
+    }
+
+    const qualityFile = variant.replace('.mp4', '_vmaf.json');
+
+    if (concurrency) {
+      return await Promise.all(
+        models.map(async model => ({
+          model,
+          qualityFile: await pipeline.analyzeQuality(
+            reference,
+            variant,
+            path.dirname(qualityFile) + `/${qualityAnalysisModelToString(model)}/` + path.basename(qualityFile),
+            model
+          ),
+        }))
+      );
+    } else {
+      let results: any = [];
+      for (const model of models) {
+        results.push({
+          model,
+          qualityFile: await pipeline.analyzeQuality(
+            reference,
+            variant,
+            path.dirname(qualityFile) + `/${qualityAnalysisModelToString(model)}/` + path.basename(qualityFile),
+            model
+          ),
+        });
+      }
+      return results;
+    }
+  };
+
   if (analyzePair.length === 0) {
     logger.error(`No pairs to analyze`);
     return [];
   }
 
   let qualityFiles = new Map<QualityAnalysisModel, string[]>();
-  if (concurrency === true) {
+  if(pipeline instanceof EncorePipeline){
+    await analyzePairs(pairs);
+  }
+  else if (concurrency === true) {
     (await Promise.all(pairs.map(pair => analyzePair(pair)))).flat().forEach(file => {
       qualityFiles.set(file.model, [...(qualityFiles.get(file.model) ?? []), file.qualityFile]);
     });

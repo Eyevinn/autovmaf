@@ -7,8 +7,11 @@ import { QualityAnalysisModel } from '../../models/quality-analysis-model';
 import { EncoreInstance } from '../../models/encoreInstance';
 import { EncoreJobs, EncoreJob } from '../../models/encoreJobs';
 import logger from '../../logger';
+import { BitrateResolutionPair } from '../../models/bitrate-resolution-pair';
+import { EncoreYAMLGenerator } from '../../encoreYamlGenerator';
+import { EncoreEncodeType, EncoreProgramProfile } from '../../models/encoreProfileTypes';
 import fs from 'fs';
-const ISOBoxer = require('codem-isoboxer');
+// const ISOBoxer = require('codem-isoboxer');
 const { Readable } = require('stream'); //Typescript import library contains different functions. 
 //If someone knows how to achieve the same functionality in Typescript syntax let me know.
 const { finished } = require('stream/promises'); //Same as above.
@@ -20,25 +23,12 @@ export function delay(ms: number): Promise<void> {
 export class EncorePipeline implements Pipeline {
 
   configuration: EncorePipelineConfiguration;
+  private AWSConf: AWSPipelineConfiguration;
+  private awsPipe: AWSPipeline;
 
   constructor(configuration: EncorePipelineConfiguration) {
     this.configuration = configuration;
-  }
-
-  async transcode(input: string, targetResolution: Resolution, targetBitrate: number, output: string, variables?: Record<string, string>): Promise<string> {
-    const instance: EncoreInstance | undefined = await this.createEncoreInstance(this.configuration.apiAddress, this.configuration.token, this.configuration.instanceId, this.configuration.profile);
-    await delay(this.configuration.encoreInstancePostCreationDelay_ms); // Delay required to allow instance to be created before calling it
-    if(!instance){
-      throw new Error('undefined instance');
-    }
-    await this.runTranscodeThenAnalyze(instance);
-    await this.deleteEncoreInstance(instance, this.configuration.apiAddress);
-    return output
-  }
-
-  async analyzeQuality(reference: string, distorted: string, output: string, model: QualityAnalysisModel): Promise<string> {
-
-    const AWSConf: AWSPipelineConfiguration = {
+    this.AWSConf = {
       inputBucket: "vmaf-files-incoming",
       outputBucket: "vmaf-files",
       mediaConvertRole: "",
@@ -51,8 +41,64 @@ export class EncorePipeline implements Pipeline {
       ecsTaskDefinition: "easyvmaf-s3:3"
     };
 
-    const awsPipe = new AWSPipeline(AWSConf);
-    return await awsPipe.analyzeQuality(reference, distorted, output, model);
+    this.awsPipe = new AWSPipeline(this.AWSConf);
+  }
+
+  stringReplacement(input: string, search: string, replacement: string) {
+    return input.split(search).join(replacement);
+  };
+
+  async transcode(input: string, targetResolution: Resolution, targetBitrate: number, output: string, variables?: Record<string, string>, pairs?: BitrateResolutionPair[]): Promise<string> {
+
+    const yamlGenerator = new EncoreYAMLGenerator();
+
+    if(!pairs){
+      throw new Error('No bitrateResolutionPairs in encore transcode');
+    }
+    const bitrateResolutionPairs = pairs;
+    let encodeObjects: EncoreEncodeType[] = [];
+
+    bitrateResolutionPairs.forEach( pair => {
+      const encodeObject = yamlGenerator.createEncodeObject('X264Encode', '_x264_', true, pair.resolution.width, {
+        'b:v': `${pair.bitrate / 100}k`,
+        maxrate: `${(pair.bitrate / 100) * 1.5}k`,
+        bufsize: `${(pair.bitrate / 100) * 1.5 * 1.5}k`,
+        r: '25',
+        fps_mode: 'cfr',
+        pix_fmt: 'yuv420p',
+        force_key_frames: 'expr:not(mod(n,96))',
+        preset: 'medium',
+      });
+      encodeObjects.push(encodeObject);
+    })
+
+    const programProfile: EncoreProgramProfile = {
+      name: 'encoreProgram',
+      description: 'Program profile',
+      scaling: 'bicubic',
+      encodes: encodeObjects,
+    };
+    
+    const profileFilename: string = 'encoreProfile.yml';
+    yamlGenerator.saveToFile(programProfile, profileFilename);
+    this.configuration.profile = await this.awsPipe.uploadIfNeeded(
+      profileFilename,
+      this.awsPipe.configuration.outputBucket,
+      'encoreProfiles',
+    )
+
+    const instance: EncoreInstance | undefined = await this.createEncoreInstance(this.configuration.apiAddress, this.configuration.token, this.configuration.instanceId, this.configuration.profile);
+    await delay(this.configuration.encoreInstancePostCreationDelay_ms); // Delay required to allow instance to be created before calling it
+    if(!instance){
+      throw new Error('undefined instance');
+    }
+    await this.runTranscodePollUntilFinished(instance, input);
+    await this.deleteEncoreInstance(instance, this.configuration.apiAddress);
+    return output
+  }
+
+  async analyzeQuality(reference: string, distorted: string, output: string, model: QualityAnalysisModel): Promise<string> {
+    return await this.awsPipe.analyzeQuality(reference, distorted, output, model);
   }
 
   /**
@@ -60,9 +106,9 @@ export class EncorePipeline implements Pipeline {
    * @param apiAddress The api address.
    * @param token api token.
    * @param instanceId The Encore Instance that will enqueue the transcode job.
-   * @param profile The transcode profile.
+   * @param profiles http address of directory containing all profiles.
    */
-  async createEncoreInstance(apiAddress: string, token: string, instanceId: string, profile: string): Promise<EncoreInstance | undefined> {
+  async createEncoreInstance(apiAddress: string, token: string, instanceId: string, profiles: string): Promise<EncoreInstance | undefined> {
 
     const url = `${apiAddress}/encoreinstance`;
     const headerObj = {
@@ -73,7 +119,7 @@ export class EncorePipeline implements Pipeline {
     const headers = new Headers(headerObj);
     const data = JSON.stringify({
       "name": instanceId,
-      "profile": profile,
+      "profiles": profiles,
     });
 
     const request = new Request(url, {
@@ -204,7 +250,6 @@ export class EncorePipeline implements Pipeline {
               const splitFilename = filePath.split("/");
               filePath = splitFilename[splitFilename.length - 1];
             }
-
             await this.downloadFile(url, filePath);
           }
           enqueuedJobIds.splice(jobShouldBeProcessed, 1);
@@ -284,38 +329,38 @@ export class EncorePipeline implements Pipeline {
    * ONLY RUNS WITH .mp4 files.
    * @param encoreInstance The Encore Instance in which to create Encore Transcode jobs.
    */
-  async runTranscodeThenAnalyze(instance: EncoreInstance) {
+  async runTranscodePollUntilFinished(instance: EncoreInstance, reference: string) {
 
     let jobIds: string[] = [];
 
-    for (let input of this.configuration.inputs) {
-      const job: EncoreJob = await this.createEncoreJob(instance, input);
+    //for (let input of this.configuration.inputs) {
+      const job: EncoreJob = await this.createEncoreJob(instance, reference);
       jobIds.push(job.id);
-      const referenceFilename: string = `${job.id}_reference.mp4`;
-      await this.downloadFile(input, referenceFilename);
+      const referenceFilename: string = `reference.mp4`;
+      await this.downloadFile(reference, referenceFilename);
       await this.pollUntilAllJobsCompleted(instance, jobIds);
 
-      const dir: string = `./${this.configuration.baseName}`;
-      fs.readdir(dir, (err, files) => {
-        files.forEach(file => {
-          if (file.includes(".mp4") && !file.includes("reference")) {
-            const arrayBuffer = new Uint8Array(fs.readFileSync(`${dir}/${file}`)).buffer;
-            const parsedFile = ISOBoxer.parseBuffer(arrayBuffer);
-            const hdlrs = parsedFile.fetchAll('hdlr');
-            let isVideo: boolean = false;
-            hdlrs.forEach(hldr => {
-              if (hldr.handler_type == "vide") {
-                logger.debug(`Contains video track: ${file}`);
-                isVideo = true;
-              }
-            })
-            if (isVideo) {
-              logger.info(`Analyzing quality using: ${file}`);
-              this.analyzeQuality(`./${this.configuration.baseName}/${referenceFilename}`, `${dir}/${file}`, `OSAAS_Encore_workdir/output_${file}.json`, QualityAnalysisModel.HD) // TODO Model should be configurable
-            }
-          }
-        });
-      });
-    }
+      // const dir: string = `./${this.configuration.baseName}`;
+      // fs.readdir(dir, (err, files) => {
+      //   files.forEach(file => {
+      //     if (file.includes(".mp4") && !file.includes("reference")) {
+      //       const arrayBuffer = new Uint8Array(fs.readFileSync(`${dir}/${file}`)).buffer;
+      //       const parsedFile = ISOBoxer.parseBuffer(arrayBuffer);
+      //       const hdlrs = parsedFile.fetchAll('hdlr');
+      //       let isVideo: boolean = false;
+      //       hdlrs.forEach(hldr => {
+      //         if (hldr.handler_type == "vide") {
+      //           logger.debug(`Contains video track: ${file}`);
+      //           isVideo = true;
+      //         }
+      //       })
+      //       if (isVideo) {
+      //         logger.info(`Analyzing quality using: ${file}`);
+      //         this.analyzeQuality(`./${this.configuration.baseName}/${referenceFilename}`, `${dir}/${file}`, `OSAAS_Encore_workdir/output_${file}.json`, QualityAnalysisModel.HD) // TODO Model should be configurable
+      //       }
+      //     }
+      //   });
+      // });
+  //  }
   }
 }

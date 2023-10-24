@@ -138,7 +138,7 @@ export default async function createJob(description: JobDescription, pipelineDat
   }
 
   const reference: string = await uploadReferenceIfNeeded(description, pipeline);
-
+  logger.info('Before method selection');
   if (description.method === 'walkTheHull') {
     await analyzeWalkTheHull();
   } else {

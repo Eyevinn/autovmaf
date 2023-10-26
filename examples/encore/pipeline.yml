@@ -1,0 +1,12 @@
+encore:
+  apiAddress: https://api-encore.stage.osaas.io,
+  token: null,
+  instanceId: dummy,
+  profilesUrl: profilesUrl,
+  outputFolder: /usercontent/demo,
+  baseName: _demo,
+  input: https://testcontent.eyevinn.technology/mp4/stswe-tvplus-promo.mp4,
+  duration: 120,
+  priority: 0,
+  encorePollingInterval_ms: 30000,
+  encoreInstancePostCreationDelay_ms: 10000,

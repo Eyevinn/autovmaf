@@ -88,7 +88,6 @@ export default async function analyzeBruteForce(directory: string, reference: st
   if (options.pipelineVariables) {
     // Create all combinations of bitrate, resolution, and variables
     Object.entries(options.pipelineVariables).forEach(([variableName, values]) => {
-      //console.log(`variableName: ${variableName}`);
       pairs = pairs.flatMap(pair =>
         values.map( value => {
           const variables = pair.ffmpegOptionVariables ? {...pair.ffmpegOptionVariables} : {};

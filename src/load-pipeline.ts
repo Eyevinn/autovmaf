@@ -2,9 +2,8 @@ import fs from 'fs';
 import YAML from 'yaml';
 import LocalPipeline from './pipelines/local/local-pipeline';
 import AWSPipeline from './pipelines/aws/aws-pipeline';
+import { EncorePipeline } from './pipelines/encore/encore-pipeline';
 import { Pipeline } from './pipelines/pipeline';
-import logger from './logger';
-import { LocalPipelineConfiguration } from './pipelines/local/local-pipeline-configuration';
 
 /**
  * An object representing a pipeline profile.
@@ -30,6 +29,21 @@ export type PipelineProfile = {
     pythonPath: string;
     ffmpegEncoder: 'libx264' | 'h264_videotoolbox';
   };
+
+  encore?: {
+    apiAddress: string;
+    token: string;
+    instanceId: string;
+    profilesUrl: string;
+    inlineProfile: string;
+    outputFolder: string;
+    baseName: string;
+    input: string;
+    duration: number;
+    priority: number;
+    encorePollingInterval_ms: number;
+    encoreInstancePostCreationDelay_ms: number
+  }
 };
 
 /**
@@ -53,6 +67,8 @@ async function loadPipeline(pipelineFilename: string, encodingProfile?: string):
     return new AWSPipeline({ ...pipelineProfile.aws, mediaConvertSettings: encodingProfileData });
   } else if (pipelineProfile.local !== undefined) {
     return new LocalPipeline({ ...pipelineProfile.local, ffmpegOptions: encodingProfileData });
+  } else if (pipelineProfile.encore !== undefined) {
+      return new EncorePipeline(pipelineProfile.encore);
   } else {
     throw new Error(`Invalid pipeline: ${JSON.stringify(pipelineProfile)}`);
   }
@@ -75,6 +91,9 @@ async function loadPipelineFromObjects(pipelineData: any, encodingProfileData?: 
     return new AWSPipeline({ ...pipelineProfile.aws, mediaConvertSettings: encodingProfileData });
   } else if (pipelineProfile.local !== undefined) {
     return new LocalPipeline({ ...pipelineProfile.local, ffmpegOptions: encodingProfileData });
+  }
+  else if (pipelineProfile.encore !== undefined) {
+    return new EncorePipeline({ ...pipelineProfile.encore, inlineProfile: encodingProfileData });
   } else {
     throw new Error(`Invalid pipeline: ${JSON.stringify(pipelineProfile)}`);
   }

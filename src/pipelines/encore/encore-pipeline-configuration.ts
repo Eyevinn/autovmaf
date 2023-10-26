@@ -2,10 +2,11 @@ export type EncorePipelineConfiguration = {
     apiAddress: string;
     token: string;
     instanceId: string;
-    profile: string;
+    profilesUrl: string;
+    inlineProfile: string;
     outputFolder: string;
     baseName: string;
-    inputs: Array<string>;
+    input: string;
     duration: number;
     priority: number;
     encorePollingInterval_ms: number;

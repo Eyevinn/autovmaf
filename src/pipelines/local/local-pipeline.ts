@@ -5,6 +5,7 @@ import ffmpeg from 'fluent-ffmpeg';
 import { execSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
+import { devNull } from 'os';
 import { QualityAnalysisModel } from '../../models/quality-analysis-model';
 import logger from '../../logger';
 
@@ -73,13 +74,13 @@ export default class LocalPipeline implements Pipeline {
       ffmpeg({source: input, measureCpu: {output: `${output}.pass1-cpu-time.txt`, format: timeFormat }})
         .addOptions(ffmpegOptions)
         .addOptions(this.configuration.singlePass ? []: ['-pass', '1'])
-        .addOutput(this.configuration.singlePass === undefined ? '/dev/null' : output)
+        .addOutput(this.configuration.singlePass === undefined ? devNull : output)
         .outputFormat('mp4'),
       info => {
         logger.info(`Transcoding ${output}: Pass 1 progress: ${Math.round(info.percent * 100) / 100}%`);
       }
     );
-    
+
     if(!this.configuration.singlePass) {
       await ffmpegAsync(
         ffmpeg({source: input, measureCpu: {output: `${output}.pass2-cpu-time.txt`, format: timeFormat }})

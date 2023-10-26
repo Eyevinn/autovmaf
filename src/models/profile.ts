@@ -1,5 +1,5 @@
 export type Profile = {
   name: string;
-  pipeline: 'local' | 'aws';
+  pipeline: 'local' | 'aws' | 'encore';
   pipelineConfiguration: string;
 };

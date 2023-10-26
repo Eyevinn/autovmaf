@@ -1,0 +1,366 @@
+import { Resolution } from '../../models/resolution';
+import { Pipeline } from '../pipeline';
+import AWSPipeline from '../aws/aws-pipeline';
+import { AWSPipelineConfiguration } from '../aws/aws-pipeline-configuration';
+import { EncorePipelineConfiguration } from './encore-pipeline-configuration';
+import { QualityAnalysisModel } from '../../models/quality-analysis-model';
+import { EncoreInstance } from '../../models/encoreInstance';
+import { EncoreJobs, EncoreJob } from '../../models/encoreJobs';
+import logger from '../../logger';
+import { BitrateResolutionPair } from '../../models/bitrate-resolution-pair';
+import { EncoreYAMLGenerator } from '../../encoreYamlGenerator';
+import { EncoreEncodeType, EncoreProgramProfile } from '../../models/encoreProfileTypes';
+import fs from 'fs';
+// const ISOBoxer = require('codem-isoboxer');
+const { Readable } = require('stream'); //Typescript import library contains different functions. 
+//If someone knows how to achieve the same functionality in Typescript syntax let me know.
+const { finished } = require('stream/promises'); //Same as above.
+
+export function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export class EncorePipeline implements Pipeline {
+
+  configuration: EncorePipelineConfiguration;
+  private AWSConf: AWSPipelineConfiguration;
+  private awsPipe: AWSPipeline;
+
+  constructor(configuration: EncorePipelineConfiguration) {
+    this.configuration = configuration;
+    this.AWSConf = {
+      inputBucket: "vmaf-files-incoming",
+      outputBucket: "vmaf-files",
+      mediaConvertRole: "",
+      mediaConvertSettings: "",
+      mediaConvertEndpoint: "",
+      ecsSubnet: "subnet-05d98882c13408e16",
+      ecsSecurityGroup: "sg-0e444b67a747bf739",
+      ecsContainerName: "easyvmaf-s3",
+      ecsCluster: "vmaf-runner",
+      ecsTaskDefinition: "easyvmaf-s3:3"
+    };
+
+    this.awsPipe = new AWSPipeline(this.AWSConf);
+  }
+
+  stringReplacement(input: string, search: string, replacement: string) {
+    return input.split(search).join(replacement);
+  };
+
+  async transcode(input: string, targetResolution: Resolution, targetBitrate: number, output: string, variables?: Record<string, string>, pairs?: BitrateResolutionPair[]): Promise<string> {
+
+    const yamlGenerator = new EncoreYAMLGenerator();
+
+    if(!pairs){
+      throw new Error('No bitrateResolutionPairs in encore transcode');
+    }
+    const bitrateResolutionPairs = pairs;
+    let encodeObjects: EncoreEncodeType[] = [];
+
+    bitrateResolutionPairs.forEach( pair => {
+      const encodeObject = yamlGenerator.createEncodeObject('X264Encode', '_x264_', true, pair.resolution.width, {
+        'b:v': `${pair.bitrate / 100}k`,
+        maxrate: `${(pair.bitrate / 100) * 1.5}k`,
+        bufsize: `${(pair.bitrate / 100) * 1.5 * 1.5}k`,
+        r: '25',
+        fps_mode: 'cfr',
+        pix_fmt: 'yuv420p',
+        force_key_frames: 'expr:not(mod(n,96))',
+        preset: 'medium',
+      });
+      encodeObjects.push(encodeObject);
+    })
+
+    const programProfile: EncoreProgramProfile = {
+      name: 'encoreProgram',
+      description: 'Program profile',
+      scaling: 'bicubic',
+      encodes: encodeObjects,
+    };
+    
+    const profileFilename: string = 'encoreProfile.yml';
+    yamlGenerator.saveToFile(programProfile, profileFilename);
+    this.configuration.profile = await this.awsPipe.uploadIfNeeded(
+      profileFilename,
+      this.awsPipe.configuration.outputBucket,
+      'encoreProfiles',
+    )
+
+    const instance: EncoreInstance | undefined = await this.createEncoreInstance(this.configuration.apiAddress, this.configuration.token, this.configuration.instanceId, this.configuration.profile);
+    await delay(this.configuration.encoreInstancePostCreationDelay_ms); // Delay required to allow instance to be created before calling it
+    if(!instance){
+      throw new Error('undefined instance');
+    }
+    await this.runTranscodePollUntilFinished(instance, input);
+    await this.deleteEncoreInstance(instance, this.configuration.apiAddress);
+    return output
+  }
+
+  async analyzeQuality(reference: string, distorted: string, output: string, model: QualityAnalysisModel): Promise<string> {
+    return await this.awsPipe.analyzeQuality(reference, distorted, output, model);
+  }
+
+  /**
+   * Creates an Encore Instance, waits for 5000ms, then attempts to enqueue a transcode job.
+   * @param apiAddress The api address.
+   * @param token api token.
+   * @param instanceId The Encore Instance that will enqueue the transcode job.
+   * @param profiles http address of directory containing all profiles.
+   */
+  async createEncoreInstance(apiAddress: string, token: string, instanceId: string, profiles: string): Promise<EncoreInstance | undefined> {
+
+    const url = `${apiAddress}/encoreinstance`;
+    const headerObj = {
+      'accept': 'application/json',
+      'x-jwt': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+    const headers = new Headers(headerObj);
+    const data = JSON.stringify({
+      "name": instanceId,
+      "profiles": profiles,
+    });
+
+    const request = new Request(url, {
+      method: "POST",
+      headers: headers,
+      body: data,
+    });
+
+    return fetch(request).then(response => {
+      logger.info(`Create Encore Instance Status: ${response.status}`);
+      if (response.status == 200) {
+        return response.json();
+      }
+      else {
+        throw new Error('Instance creation failed');
+      }
+    }).catch(error => {
+      logger.error(`createEncoreInstance: ${error}`);
+    });
+  }
+
+  /**
+   * Attempts to delete an Encore Instance.
+   * @param encoreInstance The Encore Instance to be deleted.
+   * @param apiAddress The api address to the OSaaS api.
+   */
+  async deleteEncoreInstance(encoreInstance: EncoreInstance, apiAddress: string): Promise<void> {
+
+    const url = `${apiAddress}/encoreinstance/${encoreInstance.name}`;
+    const headerObj = {
+      'accept': 'application/json',
+      'x-jwt': `Bearer ${this.configuration.token}`,
+    };
+    const headers = new Headers(headerObj);
+
+    const request = new Request(url, {
+      method: "DELETE",
+      headers: headers,
+    });
+
+    fetch(request).then(response => {
+      if (response.status == 204) {
+        logger.error(`Successfully deleted encore instance`);
+      }
+    })
+      .catch(error => {
+        logger.error(`deleteEncoreInstance: ${error}`);
+      });
+  }
+
+  /**
+   * Attempts to enqueue a transcode job to an Encore Instance.
+   * @param encoreInstance The Encore Instance were the job should be enqueued.
+   * @param mediaFileAddress The https address of the media file to be enqueued.
+   */
+  async createEncoreJob(encoreInstance: EncoreInstance, mediaFileAddress: string): Promise<EncoreJob> {
+
+    const url = encoreInstance.resources.enqueueJob.url;
+    const headerObj = {
+      'accept': 'application/json',
+      'x-jwt': `Bearer ${this.configuration.token}`,
+      'Content-Type': 'application/json',
+    };
+    const headers = new Headers(headerObj);
+    const data = JSON.stringify({
+      "profile": this.configuration.profile,
+      "outputFolder": this.configuration.outputFolder,
+      "baseName": this.configuration.baseName,
+      "inputs": [
+        {
+          "uri": mediaFileAddress,
+          "type": "AudioVideo"
+        }
+      ],
+      "duration": this.configuration.duration,
+      "priority": this.configuration.priority
+    });
+
+    const request = new Request(url, {
+      method: "POST",
+      headers: headers,
+      body: data,
+    });
+
+    return fetch(request).then(response => {
+      logger.info(`Create Encore Job Status: ${response.status}`);
+      if (response.status == 201) {
+        return response.json();
+      }
+      else {
+        throw new Error('Job creation failed');
+      }
+    })
+      .catch(error => {
+        logger.error(`createEncoreJob: ${error}`);
+      });
+  }
+
+  /**
+   * Polls the encore api until all enqueued jobs have reached a SUCCESSFUL state
+   *  and been downloaded or have FAILED.
+   * @param encoreInstance The Encore Instance were the jobs have been queued.
+   * @param enqueuedJobIds List of jobs that are expected to be transcoded.
+   */
+  async pollUntilAllJobsCompleted(encoreInstance: EncoreInstance, enqueuedJobIds: string[]): Promise<void> {
+    logger.info("polling until successful job")
+    while (true) {
+      logger.info(`Enqueued jobs: ${enqueuedJobIds}`);
+      if (enqueuedJobIds.length < 1 || enqueuedJobIds === undefined) {
+        break
+      }
+      const jobsResponse: EncoreJobs = await this.getEncoreJobs(encoreInstance);
+      const jobs: EncoreJob[] = jobsResponse._embedded.encoreJobs;
+      if (jobs.length < 1 || jobs === undefined) {
+        throw new Error('getEncoreJobs returned empty list');
+      }
+      for (let job of jobs) {
+        logger.info(`Encore Job Transcoding Status: ${job.status}`);
+        const jobShouldBeProcessed: number = enqueuedJobIds.indexOf(job.id);
+        if (job.status === "SUCCESSFUL" && jobShouldBeProcessed != -1) {
+          for (let outputObj of job.output) {
+            let filePath: string = outputObj.file;
+            let url: string = `${encoreInstance.url}${filePath}`;;
+            if (filePath[0] == "/") {
+              const trimmedInstanceUrl: string = encoreInstance.url.substring(0, encoreInstance.url.length - 1);
+              // Remove final '/' in url to enable combining with filename path
+              const url: string = `${trimmedInstanceUrl}${filePath}`;
+              const splitFilename = filePath.split("/");
+              filePath = splitFilename[splitFilename.length - 1];
+            }
+            await this.downloadFile(url, filePath);
+          }
+          enqueuedJobIds.splice(jobShouldBeProcessed, 1);
+        }
+        else if (job.status === "FAILED") {
+          enqueuedJobIds.splice(jobShouldBeProcessed, 1);
+        }
+      }
+      await delay(this.configuration.encorePollingInterval_ms);
+    }
+  }
+
+  /**
+   * Attempts to get all jobs for an Encore Instance.
+   * @param encoreInstance The Encore Instance to get jobs from.
+   */
+  async getEncoreJobs(encoreInstance: EncoreInstance): Promise<EncoreJobs> {
+    const url = encoreInstance.resources.listJobs.url;
+    const headerObj = {
+      'accept': 'application/json',
+      'x-jwt': `Bearer ${this.configuration.token}`,
+    };
+    const headers = new Headers(headerObj);
+
+    const request = new Request(url, {
+      method: "GET",
+      headers: headers,
+    });
+
+    return fetch(request).then(response => {
+      logger.info(`GET Encore Jobs Status: ${response.status}`);
+      if (response.status == 200) {
+        return response.json();
+      }
+    })
+      .catch(error => {
+        logger.error(`getEncoreJobs: ${error}`);
+      });
+  }
+
+  /**
+   * Download a finished transcode job using a url address. 
+   * Creates a download directory from the baseName parameter in the pipeline configurations.
+   * @param url The file url to download.
+   * @param filename The filename that should be given to the downloaded file.
+   */
+  async downloadFile(url: string, filename: string): Promise<string> {
+    const headerObj = {
+      'accept': 'application/json',
+      'x-jwt': `Bearer ${this.configuration.token}`,
+      'Content-Type': 'application/json',
+    };
+    const headers = new Headers(headerObj);
+
+    const request = new Request(url, {
+      headers: headers,
+    });
+
+    logger.info(`File to download: ${filename}`);
+    const dir: string = `./${this.configuration.baseName}`;
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+      logger.debug('Directory created:', dir);
+    }
+    const destinationPath: string = `${dir}/${filename}`;
+    const stream = fs.createWriteStream(destinationPath);
+    const { body } = await fetch(request);
+    await finished(Readable.fromWeb(body).pipe(stream));
+    return filename;
+  }
+
+  /**
+   * Creates an Encore job for each media path in the input[] parameter for the EncoreInstance.
+   * Downloads the original reference file then polls the api and downloads the finished files if they exist.
+   * Will keep polling until all jobs queued by the pipeline have reached a SUCCESSFUL or FAILED state.
+   * When polling is done, runs analysis on the transcoded files.
+   * ONLY RUNS WITH .mp4 files.
+   * @param encoreInstance The Encore Instance in which to create Encore Transcode jobs.
+   */
+  async runTranscodePollUntilFinished(instance: EncoreInstance, reference: string) {
+
+    let jobIds: string[] = [];
+
+    //for (let input of this.configuration.inputs) {
+      const job: EncoreJob = await this.createEncoreJob(instance, reference);
+      jobIds.push(job.id);
+      const referenceFilename: string = `reference.mp4`;
+      await this.downloadFile(reference, referenceFilename);
+      await this.pollUntilAllJobsCompleted(instance, jobIds);
+
+      // const dir: string = `./${this.configuration.baseName}`;
+      // fs.readdir(dir, (err, files) => {
+      //   files.forEach(file => {
+      //     if (file.includes(".mp4") && !file.includes("reference")) {
+      //       const arrayBuffer = new Uint8Array(fs.readFileSync(`${dir}/${file}`)).buffer;
+      //       const parsedFile = ISOBoxer.parseBuffer(arrayBuffer);
+      //       const hdlrs = parsedFile.fetchAll('hdlr');
+      //       let isVideo: boolean = false;
+      //       hdlrs.forEach(hldr => {
+      //         if (hldr.handler_type == "vide") {
+      //           logger.debug(`Contains video track: ${file}`);
+      //           isVideo = true;
+      //         }
+      //       })
+      //       if (isVideo) {
+      //         logger.info(`Analyzing quality using: ${file}`);
+      //         this.analyzeQuality(`./${this.configuration.baseName}/${referenceFilename}`, `${dir}/${file}`, `OSAAS_Encore_workdir/output_${file}.json`, QualityAnalysisModel.HD) // TODO Model should be configurable
+      //       }
+      //     }
+      //   });
+      // });
+  //  }
+  }
+}

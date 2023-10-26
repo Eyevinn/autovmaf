@@ -74,7 +74,14 @@ async function runSuggestLadder(argv) {
 }
 
 async function exportWmafResultToCsv(argv) {
-    const folder = argv.folder.split("/").slice("-2").join("/");
+    let folder = "";
+    if (folder.includes("/")) {
+        folder = argv.folder.split("/").slice("-2").join("/");
+    } else if (folder.includes("\\")) {
+        folder = argv.folder.split("\\").slice("-2").join("\\");
+    } else {
+        folder = argv.folder;
+    }
     const pairs = Array.from(await pairVmafWithResolutionAndBitrate(argv.folder, () => true, () => { }, argv.probeBitrate)).flatMap((result) => {
         return result[1].map((resolutionVmaf => ({
             folder,
@@ -86,8 +93,8 @@ async function exportWmafResultToCsv(argv) {
             cpuTime: resolutionVmaf.cpuTime?.cpuTime
         })))
     });
-
-    await new ObjectsToCsv(pairs).toDisk(`${argv.folder}/results.csv`, { allColumns: true });
+    const location = path.join(argv.folder, "results.csv");
+    await new ObjectsToCsv(pairs).toDisk(location, { allColumns: true });
 }
 
 async function transcodeAndAnalyse(argv) {
@@ -99,7 +106,10 @@ async function transcodeAndAnalyse(argv) {
 
     console.log(`saveAsCsv: ${job.saveAsCsv}, ` + (job.saveAsCsv ? `also saving results as a .csv file.` : `will not save results as a .csv file.`));
     if (job.saveAsCsv) {
-        models.forEach(model => exportWmafResultToCsv({ folder: `${job.name}/${model}`, probeBitrate: argv.probeBitrate }));
+        models.forEach(model => {
+            const location = path.join(job.name, model)
+            exportWmafResultToCsv({ folder: location, probeBitrate: argv.probeBitrate });
+        });
     }
 }
 

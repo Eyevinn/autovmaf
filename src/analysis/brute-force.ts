@@ -95,7 +95,7 @@ export default async function analyzeBruteForce(directory: string, reference: st
           variables[variableName] = value;
           return {...pair, ffmpegOptionVariables: variables}
         }) as BitrateResolutionPair[]
-      )  
+      )
     })
   }
 
@@ -135,7 +135,7 @@ export default async function analyzeBruteForce(directory: string, reference: st
           qualityFile: await pipeline.analyzeQuality(
             reference,
             variant,
-            path.dirname(qualityFile) + `/${qualityAnalysisModelToString(model)}/` + path.basename(qualityFile),
+            path.join(path.dirname(qualityFile), qualityAnalysisModelToString(model), path.basename(qualityFile)),
             model
           ),
         }))
@@ -148,7 +148,7 @@ export default async function analyzeBruteForce(directory: string, reference: st
           qualityFile: await pipeline.analyzeQuality(
             reference,
             variant,
-            path.dirname(qualityFile) + `/${qualityAnalysisModelToString(model)}/` + path.basename(qualityFile),
+            path.join(path.dirname(qualityFile), qualityAnalysisModelToString(model), path.basename(qualityFile)),
             model
           ),
         });
@@ -188,7 +188,7 @@ export function preparePairs(resolutions: Resolution[], bitrates: number[], filt
     .flat()
     .flatMap(resolution =>
       bitrates.map(bitrate =>
-        (filterFunction({ bitrate, resolution }) && (resolution.range === undefined || checkIfBitrateInRange(bitrate, resolution.range))) 
+        (filterFunction({ bitrate, resolution }) && (resolution.range === undefined || checkIfBitrateInRange(bitrate, resolution.range)))
           ? {
               resolution,
               bitrate,

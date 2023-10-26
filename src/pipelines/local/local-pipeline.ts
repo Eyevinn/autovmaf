@@ -138,7 +138,7 @@ export default class LocalPipeline implements Pipeline {
     logger.info('Finished analyzing ' + distorted);
 
     const distortedDetails = path.parse(distorted);
-    const vmafFilename = distortedDetails.dir + '/' + distortedDetails.name + '_vmaf.json';
+    const vmafFilename = path.join(distortedDetails.dir, distortedDetails.name + '_vmaf.json');
     fs.renameSync(vmafFilename, output);
 
     return output;

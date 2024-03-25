@@ -56,73 +56,79 @@ AWS_SECRET_ACCESS_KEY=EFGH...
 To generate VMAF measurements, you will need to define a job which can be created with the `createJob()`-function.
 
 ```typescript
-  const { createJob } = require('@eyevinn/autovmaf');
+const { createJob } = require("@eyevinn/autovmaf");
 
-  const vmafScores = await createJob({
-    name: "MyVMAFmeasurements",
-    pipeline: "pipeline.yml",
-    encodingProfile: "profile.json",
-    reference: "reference.mp4",
-    models: ["HD", "PhoneHD"],         // optional
-    resolutions: [{                    // optional
+const vmafScores = await createJob({
+  name: "MyVMAFmeasurements",
+  pipeline: "pipeline.yml",
+  encodingProfile: "profile.json",
+  reference: "reference.mp4",
+  models: ["HD", "PhoneHD"], // optional
+  resolutions: [
+    {
+      // optional
       width: 1280,
       height: 720,
-      range: {                         // optional
+      range: {
+        // optional
         min: 500000,
-        max: 600000
-      }
-   }],
-    bitrates: [                        // optional
-      500000,
-      600000,
-      800000
-    ],
-    method: "bruteForce"               // optional
-  });
+        max: 600000,
+      },
+    },
+  ],
+  bitrates: [
+    // optional
+    500000, 600000, 800000,
+  ],
+  method: "bruteForce", // optional
+});
 ```
 
 When creating a job, you can specify:
 
- * **Name**
-    -  This will name the folder in which to put the files.
- * **Pipeline**
-    * Path to a YAML-file that defines the pipeline. See [`examples/pipeline.yml`](https://github.com/Eyevinn/autovmaf/blob/main/examples/aws/pipeline.yml) for an example AWS-pipeline.
-    * When running locally, pipeline data can be inlined in the job definition.
- * **Encoding Profile**
-    * Path to a JSON-file that defines how the reference should be encoded. When using AWS, this is a MediaConvert configuration. See an example for AWS at [`examples/aws/encoding-profile.json`](https://github.com/Eyevinn/autovmaf/blob/main/examples/encoding-profile.json). 
+- **Name**
+  - This will name the folder in which to put the files.
+- **Pipeline**
+  - Path to a YAML-file that defines the pipeline. See [`examples/pipeline.yml`](https://github.com/Eyevinn/autovmaf/blob/main/examples/aws/pipeline.yml) for an example AWS-pipeline.
+  - When running locally, pipeline data can be inlined in the job definition.
+- **Encoding Profile**
+  - Path to a JSON-file that defines how the reference should be encoded. When using AWS, this is a MediaConvert configuration. See an example for AWS at [`examples/aws/encoding-profile.json`](https://github.com/Eyevinn/autovmaf/blob/main/examples/encoding-profile.json).
     For local pipelines, this is key-value pairs that will be passed as command line arguments to FFmpeg. If pipeline
     data is inlined in the job definition, encodingProfile can be omitted and key-value pairs can instead be set
     in the `ffmpegOptions` property of the pipeline object.
- * **Reference**
-    * Path to the reference video to analyze. Normally a local path, but when using AWS, this can also be an S3-URI.
- * **Models** (optional)
-    * A list of VMAF-models to use in evaluation. This can be HD, MobileHD and UHD. HD by default.
- * **Resolutions** (optional)
-    * A list of resolutions to test. By default it will test all resolutions in the example ABR-ladder provided by Apple in the [HLS Authoring Spec](https://developer.apple.com/documentation/http_live_streaming/hls_authoring_specification_for_apple_devices).
-    * **Range** (optional)
-       * A min and max bitrate for testing a specific resolution. Adding a range will filter out bitrates that are outside of the given range. It is disabled by default. 
- * **Bitrates** (optional)
-    * A list of bitrates to test. By default a list of bitrates between 150 kbit/s to 9000 kbit/s.
- * **Method** (optional)
-    * The method to use when analyzing the videos. Either `bruteForce` or `walkTheHull`. By default `bruteForce`. NOTE: `walkTheHull` is not implemented at the moment.
+- **Reference**
+  - Path to the reference video to analyze. Normally a local path, but when using AWS, this can also be an S3-URI.
+- **Models** (optional)
+  - A list of VMAF-models to use in evaluation. This can be HD, MobileHD and UHD. HD by default.
+- **Resolutions** (optional)
+  - A list of resolutions to test. By default it will test all resolutions in the example ABR-ladder provided by Apple in the [HLS Authoring Spec](https://developer.apple.com/documentation/http_live_streaming/hls_authoring_specification_for_apple_devices).
+  - **Range** (optional)
+    - A min and max bitrate for testing a specific resolution. Adding a range will filter out bitrates that are outside of the given range. It is disabled by default.
+- **Bitrates** (optional)
+  - A list of bitrates to test. By default a list of bitrates between 150 kbit/s to 9000 kbit/s.
+- **Method** (optional)
+  - The method to use when analyzing the videos. Either `bruteForce` or `walkTheHull`. By default `bruteForce`. NOTE: `walkTheHull` is not implemented at the moment.
 
 ### Create job using yaml
 
 ```typescript
-const { createJob } = require('@eyevinn/autovmaf');
-const YAML = require('yaml');
-const fs = require('fs');
-const parseResolutions = resolutions => {
-resolutions.map(resolutionStr => ({
-   width: parseInt(resolutionStr.split('x')[0]),
-   height: parseInt(resolutionStr.split('x')[1]),
+const { createJob } = require("@eyevinn/autovmaf");
+const YAML = require("yaml");
+const fs = require("fs");
+const parseResolutions = (resolutions) => {
+  resolutions.map((resolutionStr) => ({
+    width: parseInt(resolutionStr.split("x")[0]),
+    height: parseInt(resolutionStr.split("x")[1]),
   }));
 };
-const jobFile = fs.readFileSync('job.yml', 'utf-8');
+const jobFile = fs.readFileSync("job.yml", "utf-8");
 const jobData = YAML.parse(jobFile);
 const job = {
   ...jobData,
-  resolutions: jobData['resolutions'] !== undefined ? parseResolutions(jobData['resolutions']) : undefined,
+  resolutions:
+    jobData["resolutions"] !== undefined
+      ? parseResolutions(jobData["resolutions"])
+      : undefined,
 };
 createJob(job);
 ```
@@ -136,10 +142,10 @@ Using `getVmaf()`, you can read VMAF-scores from a JSON-file or a directory of J
 Example:
 
 ```javascript
-const vmafFiles = await getVmaf('s3://path/to/vmaf/');
+const vmafFiles = await getVmaf("s3://path/to/vmaf/");
 
-vmafFiles.forEach(file => {
-  console.log(file.filename + ': ' + file.vmaf);
+vmafFiles.forEach((file) => {
+  console.log(file.filename + ": " + file.vmaf);
 });
 ```
 
@@ -149,23 +155,24 @@ When running with the cli, all transcoding and vmaf analysis will be run locally
 
 ### Requirements
 
-* [easyVmaf](https://github.com/gdavila/easyVmaf)
-* [FFmpeg](https://www.ffmpeg.org/) >= 5.0, compiled with libvmaf
-* [Python](https://www.python.org) >= 3.0
+- [easyVmaf](https://github.com/gdavila/easyVmaf)
+- [FFmpeg](https://www.ffmpeg.org/) >= 5.0, compiled with libvmaf
+- [Python](https://www.python.org) >= 3.0
 
 ### Installation
 
 Installing with `npm -g` will make the `autovmaf` command available in your path
+
 ```bash
 npm install -g @eyevinn/autovmaf
 ```
 
 ### Environments variables
 
-* `EASYVMAF_PATH` - needs to point to the file `easyVmaf.py` from your
-easyVmaf installation.
-* `FFMPEG_PATH` - only needs to be set if ffmpeg is not in your path.
-* `PYTHON_PATH` - only needs to be set if python is not in yur path.
+- `EASYVMAF_PATH` - needs to point to the file `easyVmaf.py` from your
+  easyVmaf installation.
+- `FFMPEG_PATH` - only needs to be set if ffmpeg is not in your path.
+- `PYTHON_PATH` - only needs to be set if python is not in yur path.
 
 ### Command line options
 
@@ -209,11 +216,13 @@ Output files will be stored in a folder corresponding to the argument given to t
 If resolutions and/or bitrates are not specified default values will be used, [See above](#generate-vmaf-measurements).
 
 ### Providing job definition in a json or yaml file
+
 With the `--job` option, a path to a yaml or json file with a job definition can be passed to to the cli. The values
 defined in the file can be overriden with other commandline options. For instance the `reference` video defined
 in the job file can be overridden by passing a source file on the command line.
 
 #### Using variables in the job definition
+
 It is possible to iterate over other variables than bitrate and resolutions when running a local encode. For
 instance, to run transcode and vmaf analysis with x265 in CRF mode for a number of CRF values, a job definition
 like below can be used (also available in [examples/local/local-job-crf.yaml](examples/local/local-job-crf.yaml))
@@ -245,7 +254,7 @@ pipelineVariables:
 ```
 
 This will run transcode and vmaf analysis for CRF values 22,26,30, and 34. Variables are used in the ffmpeg options
-by insterting `%VARIABLENAME%`. This string will then be subtituted with a value from the list of values from 
+by insterting `%VARIABLENAME%`. This string will then be subtituted with a value from the list of values from
 `pipelineVariables.VARIABLENAME`. Note that when running CRF encode or other non-ABR mode, `skipDefaultOptions` must
 be set to avoid injecting bitrate options to ffmpeg. Also note that the cli needs to be run with the `--probe-bitrate`
 option to get the correct bitrate from the transcoded files.

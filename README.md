@@ -1,23 +1,14 @@
-<h1 align="center">
-  <a href="https://github.com/eyevinn/autovmaf">
-    <img src="https://raw.githubusercontent.com/Eyevinn/autovmaf/main/AutoVMAF.svg" alt="Logo" height="100">
-  </a>
-</h1>
-
 <div align="center">
-  autovmaf - A toolkit to automatically encode multiple bitrates and perform automated VMAF measurements on all of them. 
-  <br />
-  <br />
-  :book: <b><a href="https://eyevinn.github.io/autovmaf/">Read the documentation</a></b> :eyes:
-  <br />
-  <br />
-  <a href="https://github.com/eyevinn/autovmaf/issues/new?assignees=&labels=bug&template=01_BUG_REPORT.md&title=bug%3A+">Report a Bug</a>
-  ·
-  <a href="https://github.com/eyevinn/autovmaf/issues/new?assignees=&labels=enhancement&template=02_FEATURE_REQUEST.md&title=feat%3A+">Request a Feature</a>
-</div>
 
-<div align="center">
-<br />
+# [<img src="https://raw.githubusercontent.com/Eyevinn/autovmaf/main/AutoVMAF.svg" alt="autovmaf" height="100">](https://github.com/eyevinn/autovmaf)
+
+autovmaf - A toolkit to automatically encode multiple bitrates and perform automated VMAF measurements on all of them.
+
+📖 **[Read the documentation](https://eyevinn.github.io/autovmaf/)** 👀
+
+[Report a Bug](https://github.com/eyevinn/autovmaf/issues/new?assignees=&labels=bug&template=01_BUG_REPORT.md&title=bug%3A+)
+·
+[Request a Feature](https://github.com/eyevinn/autovmaf/issues/new?assignees=&labels=enhancement&template=02_FEATURE_REQUEST.md&title=feat%3A+)
 
 [![license](https://img.shields.io/npm/v/@eyevinn/autovmaf?style=flat-square)](https://www.npmjs.com/package/@eyevinn/autovmaf)
 [![license](https://img.shields.io/github/v/release/Eyevinn/autovmaf?style=flat-square)](https://github.com/Eyevinn/autovmaf/releases)

@@ -150,9 +150,9 @@ When running with the cli, all transcoding and vmaf analysis will be run locally
 - [FFmpeg](https://www.ffmpeg.org/) >= 5.0, compiled with libvmaf
 - [Python](https://www.python.org) >= 3.0
 
-### Installation
+### Global installation
 
-Installing with `npm -g` will make the `autovmaf` command available in your path
+Installing globally with `npm -g` will make the `autovmaf` command available in your path
 
 ```bash
 npm install -g @eyevinn/autovmaf

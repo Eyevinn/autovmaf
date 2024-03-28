@@ -44,10 +44,10 @@ export type JobDescription = {
   /** Values that will be substituted into the encoding options. Currently only supported for local pipeline */
   pipelineVariables?: { [key: string]: string[] };
 
-  /** Skip transcode and run analysis only, files are assumed to be allready present */
+  /** Skip transcode and run analysis only, files are assumed to be already present */
   skipTranscode?: boolean;
 
-  /** Skip transcode if outfile allready exists */
+  /** Skip transcode if outfile already exists */
   skipExisting?: boolean;
 };
 

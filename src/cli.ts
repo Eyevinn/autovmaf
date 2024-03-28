@@ -63,12 +63,12 @@ async function run() {
             skipTranscode: {
               type: 'boolean',
               description:
-                'Skip transcode and run vmaf on allready transcoded files',
+                'Skip transcode and run vmaf on already transcoded files',
               default: false
             },
             skipExisting: {
               type: 'boolean',
-              description: 'Skip transcode for allready transcoded files',
+              description: 'Skip transcode for already transcoded files',
               default: true
             },
             probeBitrate: {
@@ -184,7 +184,7 @@ async function transcodeAndAnalyse(argv) {
 }
 
 async function updateJobDefinition(argv) {
-  const job: any = argv.job ? await readJobDefintion(argv.job) : {};
+  const job: any = argv.job ? await readJobDefinition(argv.job) : {};
   job.skipTranscode = argv.skipTranscode;
   job.skipExisting = argv.skipExisting;
   if (argv.source) {
@@ -237,7 +237,7 @@ async function updateJobDefinition(argv) {
   return job;
 }
 
-async function readJobDefintion(file) {
+async function readJobDefinition(file) {
   const text = await fs.readFile(file, { encoding: 'utf-8' });
   const extension = path.extname(file);
   const definition = ['.yml', '.yaml'].includes(extension.toLowerCase())

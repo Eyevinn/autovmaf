@@ -46,7 +46,7 @@ async function dataFromS3(
     const getCommands = listResponse.Contents?.map(
       (obj) => new GetObjectCommand({ Bucket: bucket, Key: obj.Key })
     );
-    const getReponses = getCommands
+    const getResponses = getCommands
       .filter((command) => command.input.Key?.endsWith('.json'))
       .map(async (command) => {
         const response = await s3.send(command);
@@ -54,13 +54,13 @@ async function dataFromS3(
       });
 
     let counter = 1;
-    for (const promise of getReponses) {
+    for (const promise of getResponses) {
       const { key, response } = await promise;
       const stream = (await response).Body;
       const data = await streamToString(stream);
       dataList.push({ filename: path.basename(key), contents: data });
-      onProgress(counter - 1, path.basename(key), getReponses.length);
-      logger.info(`Finished loading VMAF ${counter}/${getReponses.length}.`);
+      onProgress(counter - 1, path.basename(key), getResponses.length);
+      logger.info(`Finished loading VMAF ${counter}/${getResponses.length}.`);
       counter += 1;
     }
   }

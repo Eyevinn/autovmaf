@@ -163,7 +163,7 @@ npm install -g @eyevinn/autovmaf
 - `EASYVMAF_PATH` - needs to point to the file `easyVmaf.py` from your
   easyVmaf installation.
 - `FFMPEG_PATH` - only needs to be set if ffmpeg is not in your path.
-- `PYTHON_PATH` - only needs to be set if python is not in yur path.
+- `PYTHON_PATH` - only needs to be set if python is not in your path.
 
 ### Command line options
 
@@ -193,9 +193,9 @@ Options:
   --job             File with job definition                            [string]
   --saveAsCsv       Save VMAF measurements as a .csv file in addition to a JSON
                     file                              [boolean] [default: false]
-  --skipTranscode   Skip transcode and run vmaf on allready transcoded files
+  --skipTranscode   Skip transcode and run vmaf on already transcoded files
                                                       [boolean] [default: false]
-  --skipExisting    Skip transcode for allready transcoded files
+  --skipExisting    Skip transcode for already transcoded files
                                                        [boolean] [default: true]
   --probeBitrate    Read bitrate of transcoded file with ffprobe
                                                       [boolean] [default: false]
@@ -209,7 +209,7 @@ If resolutions and/or bitrates are not specified default values will be used, [S
 ### Providing job definition in a json or yaml file
 
 With the `--job` option, a path to a yaml or json file with a job definition can be passed to to the cli. The values
-defined in the file can be overriden with other commandline options. For instance the `reference` video defined
+defined in the file can be overridden with other commandline options. For instance the `reference` video defined
 in the job file can be overridden by passing a source file on the command line.
 
 #### Using variables in the job definition
@@ -245,7 +245,7 @@ pipelineVariables:
 ```
 
 This will run transcode and vmaf analysis for CRF values 22,26,30, and 34. Variables are used in the ffmpeg options
-by insterting `%VARIABLENAME%`. This string will then be subtituted with a value from the list of values from
+by insterting `%VARIABLENAME%`. This string will then be substituted with a value from the list of values from
 `pipelineVariables.VARIABLENAME`. Note that when running CRF encode or other non-ABR mode, `skipDefaultOptions` must
 be set to avoid injecting bitrate options to ffmpeg. Also note that the cli needs to be run with the `--probe-bitrate`
 option to get the correct bitrate from the transcoded files.

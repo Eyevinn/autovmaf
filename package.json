@@ -31,6 +31,8 @@
     "dev": "tsc --watch --project ./",
     "test": "jest",
     "test-coverage": "jest --coverage",
+    "lint:typos": "typos .",
+    "format:typos": "typos -w .",
     "docs": "npx typedoc src/index.ts",
     "postversion": "git push && git push --tags"
   },

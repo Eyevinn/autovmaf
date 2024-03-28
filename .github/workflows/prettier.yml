@@ -1,8 +1,9 @@
-name: Unit Tests
-on: [push]
+name: Prettier
+on: [pull_request]
 
 jobs:
-  unittests:
+  pretty:
+    if: "!contains(github.event.pull_request.title, 'WIP!')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -12,5 +13,5 @@ jobs:
           node-version: '18.x'
       - name: Install Dependencies
         run: npm ci
-      - name: Run Unit Tests
-        run: npm test
+      - name: Run Prettier
+        run: npm run pretty

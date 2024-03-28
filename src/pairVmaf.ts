@@ -52,14 +52,12 @@ export async function pairVmafWithResolutionAndBitrate(
 
     if (filterFunction(bitrate, { width, height }, vmaf)) {
       if (pairs.has(bitrate)) {
-        pairs
-          .get(bitrate)
-          ?.push({
-            resolution: { width, height },
-            vmaf,
-            cpuTime,
-            vmafFile: filename
-          });
+        pairs.get(bitrate)?.push({
+          resolution: { width, height },
+          vmaf,
+          cpuTime,
+          vmafFile: filename
+        });
       } else {
         pairs.set(bitrate, [
           { resolution: { width, height }, vmaf, cpuTime, vmafFile: filename }

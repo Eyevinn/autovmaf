@@ -4,7 +4,7 @@
 export enum QualityAnalysisModel {
   PhoneHD,
   HD,
-  UHD,
+  UHD
 }
 
 /**
@@ -12,7 +12,9 @@ export enum QualityAnalysisModel {
  * @param model The model to convert.
  * @returns A readable string of the model name.
  */
-export function qualityAnalysisModelToString(model: QualityAnalysisModel): string {
+export function qualityAnalysisModelToString(
+  model: QualityAnalysisModel
+): string {
   if (model === QualityAnalysisModel.HD) {
     return 'HD';
   } else if (model === QualityAnalysisModel.PhoneHD) {
@@ -29,7 +31,9 @@ export function qualityAnalysisModelToString(model: QualityAnalysisModel): strin
  * @param model The string to convert. Can be either "HD", "PhoneHD", or "UHD".
  * @returns A QualityAnalysisModel-enum depending on the input string.
  */
-export function stringToQualityAnalysisModel(model: 'HD' | 'PhoneHD' | 'UHD'): QualityAnalysisModel {
+export function stringToQualityAnalysisModel(
+  model: 'HD' | 'PhoneHD' | 'UHD'
+): QualityAnalysisModel {
   if (model === 'HD') {
     return QualityAnalysisModel.HD;
   } else if (model === 'PhoneHD') {

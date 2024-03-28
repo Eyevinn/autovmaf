@@ -1,4 +1,4 @@
-import { BitrateRange } from "./bitrateRange";
+import { BitrateRange } from './bitrateRange';
 
 export type Resolution = {
   width: number;

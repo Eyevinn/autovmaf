@@ -1,93 +1,93 @@
 const default_profile = {
   Inputs: [
     {
-      TimecodeSource: "ZEROBASED",
+      TimecodeSource: 'ZEROBASED',
       VideoSelector: {},
-      FileInput: "$INPUT",
-    },
+      FileInput: '$INPUT'
+    }
   ],
   OutputGroups: [
     {
-      Name: "File Group",
+      Name: 'File Group',
       OutputGroupSettings: {
-        Type: "FILE_GROUP_SETTINGS",
+        Type: 'FILE_GROUP_SETTINGS',
         FileGroupSettings: {
-          Destination: "$OUTPUT",
-        },
+          Destination: '$OUTPUT'
+        }
       },
       Outputs: [
         {
           VideoDescription: {
             CodecSettings: {
-              Codec: "H_264",
+              Codec: 'H_264',
               H264Settings: {
-                RateControlMode: "CBR",
-                Bitrate: "$BITRATE",
-                CodecProfile: "HIGH",
-              },
+                RateControlMode: 'CBR',
+                Bitrate: '$BITRATE',
+                CodecProfile: 'HIGH'
+              }
             },
-            Width: "$WIDTH",
-            Height: "$HEIGHT",
+            Width: '$WIDTH',
+            Height: '$HEIGHT'
           },
           ContainerSettings: {
-            Container: "MP4",
-            Mp4Settings: {},
-          },
-        },
-      ],
-    },
+            Container: 'MP4',
+            Mp4Settings: {}
+          }
+        }
+      ]
+    }
   ],
   TimecodeConfig: {
-    Source: "ZEROBASED",
-  },
+    Source: 'ZEROBASED'
+  }
 };
 
 const h265_profile = {
   Inputs: [
     {
-      TimecodeSource: "ZEROBASED",
+      TimecodeSource: 'ZEROBASED',
       VideoSelector: {},
-      FileInput: "$INPUT",
-    },
+      FileInput: '$INPUT'
+    }
   ],
   OutputGroups: [
     {
-      Name: "File Group",
+      Name: 'File Group',
       OutputGroupSettings: {
-        Type: "FILE_GROUP_SETTINGS",
+        Type: 'FILE_GROUP_SETTINGS',
         FileGroupSettings: {
-          Destination: "$OUTPUT",
-        },
+          Destination: '$OUTPUT'
+        }
       },
       Outputs: [
         {
           VideoDescription: {
             CodecSettings: {
-              Codec: "H_265",
+              Codec: 'H_265',
               H265Settings: {
-                GopBReference: "ENABLED",
-                HrdBufferSize: "$HRDBUFFER",
-                Bitrate: "$BITRATE",
-                RateControlMode: "CBR",
-                CodecProfile: "MAIN10_HIGH",
-                AdaptiveQuantization: "AUTO",
-                GopSizeUnits: "AUTO",
-              },
+                GopBReference: 'ENABLED',
+                HrdBufferSize: '$HRDBUFFER',
+                Bitrate: '$BITRATE',
+                RateControlMode: 'CBR',
+                CodecProfile: 'MAIN10_HIGH',
+                AdaptiveQuantization: 'AUTO',
+                GopSizeUnits: 'AUTO'
+              }
             },
-            Width: "$WIDTH",
-            Height: "$HEIGHT",
+            Width: '$WIDTH',
+            Height: '$HEIGHT'
           },
           ContainerSettings: {
-            Container: "MP4",
-            Mp4Settings: {},
-          },
-        },
-      ],
-    },
+            Container: 'MP4',
+            Mp4Settings: {}
+          }
+        }
+      ]
+    }
   ],
   TimecodeConfig: {
-    Source: "ZEROBASED",
-  },
+    Source: 'ZEROBASED'
+  }
 };
 
 export { default_profile, h265_profile };

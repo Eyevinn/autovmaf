@@ -1,3 +1,3 @@
-import { startJobLambda } from "./index";
+import { startJobLambda } from './index';
 
 export const handler = startJobLambda.handler;

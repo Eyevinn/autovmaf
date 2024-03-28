@@ -1,5 +1,8 @@
 import { mockClient } from 'aws-sdk-client-mock';
-import { CreateJobCommand, MediaConvertClient } from '@aws-sdk/client-mediaconvert';
+import {
+  CreateJobCommand,
+  MediaConvertClient
+} from '@aws-sdk/client-mediaconvert';
 import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3';
 import { ECSClient, RunTaskCommand } from '@aws-sdk/client-ecs';
 import { AWSPipeline } from '../src';
@@ -12,8 +15,8 @@ const mediaConvertSettings = {
     {
       TimecodeSource: 'ZEROBASED',
       VideoSelector: {},
-      FileInput: '$INPUT',
-    },
+      FileInput: '$INPUT'
+    }
   ],
   OutputGroups: [
     {
@@ -21,8 +24,8 @@ const mediaConvertSettings = {
       OutputGroupSettings: {
         Type: 'FILE_GROUP_SETTINGS',
         FileGroupSettings: {
-          Destination: '$OUTPUT',
-        },
+          Destination: '$OUTPUT'
+        }
       },
       Outputs: [
         {
@@ -36,23 +39,23 @@ const mediaConvertSettings = {
                 RateControlMode: 'CBR',
                 CodecProfile: 'MAIN10_HIGH',
                 AdaptiveQuantization: 'AUTO',
-                GopSizeUnits: 'AUTO',
-              },
+                GopSizeUnits: 'AUTO'
+              }
             },
             Width: '$WIDTH',
-            Height: '$HEIGHT',
+            Height: '$HEIGHT'
           },
           ContainerSettings: {
             Container: 'MP4',
-            Mp4Settings: {},
-          },
-        },
-      ],
-    },
+            Mp4Settings: {}
+          }
+        }
+      ]
+    }
   ],
   TimecodeConfig: {
-    Source: 'ZEROBASED',
-  },
+    Source: 'ZEROBASED'
+  }
 };
 const pipelineSettings: AWSPipelineConfiguration = {
   inputBucket: 'vmaf-files',
@@ -65,7 +68,7 @@ const pipelineSettings: AWSPipelineConfiguration = {
   ecsSecurityGroup: 'sg-0e444b67a747bf739',
   ecsContainerName: 'easyvmaf-s3',
   ecsCluster: 'vmaf-runner',
-  ecsTaskDefinition: 'easyvmaf-s3:1',
+  ecsTaskDefinition: 'easyvmaf-s3:1'
 };
 const mcMock = mockClient(MediaConvertClient);
 const ecsMock = mockClient(ECSClient);
@@ -134,7 +137,9 @@ describe('AWSPipeline', () => {
 
   it('stringReplacement should replace keyword in string', async () => {
     const str = 'FileInput: $INPUT';
-    expect(pipeline.stringReplacement(str, '$INPUT', 'testFile')).toEqual('FileInput: testFile');
+    expect(pipeline.stringReplacement(str, '$INPUT', 'testFile')).toEqual(
+      'FileInput: testFile'
+    );
   });
 
   it('transcode should start a transcoding job', async () => {
@@ -143,7 +148,12 @@ describe('AWSPipeline', () => {
 
     jest.spyOn(pipeline, 'fileExists').mockResolvedValue(true);
 
-    await pipeline.transcode('file', { width: 1280, height: 720 }, 900000, 's3Dir');
+    await pipeline.transcode(
+      'file',
+      { width: 1280, height: 720 },
+      900000,
+      's3Dir'
+    );
 
     expect(pipeline.fileExists).toReturnTimes(2);
     expect(mcMock.send).toHaveBeenCalled;
@@ -151,26 +161,45 @@ describe('AWSPipeline', () => {
 
   it('analyzeQuality should start job in ECS', async () => {
     jest.spyOn(pipeline, 'waitForObjectInS3').mockResolvedValue(true);
-    jest.spyOn(pipeline, 'uploadIfNeeded').mockResolvedValue('file'); 
+    jest.spyOn(pipeline, 'uploadIfNeeded').mockResolvedValue('file');
     jest.spyOn(pipeline, 'fileExists').mockResolvedValue(false);
 
     s3Mock.on(HeadObjectCommand).resolves({});
     ecsMock.on(RunTaskCommand).resolves({});
 
-    await pipeline.analyzeQuality('referenceFile', 'distortedFile', 's3Dir', QualityAnalysisModel.HD);
+    await pipeline.analyzeQuality(
+      'referenceFile',
+      'distortedFile',
+      's3Dir',
+      QualityAnalysisModel.HD
+    );
 
     expect(ecsMock.send).toHaveBeenCalled;
-    expect(pipeline.fileExists).toHaveBeenCalledWith('vmaf-files', 'results/s3Dir');
-    expect(pipeline.waitForObjectInS3).toHaveBeenCalledWith('vmaf-files', 'results/s3Dir');
+    expect(pipeline.fileExists).toHaveBeenCalledWith(
+      'vmaf-files',
+      'results/s3Dir'
+    );
+    expect(pipeline.waitForObjectInS3).toHaveBeenCalledWith(
+      'vmaf-files',
+      'results/s3Dir'
+    );
   });
 
   it('analyzeQuality should skip job if outputObject already exists in S3', async () => {
     jest.spyOn(pipeline, 'fileExists').mockResolvedValue(true);
 
-    await pipeline.analyzeQuality('referenceFile', 'distortedFile', 'fileInS3', QualityAnalysisModel.HD);
+    await pipeline.analyzeQuality(
+      'referenceFile',
+      'distortedFile',
+      'fileInS3',
+      QualityAnalysisModel.HD
+    );
 
     expect(ecsMock.send).not.toHaveBeenCalled;
-    expect(pipeline.fileExists).toHaveBeenCalledWith('vmaf-files', 'results/fileInS3');
+    expect(pipeline.fileExists).toHaveBeenCalledWith(
+      'vmaf-files',
+      'results/fileInS3'
+    );
   });
 
   it('isS3URI should return "true" if string is a valid S3 URI', async () => {

@@ -1,17 +1,16 @@
 import analyzeBruteForce from './analysis/brute-force';
-import { Pipeline } from './pipelines/pipeline'
+import { Pipeline } from './pipelines/pipeline';
 import AWSPipeline from './pipelines/aws/aws-pipeline';
 import { loadPipeline, loadPipelineFromObjects } from './load-pipeline';
 import LocalPipeline from './pipelines/local/local-pipeline';
 import {
   QualityAnalysisModel,
-  stringToQualityAnalysisModel,
+  stringToQualityAnalysisModel
 } from './models/quality-analysis-model';
 import logger from './logger';
 import { Resolution } from './models/resolution';
 import analyzeWalkTheHull from './analysis/walk-the-hull';
 import { LocalPipelineConfiguration } from './pipelines/local/local-pipeline-configuration';
-
 
 /** Describes a ABR-analysis job and can be used to create jobs using the createJob()-function. */
 export type JobDescription = {
@@ -25,7 +24,7 @@ export type JobDescription = {
    *  For local pipelines, this is key-value pairs that will be passed as command line arguments to FFmpeg.
    *  For inline pipeline definition, this should be key-value pairs
    *  See an example for AWS at `examples/encoding-profile.json`.  */
-  encodingProfile: string | Record<string,string>;
+  encodingProfile: string | Record<string, string>;
 
   /** Path to the reference video to analyze. Normally a local path, but when using AWS, this can also be an S3-URI. */
   reference: string;
@@ -110,30 +109,48 @@ export type JobDescription = {
  *
  * @param description An object that describes the job to create.
  */
-export default async function createJob(description: JobDescription, pipelineData?: any, encodingProfileData?: any, concurrency: boolean = true) {
+export default async function createJob(
+  description: JobDescription,
+  pipelineData?: any,
+  encodingProfileData?: any,
+  concurrency: boolean = true
+) {
   logger.info(`Creating job ${description.name}.`);
 
   let pipeline: Pipeline | undefined = undefined;
   if (pipelineData && encodingProfileData) {
     pipeline = await loadPipelineFromObjects(pipelineData, encodingProfileData);
-  } else if(typeof description.pipeline === 'object') {
-    pipeline = new LocalPipeline({...description.pipeline, ...description.encodingProfile as Record<string,string>} );
+  } else if (typeof description.pipeline === 'object') {
+    pipeline = new LocalPipeline({
+      ...description.pipeline,
+      ...(description.encodingProfile as Record<string, string>)
+    });
   } else {
-    pipeline = await loadPipeline(description.pipeline, description.encodingProfile as string);
+    pipeline = await loadPipeline(
+      description.pipeline,
+      description.encodingProfile as string
+    );
   }
 
   if (pipeline === undefined) {
-    throw new Error(`No pipeline defined for job: ${JSON.stringify(description)}`);
+    throw new Error(
+      `No pipeline defined for job: ${JSON.stringify(description)}`
+    );
   }
 
   let models: QualityAnalysisModel[];
   if (description.models === undefined) {
     models = [QualityAnalysisModel.HD];
   } else {
-    models = description.models.map(modelStr => stringToQualityAnalysisModel(modelStr));
+    models = description.models.map((modelStr) =>
+      stringToQualityAnalysisModel(modelStr)
+    );
   }
 
-  const reference: string = await uploadReferenceIfNeeded(description, pipeline);
+  const reference: string = await uploadReferenceIfNeeded(
+    description,
+    pipeline
+  );
 
   if (description.method === 'walkTheHull') {
     await analyzeWalkTheHull();
@@ -147,21 +164,27 @@ export default async function createJob(description: JobDescription, pipelineDat
       skipTranscode: !!description.skipTranscode,
       skipExisting: !!description.skipExisting,
       filterFunction:
-        description.bitrates !== undefined && description.resolutions !== undefined ? _ => true : undefined,
+        description.bitrates !== undefined &&
+        description.resolutions !== undefined
+          ? (_) => true
+          : undefined
     });
   }
 
   logger.info('Finished analysis!');
 }
 
-async function uploadReferenceIfNeeded(description: JobDescription, pipeline: Pipeline) {
+async function uploadReferenceIfNeeded(
+  description: JobDescription,
+  pipeline: Pipeline
+) {
   if (pipeline instanceof AWSPipeline) {
     return await pipeline.uploadIfNeeded(
       description.reference,
       pipeline.configuration.inputBucket,
       description.name,
       'reference.mp4'
-    )
+    );
   }
   return description.reference;
 }

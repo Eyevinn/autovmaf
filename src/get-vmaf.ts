@@ -43,10 +43,12 @@ async function dataFromS3(
   let dataList: any = [];
 
   if (listResponse.Contents !== undefined) {
-    const getCommands = listResponse.Contents?.map(obj => new GetObjectCommand({ Bucket: bucket, Key: obj.Key }));
+    const getCommands = listResponse.Contents?.map(
+      (obj) => new GetObjectCommand({ Bucket: bucket, Key: obj.Key })
+    );
     const getReponses = getCommands
-      .filter(command => command.input.Key?.endsWith('.json'))
-      .map(async command => {
+      .filter((command) => command.input.Key?.endsWith('.json'))
+      .map(async (command) => {
         const response = await s3.send(command);
         return { key: command.input.Key!, response };
       });
@@ -82,17 +84,26 @@ async function dataFromS3(
  */
 export default async function getVmaf(
   filename: string,
-  onProgress: (index: number, filename: string, total: number) => void = () => {}
+  onProgress: (
+    index: number,
+    filename: string,
+    total: number
+  ) => void = () => {}
 ): Promise<{ filename: string; vmaf: number }[]> {
   if (isS3URI(filename)) {
     const list = await dataFromS3(filename, onProgress);
-    return list.map(({ filename, contents }) => ({ filename, vmaf: vmafFromJsonString(contents) }));
+    return list.map(({ filename, contents }) => ({
+      filename,
+      vmaf: vmafFromJsonString(contents)
+    }));
   } else {
     if (fs.lstatSync(filename).isDirectory()) {
       logger.info('Loading VMAF from directory...');
-      const files = fs.readdirSync(filename).filter(file => path.extname(file) === '.json');
+      const files = fs
+        .readdirSync(filename)
+        .filter((file) => path.extname(file) === '.json');
       return await Promise.all(
-        files.map(async f => {
+        files.map(async (f) => {
           const contents = fs.readFileSync(path.join(filename, f), 'utf-8');
           const vmaf = await vmafFromJsonString(contents);
           return { filename: f, vmaf };

@@ -5,7 +5,7 @@ export const handler = async (event: any): Promise<any> => {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Origin',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
   };
   console.log(JSON.stringify(event));
   if (!event['job'] || !event['pipeline'] || !event['encodingProfile']) {
@@ -14,8 +14,8 @@ export const handler = async (event: any): Promise<any> => {
       headers: responseHeaders,
       statusCode: 400,
       body: JSON.stringify({
-        error: 'Missing job, pipeline or encodingProfile parameter.',
-      }),
+        error: 'Missing job, pipeline or encodingProfile parameter.'
+      })
     };
   }
   try {
@@ -23,14 +23,14 @@ export const handler = async (event: any): Promise<any> => {
     return {
       headers: responseHeaders,
       statusCode: 200,
-      body: 'Job finished successfully!',
+      body: 'Job finished successfully!'
     };
   } catch (error) {
     console.error(error);
     return {
       headers: responseHeaders,
       statusCode: 500,
-      body: 'Failed to create job',
+      body: 'Failed to create job'
     };
   }
-}
+};

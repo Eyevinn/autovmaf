@@ -11,11 +11,11 @@ pipeline:
   singlePass: true
   skipDefaultOptions: true
   ffmpegOptions:
-    "-pix_fmt": "yuv420p"
-    "-preset": "veryslow"
-    "-x265-params": "crf=%CRF%:scenecut=0:keyint=50:min-keyint=50:open-gop=0"
+    '-pix_fmt': 'yuv420p'
+    '-preset': 'veryslow'
+    '-x265-params': 'crf=%CRF%:scenecut=0:keyint=50:min-keyint=50:open-gop=0'
   easyVmafExtraArgs:
-    "-threads": 20
+    '-threads': 20
 pipelineVariables:
   CRF:
     - 22

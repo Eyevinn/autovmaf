@@ -1,14 +1,13 @@
 {
-    "version": "2.1.1",
-    "frames": [],
-    "pooled_metrics": {
-      "vmaf": {
-        "min": 57.893321,
-        "max": 100.000000,
-        "mean": 86.128118,
-        "harmonic_mean": 85.628489
-      }
-    },
-    "aggregate_metrics": {
+  "version": "2.1.1",
+  "frames": [],
+  "pooled_metrics": {
+    "vmaf": {
+      "min": 57.893321,
+      "max": 100.0,
+      "mean": 86.128118,
+      "harmonic_mean": 85.628489
     }
-  }
+  },
+  "aggregate_metrics": {}
+}

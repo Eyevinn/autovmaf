@@ -9,7 +9,7 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Origin',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
   };
 
   if (event.httpMethod === 'POST' && event.path === '/' && event['body']) {
@@ -18,7 +18,7 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
       return {
         headers: responseHeaders,
         statusCode: 400,
-        body: JSON.stringify({ Error: 'Missing job parameter!' }),
+        body: JSON.stringify({ Error: 'Missing job parameter!' })
       };
     }
     const job = body.job;
@@ -38,18 +38,20 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
       return {
         headers: responseHeaders,
         statusCode: 500,
-        body: JSON.stringify({ Message: 'Failed to load settings from S3' }),
+        body: JSON.stringify({ Message: 'Failed to load settings from S3' })
       };
     }
-    console.log(`Job: ${JSON.stringify(job)} \n Pipeline: ${JSON.stringify(pipeline)} \n MediaConvertProfile: ${JSON.stringify(mediaConvertProfile)}`);
+    console.log(
+      `Job: ${JSON.stringify(job)} \n Pipeline: ${JSON.stringify(pipeline)} \n MediaConvertProfile: ${JSON.stringify(mediaConvertProfile)}`
+    );
     let message = 'Job created successfully! 🎞️';
     let statusCode = 202;
     try {
       await createLambdaJob({
-        job: job, 
-        pipeline: pipeline, 
-        encodingProfile: mediaConvertProfile 
-      }); 
+        job: job,
+        pipeline: pipeline,
+        encodingProfile: mediaConvertProfile
+      });
     } catch (error) {
       console.error(error);
       message = 'Failed to create job!';
@@ -58,23 +60,23 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
     return {
       headers: responseHeaders,
       statusCode: statusCode,
-      body: message,
+      body: message
     };
   } else {
     return {
       headers: responseHeaders,
       statusCode: 405,
-      body: JSON.stringify({ Error: 'Method not allowed!' }),
+      body: JSON.stringify({ Error: 'Method not allowed!' })
     };
   }
-}
+};
 
 async function createLambdaJob(data: any): Promise<any> {
   const lambda = new aws.Lambda({ region: 'eu-north-1' });
   const params = {
-    FunctionName: "lambda-create-autovmaf-job",
-    InvocationType: "Event",
-    Payload: JSON.stringify(data),
+    FunctionName: 'lambda-create-autovmaf-job',
+    InvocationType: 'Event',
+    Payload: JSON.stringify(data)
   };
   return new Promise((resolve, reject) => {
     lambda.invoke(params, (err, data) => {
@@ -90,18 +92,26 @@ async function createLambdaJob(data: any): Promise<any> {
 }
 
 async function loadFromS3(encodingS3Url: string): Promise<string> {
-  const s3 = new S3({ region: (process.env.AWS_REGION || 'eu-north-1') });
-  console.log('Bucket: ' + encodingS3Url.split('/')[2] + ' Key: ' + encodingS3Url.split('/')[3]);
-  const getCommand = new GetObjectCommand({ Bucket: encodingS3Url.split('/')[2], Key: encodingS3Url.split('/')[3] });
+  const s3 = new S3({ region: process.env.AWS_REGION || 'eu-north-1' });
+  console.log(
+    'Bucket: ' +
+      encodingS3Url.split('/')[2] +
+      ' Key: ' +
+      encodingS3Url.split('/')[3]
+  );
+  const getCommand = new GetObjectCommand({
+    Bucket: encodingS3Url.split('/')[2],
+    Key: encodingS3Url.split('/')[3]
+  });
   const response = await s3.send(getCommand);
   return await streamToString(response);
 }
 
 async function streamToString(stream: any): Promise<string> {
   return new Promise(async (resolve, reject) => {
-    let responseDataChunks = []  as  any;
-    stream.Body.once('error', err => reject(err));
-    stream.Body.on('data', chunk => responseDataChunks.push(chunk));
+    let responseDataChunks = [] as any;
+    stream.Body.once('error', (err) => reject(err));
+    stream.Body.on('data', (chunk) => responseDataChunks.push(chunk));
     stream.Body.once('end', () => resolve(responseDataChunks.join('')));
   });
 }

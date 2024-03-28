@@ -47,14 +47,14 @@ AWS_SECRET_ACCESS_KEY=EFGH...
 To generate VMAF measurements, you will need to define a job which can be created with the `createJob()`-function.
 
 ```typescript
-const { createJob } = require("@eyevinn/autovmaf");
+const { createJob } = require('@eyevinn/autovmaf');
 
 const vmafScores = await createJob({
-  name: "MyVMAFmeasurements",
-  pipeline: "pipeline.yml",
-  encodingProfile: "profile.json",
-  reference: "reference.mp4",
-  models: ["HD", "PhoneHD"], // optional
+  name: 'MyVMAFmeasurements',
+  pipeline: 'pipeline.yml',
+  encodingProfile: 'profile.json',
+  reference: 'reference.mp4',
+  models: ['HD', 'PhoneHD'], // optional
   resolutions: [
     {
       // optional
@@ -63,15 +63,15 @@ const vmafScores = await createJob({
       range: {
         // optional
         min: 500000,
-        max: 600000,
-      },
-    },
+        max: 600000
+      }
+    }
   ],
   bitrates: [
     // optional
-    500000, 600000, 800000,
+    500000, 600000, 800000
   ],
-  method: "bruteForce", // optional
+  method: 'bruteForce' // optional
 });
 ```
 
@@ -103,23 +103,23 @@ When creating a job, you can specify:
 ### Create job using yaml
 
 ```typescript
-const { createJob } = require("@eyevinn/autovmaf");
-const YAML = require("yaml");
-const fs = require("fs");
+const { createJob } = require('@eyevinn/autovmaf');
+const YAML = require('yaml');
+const fs = require('fs');
 const parseResolutions = (resolutions) => {
   resolutions.map((resolutionStr) => ({
-    width: parseInt(resolutionStr.split("x")[0]),
-    height: parseInt(resolutionStr.split("x")[1]),
+    width: parseInt(resolutionStr.split('x')[0]),
+    height: parseInt(resolutionStr.split('x')[1])
   }));
 };
-const jobFile = fs.readFileSync("job.yml", "utf-8");
+const jobFile = fs.readFileSync('job.yml', 'utf-8');
 const jobData = YAML.parse(jobFile);
 const job = {
   ...jobData,
   resolutions:
-    jobData["resolutions"] !== undefined
-      ? parseResolutions(jobData["resolutions"])
-      : undefined,
+    jobData['resolutions'] !== undefined
+      ? parseResolutions(jobData['resolutions'])
+      : undefined
 };
 createJob(job);
 ```
@@ -133,10 +133,10 @@ Using `getVmaf()`, you can read VMAF-scores from a JSON-file or a directory of J
 Example:
 
 ```javascript
-const vmafFiles = await getVmaf("s3://path/to/vmaf/");
+const vmafFiles = await getVmaf('s3://path/to/vmaf/');
 
 vmafFiles.forEach((file) => {
-  console.log(file.filename + ": " + file.vmaf);
+  console.log(file.filename + ': ' + file.vmaf);
 });
 ```
 
@@ -231,11 +231,11 @@ pipeline:
   singlePass: true
   skipDefaultOptions: true
   ffmpegOptions:
-    "-pix_fmt": "yuv420p"
-    "-preset": "veryslow"
-    "-x265-params": "crf=%CRF%:scenecut=0:keyint=50:min-keyint=50:open-gop=0"
+    '-pix_fmt': 'yuv420p'
+    '-preset': 'veryslow'
+    '-x265-params': 'crf=%CRF%:scenecut=0:keyint=50:min-keyint=50:open-gop=0'
   easyVmafExtraArgs:
-    "-threads": 20
+    '-threads': 20
 pipelineVariables:
   CRF:
     - 22

@@ -9,7 +9,10 @@ import { devNull } from 'os';
 import { QualityAnalysisModel } from '../../models/quality-analysis-model';
 import logger from '../../logger';
 
-const ffmpegAsync = async (command: ffmpeg.FfmpegCommand, onProgress: (info: any) => void) => {
+const ffmpegAsync = async (
+  command: ffmpeg.FfmpegCommand,
+  onProgress: (info: any) => void
+) => {
   return new Promise<void>((resolve, reject) => {
     command
       .on('start', (cmdLine) => console.log(`Starting ffmpeg: ${cmdLine}`))
@@ -17,7 +20,7 @@ const ffmpegAsync = async (command: ffmpeg.FfmpegCommand, onProgress: (info: any
       .on('end', () => {
         resolve();
       })
-      .on('error', error => {
+      .on('error', (error) => {
         reject(error);
       })
       .run();
@@ -38,7 +41,13 @@ export default class LocalPipeline implements Pipeline {
     this.configuration = configuration;
   }
 
-  async transcode(input: string, targetResolution: Resolution, targetBitrate: number, output: string, variables?: Record<string,string>): Promise<string> {
+  async transcode(
+    input: string,
+    targetResolution: Resolution,
+    targetBitrate: number,
+    output: string,
+    variables?: Record<string, string>
+  ): Promise<string> {
     console.log(input);
     const directory = path.dirname(output);
     if (!fs.existsSync(directory)) {
@@ -50,45 +59,73 @@ export default class LocalPipeline implements Pipeline {
       '-c:v': this.configuration.ffmpegEncoder
     };
 
-    if(!this.configuration.skipDefaultOptions) {
+    if (!this.configuration.skipDefaultOptions) {
       baseEncodingArguments['-b:v'] = targetBitrate.toString();
       baseEncodingArguments['-maxrate'] = targetBitrate.toString();
       baseEncodingArguments['-bufsize'] = (targetBitrate * 2).toString();
     }
 
-    const ffmpegOptionsWithVariableSubstituted = {...this.configuration.ffmpegOptions};
+    const ffmpegOptionsWithVariableSubstituted = {
+      ...this.configuration.ffmpegOptions
+    };
     if (variables) {
-      Object.entries(this.configuration.ffmpegOptions).forEach(([key, value]) => {
-        //let value = this.configuration.ffmpegOptions[key];
-        Object.entries(variables!!).forEach(([k,v]) => {
-          value = value.replace(`%${k}%`, v);
-        })
-        ffmpegOptionsWithVariableSubstituted[key] = value;
-      });
+      Object.entries(this.configuration.ffmpegOptions).forEach(
+        ([key, value]) => {
+          //let value = this.configuration.ffmpegOptions[key];
+          Object.entries(variables!!).forEach(([k, v]) => {
+            value = value.replace(`%${k}%`, v);
+          });
+          ffmpegOptionsWithVariableSubstituted[key] = value;
+        }
+      );
     }
 
-    const ffmpegOptions = Object.entries(Object.assign({}, baseEncodingArguments, ffmpegOptionsWithVariableSubstituted)).flat();
+    const ffmpegOptions = Object.entries(
+      Object.assign(
+        {},
+        baseEncodingArguments,
+        ffmpegOptionsWithVariableSubstituted
+      )
+    ).flat();
 
-    logger.info(`ffmpegOptions: ${JSON.stringify(ffmpegOptions)}`)
+    logger.info(`ffmpegOptions: ${JSON.stringify(ffmpegOptions)}`);
     await ffmpegAsync(
-      ffmpeg({source: input, measureCpu: {output: `${output}.pass1-cpu-time.txt`, format: timeFormat }})
+      ffmpeg({
+        source: input,
+        measureCpu: {
+          output: `${output}.pass1-cpu-time.txt`,
+          format: timeFormat
+        }
+      })
         .addOptions(ffmpegOptions)
-        .addOptions(this.configuration.singlePass ? []: ['-pass', '1'])
-        .addOutput(this.configuration.singlePass === undefined ? devNull : output)
+        .addOptions(this.configuration.singlePass ? [] : ['-pass', '1'])
+        .addOutput(
+          this.configuration.singlePass === undefined ? devNull : output
+        )
         .outputFormat('mp4'),
-      info => {
-        logger.info(`Transcoding ${output}: Pass 1 progress: ${Math.round(info.percent * 100) / 100}%`);
+      (info) => {
+        logger.info(
+          `Transcoding ${output}: Pass 1 progress: ${Math.round(info.percent * 100) / 100}%`
+        );
       }
     );
 
-    if(!this.configuration.singlePass) {
+    if (!this.configuration.singlePass) {
       await ffmpegAsync(
-        ffmpeg({source: input, measureCpu: {output: `${output}.pass2-cpu-time.txt`, format: timeFormat }})
+        ffmpeg({
+          source: input,
+          measureCpu: {
+            output: `${output}.pass2-cpu-time.txt`,
+            format: timeFormat
+          }
+        })
           .addOptions(ffmpegOptions)
           .addOptions(['-pass', '2'])
           .addOutput(output),
-        info => {
-          logger.info(`Transcoding ${output}: Pass 2 progress: ${Math.round(info.percent * 100) / 100}%`);
+        (info) => {
+          logger.info(
+            `Transcoding ${output}: Pass 2 progress: ${Math.round(info.percent * 100) / 100}%`
+          );
         }
       );
     }
@@ -119,7 +156,9 @@ export default class LocalPipeline implements Pipeline {
         break;
     }
 
-    additionalArgs.push(...Object.entries(this.configuration.easyVmafExtraArgs || {}).flat())
+    additionalArgs.push(
+      ...Object.entries(this.configuration.easyVmafExtraArgs || {}).flat()
+    );
 
     logger.info('Running quality analysis on ' + distorted);
     execSync(
@@ -131,17 +170,17 @@ export default class LocalPipeline implements Pipeline {
         '-d',
         distorted,
         '-endsync',
-        ...additionalArgs,
+        ...additionalArgs
       ].join(' ')
     );
 
     logger.info('Finished analyzing ' + distorted);
 
     const distortedDetails = path.parse(distorted);
-    const vmafFilename = distortedDetails.dir + '/' + distortedDetails.name + '_vmaf.json';
+    const vmafFilename =
+      distortedDetails.dir + '/' + distortedDetails.name + '_vmaf.json';
     fs.renameSync(vmafFilename, output);
 
     return output;
   }
-
 }

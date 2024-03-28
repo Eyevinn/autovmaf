@@ -3,8 +3,8 @@ import { BitrateResolutionVMAF } from './models/bitrate-resolution-vmaf';
 import { pairVmafWithResolutionAndBitrate } from './pairVmaf';
 
 interface LadderAndVmafPairs {
-  ladder: BitrateResolutionVMAF[],
-  pairs: Map<number, {resolution: Resolution, vmaf: number}[]>
+  ladder: BitrateResolutionVMAF[];
+  pairs: Map<number, { resolution: Resolution; vmaf: number }[]>;
 }
 
 /**
@@ -17,11 +17,23 @@ interface LadderAndVmafPairs {
  */
 export default async function suggestLadder(
   directoryWithVmafFiles: string,
-  filterFunction: (bitrate: number, resolution: Resolution, vmaf: number) => boolean = () => true,
+  filterFunction: (
+    bitrate: number,
+    resolution: Resolution,
+    vmaf: number
+  ) => boolean = () => true,
   includeAllBitrates: boolean = false,
-  onProgress: (index: number, filename: string, total: number) => void = () => {}
+  onProgress: (
+    index: number,
+    filename: string,
+    total: number
+  ) => void = () => {}
 ): Promise<LadderAndVmafPairs> {
-  const pairs = await pairVmafWithResolutionAndBitrate(directoryWithVmafFiles, filterFunction, onProgress);
+  const pairs = await pairVmafWithResolutionAndBitrate(
+    directoryWithVmafFiles,
+    filterFunction,
+    onProgress
+  );
   let optimal: { resolution: Resolution; vmaf: number; bitrate: number }[] = [];
 
   // Get optimal resolution for each bitrate
@@ -35,18 +47,22 @@ export default async function suggestLadder(
       }
     }
     if (bestResolution !== undefined) {
-      optimal.push({ bitrate: bitrate, resolution: bestResolution, vmaf: bestVmaf });
+      optimal.push({
+        bitrate: bitrate,
+        resolution: bestResolution,
+        vmaf: bestVmaf
+      });
     }
   });
 
   if (includeAllBitrates) {
-    return {ladder: optimal.sort((a, b) => a.bitrate - b.bitrate), pairs};
+    return { ladder: optimal.sort((a, b) => a.bitrate - b.bitrate), pairs };
   }
 
   let ladder: { resolution: Resolution; vmaf: number; bitrate: number }[] = [];
   optimal
     .sort((a, b) => b.bitrate - a.bitrate)
-    .forEach(pair => {
+    .forEach((pair) => {
       if (ladder.length === 0) {
         if (pair.vmaf < 94) {
           ladder.push(pair);
@@ -67,5 +83,5 @@ export default async function suggestLadder(
       }
     });
 
-  return {ladder: ladder.reverse(), pairs};
+  return { ladder: ladder.reverse(), pairs };
 }

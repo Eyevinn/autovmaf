@@ -12,7 +12,7 @@ import createJob, { JobDescription } from './create-job';
 import {
   QualityAnalysisModel,
   qualityAnalysisModelToString,
-  stringToQualityAnalysisModel,
+  stringToQualityAnalysisModel
 } from './models/quality-analysis-model';
 import { loadPipeline, loadPipelineFromObjects } from './load-pipeline';
 import logger from './logger';

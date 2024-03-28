@@ -1,4 +1,4 @@
 export type BitrateRange = {
-    min?: number;
-    max?: number;
+  min?: number;
+  max?: number;
 };

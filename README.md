@@ -233,7 +233,7 @@ pipeline:
   ffmpegOptions:
     '-pix_fmt': 'yuv420p'
     '-preset': 'veryslow'
-    '-x265-params': 'crf=%CRF%:scenecut=0:keyint=50:min-keyint=50:open-gop=0'
+    '-x265-params': 'crf=${CRF}:scenecut=0:keyint=50:min-keyint=50:open-gop=0'
   easyVmafExtraArgs:
     '-threads': 20
 pipelineVariables:
@@ -245,10 +245,32 @@ pipelineVariables:
 ```
 
 This will run transcode and vmaf analysis for CRF values 22,26,30, and 34. Variables are used in the ffmpeg options
-by insterting `%VARIABLENAME%`. This string will then be substituted with a value from the list of values from
+by inserting `${VARIABLENAME}`. This string will then be substituted with a value from the list of values from
 `pipelineVariables.VARIABLENAME`. Note that when running CRF encode or other non-ABR mode, `skipDefaultOptions` must
 be set to avoid injecting bitrate options to ffmpeg. Also note that the cli needs to be run with the `--probe-bitrate`
 option to get the correct bitrate from the transcoded files.
+
+It is also possible to use pipelineVariables with the AWSPipeline. The following example will run transcode and vmaf analysis using the AWS MediaCOnvert QVBR levels 6, 7, 8 and 9.
+
+```yaml
+name: job-name
+pipeline: pipeline.yml
+encodingProfile: encoding-profile.json
+reference: reference.mp4
+models:
+  - HD
+resolutions:
+  - width: 1920
+    height: 1080
+bitrates:
+  - 0
+pipelineVariables:
+  QVBR:
+    - 6
+    - 7
+    - 8
+    - 9
+```
 
 ### Generate VMAF measurements example
 

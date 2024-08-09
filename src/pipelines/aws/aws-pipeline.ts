@@ -142,33 +142,51 @@ export default class AWSPipeline implements Pipeline {
 
     // Parse settings
     let settingsStr = JSON.stringify(this.configuration.mediaConvertSettings);
-    settingsStr = this.stringReplacement(settingsStr, '$INPUT', inputFilename);
     settingsStr = this.stringReplacement(
       settingsStr,
-      '$OUTPUT',
+      '${INPUT}',
+      inputFilename
+    );
+    settingsStr = this.stringReplacement(
+      settingsStr,
+      '${OUTPUT}',
       outputURI.replace(path.extname(outputURI), '')
     );
     settingsStr = this.stringReplacement(
       settingsStr,
-      '$WIDTH',
+      '${WIDTH}',
       targetResolution.width.toString()
     );
     settingsStr = this.stringReplacement(
       settingsStr,
-      '$HEIGHT',
+      '${HEIGHT}',
       targetResolution.height.toString()
     );
-    settingsStr = this.stringReplacement(
-      settingsStr,
-      '$BITRATE',
-      targetBitrate.toString()
-    );
+    if (settingsStr.includes('${BITRATE}')) {
+      settingsStr = this.stringReplacement(
+        settingsStr,
+        '${BITRATE}',
+        targetBitrate.toString()
+      );
+    }
+
     // HEVC specific settings
     settingsStr = this.stringReplacement(
       settingsStr,
-      '$HRDBUFFER',
+      '${HRDBUFFER}',
       (targetBitrate * 2).toString()
     );
+
+    //Handle pipelineVariables given in the JobDescription
+    if (variables) {
+      Object.entries(variables).forEach(([key, value]) => {
+        settingsStr = this.stringReplacement(
+          settingsStr,
+          '${' + `${key}` + '}',
+          value
+        );
+      });
+    }
 
     const settings = JSON.parse(settingsStr);
     logger.debug('Settings Json: ' + JSON.stringify(settings));

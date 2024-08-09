@@ -73,7 +73,7 @@ export default class LocalPipeline implements Pipeline {
         ([key, value]) => {
           //let value = this.configuration.ffmpegOptions[key];
           Object.entries(variables!!).forEach(([k, v]) => {
-            value = value.replace(`%${k}%`, v);
+            value = value.replace('${' + `${k}` + '}', v);
           });
           ffmpegOptionsWithVariableSubstituted[key] = value;
         }

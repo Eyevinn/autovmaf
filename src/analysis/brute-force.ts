@@ -83,15 +83,14 @@ export default async function analyzeBruteForce(
     // Create all combinations of bitrate, resolution, and variables
     Object.entries(options.pipelineVariables).forEach(
       ([variableName, values]) => {
-        //console.log(`variableName: ${variableName}`);
         pairs = pairs.flatMap(
           (pair) =>
             values.map((value) => {
-              const variables = pair.ffmpegOptionVariables
-                ? { ...pair.ffmpegOptionVariables }
+              const variables = pair.pipelineVariables
+                ? { ...pair.pipelineVariables }
                 : {};
               variables[variableName] = value;
-              return { ...pair, ffmpegOptionVariables: variables };
+              return { ...pair, pipelineVariables: variables };
             }) as BitrateResolutionPair[]
         );
       }
@@ -100,12 +99,10 @@ export default async function analyzeBruteForce(
 
   const analyzePair = async (pair: BitrateResolutionPair) => {
     let outFile = `${directory}/${pair.resolution.width}x${pair.resolution.height}_${pair.bitrate}`;
-    if (pair.ffmpegOptionVariables) {
-      Object.entries(pair.ffmpegOptionVariables).forEach(
-        ([variable, value]) => {
-          outFile = outFile + `_${variable}_${value}`;
-        }
-      );
+    if (pair.pipelineVariables) {
+      Object.entries(pair.pipelineVariables).forEach(([variable, value]) => {
+        outFile = outFile + `_${variable}_${value}`;
+      });
     }
     outFile = outFile + '.mp4';
     const skip =
@@ -122,7 +119,7 @@ export default async function analyzeBruteForce(
           pair.resolution,
           pair.bitrate,
           outFile,
-          pair.ffmpegOptionVariables
+          pair.pipelineVariables
         );
 
     if (variant === '') {

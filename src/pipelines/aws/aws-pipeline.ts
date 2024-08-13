@@ -5,9 +5,11 @@ import {
 } from '@aws-sdk/client-mediaconvert';
 import {
   HeadObjectCommand,
+  GetObjectCommand,
   S3Client,
   waitUntilObjectExists
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Resolution } from '../../models/resolution';
 import { Pipeline } from '../pipeline';
 import { AWSPipelineConfiguration } from './aws-pipeline-configuration';
@@ -119,6 +121,20 @@ export default class AWSPipeline implements Pipeline {
 
   stringReplacement(input: string, search: string, replacement: string) {
     return input.split(search).join(replacement);
+  }
+
+  async generatePresignedUrl(
+    bucketName: string,
+    key: string,
+    expiresIn: number
+  ): Promise<string> {
+    const command = new GetObjectCommand({
+      Bucket: bucketName,
+      Key: key
+    });
+
+    const url = await getSignedUrl(this.s3, command, { expiresIn });
+    return url;
   }
 
   async transcode(

@@ -1,4 +1,4 @@
-import getVmaf from './get-vmaf';
+import getAnalysisData from './get-analysis-data';
 import logger from './logger';
 import { Resolution } from './models/resolution';
 import ffmpeg from 'fluent-ffmpeg';
@@ -29,19 +29,31 @@ export async function pairVmafWithResolutionAndBitrate(
     }[]
   >();
   logger.info(`Loading VMAF data from ${directoryWithVmafFiles}...`);
-  const vmafs = await getVmaf(directoryWithVmafFiles, onProgress);
+  const analysisData = await getAnalysisData(
+    directoryWithVmafFiles,
+    onProgress
+  );
   let counter = 1;
-  const bitrates: Record<string, number> | undefined = probeBitrate
-    ? await getBitrates(
-        vmafs.map((vmaf) => path.resolve(directoryWithVmafFiles, vmaf.filename))
-      )
-    : undefined;
+  // Reinterpret bitrateList as a Record type
+  const bitrates: Record<string, number> | undefined =
+    analysisData.bitrateList?.reduce<Record<string, number>>((record, file) => {
+      record[file.filename] = file.bitrate;
+      return record;
+    }, {})
+      ? await getBitrates(
+          analysisData.vmafList.map((vmaf) =>
+            path.resolve(directoryWithVmafFiles, vmaf.filename)
+          )
+        )
+      : undefined;
   const cpuTimes:
     | Record<string, { realTime: number; cpuTime: number }>
     | undefined = await getCpuTimes(
-    vmafs.map((vmaf) => path.resolve(directoryWithVmafFiles, vmaf.filename))
+    analysisData.vmafList.map((vmaf) =>
+      path.resolve(directoryWithVmafFiles, vmaf.filename)
+    )
   );
-  vmafs.forEach(({ filename, vmaf }) => {
+  analysisData.vmafList.forEach(({ filename, vmaf }) => {
     const [resolutionStr, bitrateStr] = filename.split('_');
     const [widthStr, heightStr] = resolutionStr.split('x');
 
@@ -65,7 +77,9 @@ export async function pairVmafWithResolutionAndBitrate(
       }
     }
 
-    logger.info(`Finished loading VMAF ${counter}/${vmafs.length}.`);
+    logger.info(
+      `Finished loading VMAF ${counter}/${analysisData.vmafList.length}.`
+    );
     counter += 1;
   });
   return pairs;

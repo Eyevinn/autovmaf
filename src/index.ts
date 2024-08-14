@@ -7,7 +7,7 @@ import { AWSPipelineConfiguration } from './pipelines/aws/aws-pipeline-configura
 import { LocalPipelineConfiguration } from './pipelines/local/local-pipeline-configuration';
 import { Resolution } from './models/resolution';
 import { BitrateRange } from './models/bitrateRange';
-import getVmaf from './get-vmaf';
+import getAnalysisData from './get-analysis-data';
 import createJob, { JobDescription } from './create-job';
 import {
   QualityAnalysisModel,
@@ -21,7 +21,7 @@ import * as startJobLambda from './lambda/startAutovmafJob';
 
 export {
   createJob,
-  getVmaf,
+  getAnalysisData,
   suggestLadder,
   qualityAnalysisModelToString,
   stringToQualityAnalysisModel,

@@ -1,6 +1,6 @@
 name: job-name
 pipeline: pipeline.yml
-encodingProfile: encoding-profile.json
+encodingProfile: encoding-profile-qvbr.json
 reference: reference.mp4
 models:
   - HD

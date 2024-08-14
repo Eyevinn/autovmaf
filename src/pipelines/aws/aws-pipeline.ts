@@ -22,6 +22,7 @@ import {
   qualityAnalysisModelToString
 } from '../../models/quality-analysis-model';
 import logger from '../../logger';
+import { runFfprobe } from '../../pairVmaf';
 
 export function isS3URI(url: string): boolean {
   try {
@@ -235,6 +236,19 @@ export default class AWSPipeline implements Pipeline {
       `${outputFolder}/${outputObject}`
     );
     if (!s3Status) return '';
+    if (variables ? variables['QVBR'] : undefined) {
+      const url = this.generatePresignedUrl(outputBucket, outputObject, 5);
+      const metadata = await runFfprobe(url);
+      const upload = new Upload({
+        client: this.s3,
+        params: {
+          Bucket: outputBucket,
+          Key: `${outputObject}_metadata`,
+          Body: JSON.stringify(metadata)
+        }
+      });
+      await upload.done();
+    }
 
     logger.info('Finished transcoding ' + inputFilename + '.');
     return outputURI;

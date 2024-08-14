@@ -141,7 +141,7 @@ function fileExists(file) {
   return fs.existsSync(file);
 }
 
-async function runFfprobe(file) {
+export async function runFfprobe(file) {
   return new Promise((resolve, reject) => {
     ffmpeg.ffprobe(file, (err, metadata) => {
       if (err) {

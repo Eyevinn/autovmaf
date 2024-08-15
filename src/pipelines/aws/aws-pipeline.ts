@@ -239,11 +239,15 @@ export default class AWSPipeline implements Pipeline {
     if (variables ? variables['QVBR'] : undefined) {
       const url = this.generatePresignedUrl(outputBucket, outputObject, 5);
       const metadata = await runFfprobe(url);
+      const outputMetadataFilename = outputObject.replace(
+        '.mp4',
+        '_metadata.json'
+      );
       const upload = new Upload({
         client: this.s3,
         params: {
           Bucket: outputBucket,
-          Key: `${outputObject}_metadata`,
+          Key: outputMetadataFilename,
           Body: JSON.stringify(metadata)
         }
       });

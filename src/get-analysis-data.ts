@@ -107,13 +107,13 @@ export default async function getAnalysisData(
   if (isS3URI(filename)) {
     const list = await dataFromS3(filename, onProgress);
     const vmafList = list
-      .filter((file) => !file.filename.includes('metadata'))
+      .filter((file) => !file.filename.includes('_metadata.json'))
       .map(({ filename, contents }) => ({
         filename,
         vmaf: vmafFromJsonString(contents)
       }));
     const bitrateList = list
-      .filter((file) => file.filename.includes('metadata'))
+      .filter((file) => file.filename.includes('_metadata.json'))
       .map(({ filename, contents }) => ({
         filename,
         bitrate: bitrateFromJsonString(contents)

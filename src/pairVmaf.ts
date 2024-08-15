@@ -59,7 +59,9 @@ export async function pairVmafWithResolutionAndBitrate(
 
     const width = parseInt(widthStr);
     const height = parseInt(heightStr);
-    const bitrate = bitrates ? bitrates[filename] : parseInt(bitrateStr);
+    const bitrate = bitrates
+      ? bitrates[filename.replace('_metadata.json', '.json')]
+      : parseInt(bitrateStr);
     const cpuTime = cpuTimes ? cpuTimes[filename] : undefined;
 
     if (filterFunction(bitrate, { width, height }, vmaf)) {

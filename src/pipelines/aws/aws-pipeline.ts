@@ -126,12 +126,12 @@ export default class AWSPipeline implements Pipeline {
 
   async generatePresignedUrl(
     bucketName: string,
-    key: string,
+    keyPath: string,
     expiresIn: number
   ): Promise<string> {
     const command = new GetObjectCommand({
       Bucket: bucketName,
-      Key: key
+      Key: keyPath
     });
 
     const url = await getSignedUrl(this.s3, command, { expiresIn });
@@ -237,16 +237,21 @@ export default class AWSPipeline implements Pipeline {
     );
     if (!s3Status) return '';
     if (variables ? variables['QVBR'] : undefined) {
-      const url = this.generatePresignedUrl(outputBucket, outputObject, 5);
+      const url = this.generatePresignedUrl(
+        outputBucket,
+        `${outputFolder}/${outputObject}`,
+        5
+      );
       const metadata = await runFfprobe(url);
       const outputMetadataFilename = outputObject.replace(
         '.mp4',
         '_metadata.json'
       );
+      const outputVmafResultsBucket = `s3://${outputBucket}/results`;
       const upload = new Upload({
         client: this.s3,
         params: {
-          Bucket: outputBucket,
+          Bucket: outputVmafResultsBucket,
           Key: outputMetadataFilename,
           Body: JSON.stringify(metadata)
         }

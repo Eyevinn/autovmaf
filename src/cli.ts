@@ -225,6 +225,9 @@ async function updateJobDefinition(argv) {
     throw new ValidationError('No input file selected');
   }
 
+
+  // TODO: Make conditional
+  /*
   const { pythonPath, ffmpegPath, easyVmafPath } = await getExecutablePaths();
   job.pipeline.pythonPath = job.pipeline.pythonPath || pythonPath;
   job.pipeline.ffmpegPath = job.pipeline.ffmpegPath || ffmpegPath;
@@ -232,6 +235,8 @@ async function updateJobDefinition(argv) {
   console.log('Python path: ', pythonPath);
   console.log('FFmpeg path: ', ffmpegPath);
   console.log('EasyVmaf path: ', easyVmafPath);
+
+   */
   job.method = job.method || 'bruteForce';
 
   return job;

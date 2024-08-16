@@ -24,8 +24,8 @@ function vmafFromJsonString(str: string): number {
 function bitrateFromJsonString(str: string): number {
   try {
     const data = JSON.parse(str);
-    if (data.stream[0].bit_rate) {
-      return data.stream[0].bit_rate;
+    if (data.streams[0].bit_rate) {
+      return data.streams[0].bit_rate;
     }
     return NaN;
   } catch {
@@ -122,24 +122,41 @@ export default async function getAnalysisData(
       }));
     return { vmafList, bitrateList };
   } else {
-    let bitrateList = undefined;
+    let bitrateList: {filename: string, bitrate: number}[] | undefined = undefined;
     if (fs.lstatSync(filename).isDirectory()) {
       logger.info('Loading VMAF from directory...');
       const files = fs
         .readdirSync(filename)
         .filter((file) => path.extname(file) === '.json');
       const vmafList: VmafList = await Promise.all(
-        files.map(async (f) => {
+        files
+          .filter((file) => !file.includes('_metadata.json'))
+          .map(async (f) => {
           const contents = fs.readFileSync(path.join(filename, f), 'utf-8');
-          const vmaf = await vmafFromJsonString(contents);
+          const vmaf = vmafFromJsonString(contents);
           return { filename: f, vmaf };
         })
       );
-      return { vmafList, bitrateList };
+      bitrateList = await Promise.all(
+        files
+          .filter((file) => file.includes('_metadata.json'))
+          .map(async (file) => {
+              const contents = fs.readFileSync(path.join(filename, file), 'utf-8');
+              const bitrate = bitrateFromJsonString(contents);
+              return {
+                filename: path.basename(file).replace('_metadata.json', '_vmaf.json'),
+                bitrate
+              };
+            }
+          )
+      );
+
+      return { vmafList, bitrateList: bitrateList?.length > 0 ? bitrateList : undefined };
     } else {
       const contents = fs.readFileSync(filename, 'utf-8');
-      const vmaf = await vmafFromJsonString(contents);
+      const vmaf = vmafFromJsonString(contents);
       const vmafList: VmafList = [{ filename: filename, vmaf: vmaf }];
+      // TODO: Read bitrate from metadata file
       return { vmafList, bitrateList };
     }
   }

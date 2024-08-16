@@ -57,6 +57,7 @@ export async function pairVmafWithResolutionAndBitrate(
       path.resolve(directoryWithVmafFiles, vmaf.filename)
     )
   );
+  logger.info(`Loaded VMAF data from ${JSON.stringify(analysisData, null, 2)}.`);
   analysisData.vmafList.forEach(({ filename, vmaf }) => {
     const [resolutionStr, bitrateStr] = filename.split('_');
     const [widthStr, heightStr] = resolutionStr.split('x');
@@ -107,9 +108,10 @@ async function getCpuTime(file: string) {
     );
   }
   if (!fileExists(timeFile)) {
-    throw new Error(
+    logger.info(
       `Unable to find corresponding cpu-time file: ${timeFile} for vmaf file: ${file}`
     );
+    return {realTime: 0, cpuTime: 0};
   }
 
   const metadata = JSON.parse(fs.readFileSync(timeFile, 'utf8'));

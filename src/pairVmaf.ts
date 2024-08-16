@@ -35,11 +35,15 @@ export async function pairVmafWithResolutionAndBitrate(
   );
   let counter = 1;
   // Reinterpret bitrateList as a Record type
-  const bitrates: Record<string, number> | undefined =
-    analysisData.bitrateList?.reduce<Record<string, number>>((record, file) => {
-      record[file.filename] = file.bitrate;
-      return record;
-    }, {})
+  const bitrates: Record<string, number> | undefined = analysisData.bitrateList
+    ? analysisData.bitrateList.reduce<Record<string, number>>(
+        (record, file) => {
+          record[file.filename] = file.bitrate;
+          return record;
+        },
+        {}
+      )
+    : probeBitrate
       ? await getBitrates(
           analysisData.vmafList.map((vmaf) =>
             path.resolve(directoryWithVmafFiles, vmaf.filename)
@@ -59,9 +63,7 @@ export async function pairVmafWithResolutionAndBitrate(
 
     const width = parseInt(widthStr);
     const height = parseInt(heightStr);
-    const bitrate = bitrates
-      ? bitrates[filename.replace('_metadata.json', '.json')]
-      : parseInt(bitrateStr);
+    const bitrate = bitrates ? bitrates[filename] : parseInt(bitrateStr);
     const cpuTime = cpuTimes ? cpuTimes[filename] : undefined;
 
     if (filterFunction(bitrate, { width, height }, vmaf)) {

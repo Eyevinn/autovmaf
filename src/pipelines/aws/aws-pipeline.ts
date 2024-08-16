@@ -7,7 +7,8 @@ import {
   HeadObjectCommand,
   GetObjectCommand,
   S3Client,
-  waitUntilObjectExists
+  waitUntilObjectExists,
+  CopyObjectCommand
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Resolution } from '../../models/resolution';
@@ -138,6 +139,11 @@ export default class AWSPipeline implements Pipeline {
     return url;
   }
 
+  transcodedUriToMetadataUri(uri: string): string {
+    const outputMetadataUri = uri.replace(path.extname(uri), '_metadata.json');
+    return outputMetadataUri;
+  }
+
   async transcode(
     input: string,
     targetResolution: Resolution,
@@ -236,28 +242,25 @@ export default class AWSPipeline implements Pipeline {
       `${outputFolder}/${outputObject}`
     );
     if (!s3Status) return '';
-    if (variables ? variables['QVBR'] : undefined) {
-      const url = this.generatePresignedUrl(
-        outputBucket,
-        `${outputFolder}/${outputObject}`,
-        5
-      );
-      const metadata = await runFfprobe(url);
-      const outputMetadataFilename = outputObject.replace(
-        '.mp4',
-        '_metadata.json'
-      );
-      const outputVmafResultsBucket = `s3://${outputBucket}/results`;
-      const upload = new Upload({
-        client: this.s3,
-        params: {
-          Bucket: outputVmafResultsBucket,
-          Key: outputMetadataFilename,
-          Body: JSON.stringify(metadata)
-        }
-      });
-      await upload.done();
-    }
+
+    // TODO create a condition to trigger ffprobe to determine bitrate.
+    const url = this.generatePresignedUrl(
+      outputBucket,
+      `${outputFolder}/${outputObject}`,
+      5
+    );
+    const metadata = await runFfprobe(url);
+    const outputMetadataFilename =
+      this.transcodedUriToMetadataUri(outputObject);
+    const upload = new Upload({
+      client: this.s3,
+      params: {
+        Bucket: outputBucket,
+        Key: `${outputFolder}/${outputMetadataFilename}`,
+        Body: JSON.stringify(metadata)
+      }
+    });
+    await upload.done();
 
     logger.info('Finished transcoding ' + inputFilename + '.');
     return outputURI;
@@ -380,6 +383,14 @@ export default class AWSPipeline implements Pipeline {
       `results/${outputObject}`
     );
     if (!s3Status) return '';
+
+    const input = {
+      Bucket: outputBucket,
+      CopySource: this.transcodedUriToMetadataUri(distortedFilename),
+      Key: `results/${outputObject}`.replace('_vmaf.json', '_metadata.json')
+    };
+    const command = new CopyObjectCommand(input);
+    await this.s3.send(command);
 
     logger.info(`Finished analyzing ${distorted}.`);
 

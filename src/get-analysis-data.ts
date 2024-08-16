@@ -115,7 +115,9 @@ export default async function getAnalysisData(
     const bitrateList = list
       .filter((file) => file.filename.includes('_metadata.json'))
       .map(({ filename, contents }) => ({
-        filename,
+        filename: path
+          .basename(filename)
+          .replace('_metadata.json', '_vmaf.json'),
         bitrate: bitrateFromJsonString(contents)
       }));
     return { vmafList, bitrateList };

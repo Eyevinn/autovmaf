@@ -76,6 +76,11 @@ async function run() {
               description: 'Read bitrate of transcoded file with ffprobe',
               default: false
             },
+            parallel: {
+              type: 'boolean',
+              description: 'Run multiple encodes / vmaf measurements in parallel',
+              default: false
+            },
             'ffmpeg-options': {
               type: 'string',
               description:
@@ -164,7 +169,7 @@ async function transcodeAndAnalyse(argv) {
     job as JobDescription,
     undefined,
     undefined,
-    false
+    argv.parallel
   );
 
   console.log(

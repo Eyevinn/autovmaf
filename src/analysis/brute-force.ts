@@ -19,6 +19,7 @@ export type AnalysisOptions = {
   pipelineVariables?: { [key: string]: string[] };
   skipTranscode?: boolean;
   skipExisting?: boolean;
+  skipVmaf?: boolean;
 };
 
 const defaultModels = [QualityAnalysisModel.HD];
@@ -128,6 +129,11 @@ export default async function analyzeBruteForce(
     }
 
     const qualityFile = variant.replace('.mp4', '_vmaf.json');
+
+    if (options.skipVmaf) {
+      logger.info('Skipping VMAF analysis');
+      return [];
+    }
 
     if (concurrency) {
       return await Promise.all(

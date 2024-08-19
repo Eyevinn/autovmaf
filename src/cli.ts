@@ -81,6 +81,11 @@ async function run() {
               description: 'Run multiple encodes / vmaf measurements in parallel',
               default: false
             },
+            skipVmaf: {
+              type: 'boolean',
+              description: 'Skip VMAF measurement',
+              default: false
+            },
             'ffmpeg-options': {
               type: 'string',
               description:
@@ -192,6 +197,7 @@ async function updateJobDefinition(argv) {
   const job: any = argv.job ? await readJobDefinition(argv.job) : {};
   job.skipTranscode = argv.skipTranscode;
   job.skipExisting = argv.skipExisting;
+  job.skipVmaf = argv.skipVmaf;
   if (argv.source) {
     job.reference = argv.source;
   }

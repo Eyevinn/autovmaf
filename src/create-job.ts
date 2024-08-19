@@ -49,6 +49,9 @@ export type JobDescription = {
 
   /** Skip transcode if outfile already exists. */
   skipExisting?: boolean;
+
+  /** Skip VMAF measurement */
+  skipVmaf?: boolean
 };
 
 /**
@@ -163,6 +166,7 @@ export default async function createJob(
       pipelineVariables: description.pipelineVariables,
       skipTranscode: !!description.skipTranscode,
       skipExisting: !!description.skipExisting,
+      skipVmaf: !!description.skipVmaf,
       filterFunction:
         description.bitrates !== undefined &&
         description.resolutions !== undefined

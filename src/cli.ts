@@ -134,9 +134,9 @@ async function run() {
 
 async function runSuggestLadder(argv) {
   const { ladder, pairs } = await suggestLadder(argv.folder);
-  console.log(`ladder: ${ladder}`);
+  logger.info(`ladder: ${ladder}`);
   ladder.forEach((rung) => {
-    console.log(rung);
+    logger.info(rung);
   });
 }
 
@@ -210,7 +210,7 @@ async function exportWmafResultToCsv(argv) {
 async function transcodeAndAnalyse(argv) {
   const job: any = await updateJobDefinition(argv);
   const models: string[] = job.models;
-  console.log('Running job: ', job);
+  logger.info('Running job: ', job);
 
   const vmafScores = await createJob(
     job as JobDescription,
@@ -219,7 +219,7 @@ async function transcodeAndAnalyse(argv) {
     argv.parallel
   );
 
-  console.log(
+  logger.info(
     `saveAsCsv: ${job.saveAsCsv}, ` +
       (job.saveAsCsv
         ? `also saving results as a .csv file.`
@@ -284,9 +284,9 @@ async function updateJobDefinition(argv) {
   job.pipeline.pythonPath = job.pipeline.pythonPath || pythonPath;
   job.pipeline.ffmpegPath = job.pipeline.ffmpegPath || ffmpegPath;
   job.pipeline.easyVmafPath = job.pipeline.easyVmafPath || easyVmafPath;
-  console.log('Python path: ', pythonPath);
-  console.log('FFmpeg path: ', ffmpegPath);
-  console.log('EasyVmaf path: ', easyVmafPath);
+  logger.info('Python path: ', pythonPath);
+  logger.info('FFmpeg path: ', ffmpegPath);
+  logger.info('EasyVmaf path: ', easyVmafPath);
 
    */
   job.method = job.method || 'bruteForce';
@@ -304,7 +304,7 @@ async function readJobDefinition(file) {
   const baseName = definition.name;
   let i = 1;
   while (await pathExists(definition.name)) {
-    console.log(definition.name);
+    logger.info(definition.name);
     definition.name = `${baseName}-${i}`;
     i++;
   }

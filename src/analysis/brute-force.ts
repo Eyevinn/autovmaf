@@ -109,9 +109,9 @@ export default async function analyzeBruteForce(
     const skip =
       options.skipTranscode || (options.skipExisting && fs.existsSync(outFile));
     if (options.skipTranscode) {
-      console.log(`Skipping transcode for ${outFile}`);
+      logger.info(`Skipping transcode for ${outFile}`);
     } else if (options.skipExisting && fs.existsSync(outFile)) {
-      console.log(`Skipping transcode for ${outFile} because file exists`);
+      logger.info(`Skipping transcode for ${outFile} because file exists`);
     }
     const variant = skip
       ? outFile

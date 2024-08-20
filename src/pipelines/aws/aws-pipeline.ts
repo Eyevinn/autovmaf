@@ -200,12 +200,12 @@ export default class AWSPipeline implements Pipeline {
       (targetBitrate * 2).toString()
     );
 
-    console.log(`variables: ${variables}`);
+    logger.debug(`variables: ${JSON.stringify(variables)}`);
     //Handle pipelineVariables given in the JobDescription
     if (variables) {
       Object.entries(variables).forEach(([key, value]) => {
         const replace = '${' + `${key}` + '}';
-        console.debug(`Replacing ${replace} with ${value}`);
+        logger.debug(`Replacing ${replace} with ${value}`);
         settingsStr = this.stringReplacement(
           settingsStr,
           replace,
@@ -405,7 +405,7 @@ export default class AWSPipeline implements Pipeline {
   private async copyMetadataFile(outputBucket: string, distortedFilename: string, outputObject: string) {
     let key = `results/${outputObject}`.replace('_vmaf.json', '_metadata.json');
     if ( await this.fileExists(outputBucket, key)) {
-      console.debug(`Metadata file already exists: ${key}`);
+      logger.debug(`Metadata file already exists: ${key}`);
       return;
     }
     const input = {
@@ -413,7 +413,7 @@ export default class AWSPipeline implements Pipeline {
       CopySource: this.transcodedUriToMetadataUri(distortedFilename).replace('s3:/', ''),
       Key: key
     };
-    console.debug(`Uploading metadata: ${JSON.stringify(input)}`);
+    logger.debug(`Uploading metadata: ${JSON.stringify(input)}`);
     const command = new CopyObjectCommand(input);
     await this.s3.send(command);
   }

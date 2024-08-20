@@ -78,7 +78,8 @@ async function run() {
             },
             parallel: {
               type: 'boolean',
-              description: 'Run multiple encodes / vmaf measurements in parallel',
+              description:
+                'Run multiple encodes / vmaf measurements in parallel',
               default: false
             },
             skipVmaf: {
@@ -139,30 +140,69 @@ async function runSuggestLadder(argv) {
   });
 }
 
-async function exportWmafResultToCsv(argv) {
-  const folder = argv.folder.split('/').slice('-2').join('/');
-  const pairs = Array.from(
-    await pairVmafWithResolutionAndBitrate(
-      argv.folder,
-      () => true,
-      () => {},
-      argv.probeBitrate
-    )
-  ).flatMap((result) => {
-    return result[1].map((resolutionVmaf) => ({
-      folder,
-      filename: resolutionVmaf.vmafFile,
-      resolution: `${resolutionVmaf.resolution.width}X${resolutionVmaf.resolution.height}`,
-      vmaf: resolutionVmaf.vmaf,
-      bitrate: result[0],
-      realTime: resolutionVmaf.cpuTime?.realTime,
-      cpuTime: resolutionVmaf.cpuTime?.cpuTime
-    }));
-  });
+async function findFoldersWithoutSubdirectories(
+  folderPath: string
+): Promise<string[]> {
+  let foldersWithoutSubdirs: string[] = [];
 
-  await new ObjectsToCsv(pairs).toDisk(`${argv.folder}/results.csv`, {
-    allColumns: true
-  });
+  try {
+    const files = await fs.readdir(folderPath);
+    let hasSubdirectories = false;
+
+    for (const file of files) {
+      const fullPath = path.join(folderPath, file);
+      const stats = await fs.stat(fullPath);
+      if (stats.isDirectory()) {
+        hasSubdirectories = true;
+        // Recursively call the function
+        const subFoldersWithoutSubdirs =
+          await findFoldersWithoutSubdirectories(fullPath);
+        foldersWithoutSubdirs = foldersWithoutSubdirs.concat(
+          subFoldersWithoutSubdirs
+        );
+      }
+    }
+
+    if (!hasSubdirectories) {
+      foldersWithoutSubdirs.push(folderPath);
+    }
+  } catch (err) {
+    console.error(`Error reading directory ${folderPath}: ${err}`);
+  }
+
+  return foldersWithoutSubdirs;
+}
+
+async function exportWmafResultToCsv(argv) {
+  const foldersWithoutSubdirectories = await findFoldersWithoutSubdirectories(
+    argv.folder
+  );
+  for (const folder of foldersWithoutSubdirectories) {
+    const pairs = Array.from(
+      await pairVmafWithResolutionAndBitrate(
+        folder,
+        () => true,
+        () => {},
+        argv.probeBitrate
+      )
+    ).flatMap((result) => {
+      return result[1].map((resolutionVmaf) => ({
+        folder,
+        filename: resolutionVmaf.vmafFile,
+        resolution: `${resolutionVmaf.resolution.width}X${resolutionVmaf.resolution.height}`,
+        qvbr: resolutionVmaf.qvbr,
+        vmaf: resolutionVmaf.vmaf,
+        bitrate: result[0],
+        realTime: resolutionVmaf.cpuTime?.realTime,
+        cpuTime: resolutionVmaf.cpuTime?.cpuTime
+      }));
+    });
+
+    await new ObjectsToCsv(pairs).toDisk(`${argv.folder}/results.csv`, {
+      allColumns: true,
+      append: true
+    });
+  }
 }
 
 async function transcodeAndAnalyse(argv) {
@@ -235,7 +275,6 @@ async function updateJobDefinition(argv) {
   if (!job.reference) {
     throw new ValidationError('No input file selected');
   }
-
 
   // TODO: Make conditional
   /*

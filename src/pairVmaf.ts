@@ -5,6 +5,11 @@ import ffmpeg from 'fluent-ffmpeg';
 import * as fs from 'fs';
 import * as path from 'path';
 
+function extractQVBRNumberFromFilename(filename: string): number | null {
+  const match = filename.match(/_QVBR_(\d+)_/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
 export async function pairVmafWithResolutionAndBitrate(
   directoryWithVmafFiles: string,
   filterFunction: (
@@ -24,6 +29,7 @@ export async function pairVmafWithResolutionAndBitrate(
     {
       resolution: Resolution;
       vmaf: number;
+      qvbr: number | null;
       cpuTime?: { realTime: number; cpuTime: number };
       vmafFile: string;
     }[]
@@ -57,7 +63,9 @@ export async function pairVmafWithResolutionAndBitrate(
       path.resolve(directoryWithVmafFiles, vmaf.filename)
     )
   );
-  logger.info(`Loaded VMAF data from ${JSON.stringify(analysisData, null, 2)}.`);
+  logger.info(
+    `Loaded VMAF data from ${JSON.stringify(analysisData, null, 2)}.`
+  );
   analysisData.vmafList.forEach(({ filename, vmaf }) => {
     const [resolutionStr, bitrateStr] = filename.split('_');
     const [widthStr, heightStr] = resolutionStr.split('x');
@@ -66,18 +74,26 @@ export async function pairVmafWithResolutionAndBitrate(
     const height = parseInt(heightStr);
     const bitrate = bitrates ? bitrates[filename] : parseInt(bitrateStr);
     const cpuTime = cpuTimes ? cpuTimes[filename] : undefined;
+    const qvbr = extractQVBRNumberFromFilename(filename);
 
     if (filterFunction(bitrate, { width, height }, vmaf)) {
       if (pairs.has(bitrate)) {
         pairs.get(bitrate)?.push({
           resolution: { width, height },
+          qvbr,
           vmaf,
           cpuTime,
           vmafFile: filename
         });
       } else {
         pairs.set(bitrate, [
-          { resolution: { width, height }, vmaf, cpuTime, vmafFile: filename }
+          {
+            resolution: { width, height },
+            qvbr,
+            vmaf,
+            cpuTime,
+            vmafFile: filename
+          }
         ]);
       }
     }
@@ -111,7 +127,7 @@ async function getCpuTime(file: string) {
     logger.info(
       `Unable to find corresponding cpu-time file: ${timeFile} for vmaf file: ${file}`
     );
-    return {realTime: 0, cpuTime: 0};
+    return { realTime: 0, cpuTime: 0 };
   }
 
   const metadata = JSON.parse(fs.readFileSync(timeFile, 'utf8'));

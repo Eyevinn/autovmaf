@@ -1,9 +1,11 @@
 import getAnalysisData from './get-analysis-data';
 import logger from './logger';
+import { JsonVmafScores } from './models/json-vmaf-scores';
 import { Resolution } from './models/resolution';
 import ffmpeg from 'fluent-ffmpeg';
 import * as fs from 'fs';
 import * as path from 'path';
+import { VmafBitratePair } from './models/vmaf-bitrate-pair';
 
 function extractQVBRNumberFromFilename(filename: string): number | null {
   const match = filename.match(/_QVBR_(\d+)_/);
@@ -15,7 +17,7 @@ export async function pairVmafWithResolutionAndBitrate(
   filterFunction: (
     bitrate: number,
     resolution: Resolution,
-    vmaf: number
+    vmafScores: JsonVmafScores
   ) => boolean = () => true,
   onProgress: (
     index: number,
@@ -24,16 +26,7 @@ export async function pairVmafWithResolutionAndBitrate(
   ) => void = () => {},
   probeBitrate: boolean = false
 ) {
-  let pairs = new Map<
-    number,
-    {
-      resolution: Resolution;
-      vmaf: number;
-      qvbr: number | null;
-      cpuTime?: { realTime: number; cpuTime: number };
-      vmafFile: string;
-    }[]
-  >();
+  let pairs = new Map<number, VmafBitratePair[]>();
   logger.info(`Loading VMAF data from ${directoryWithVmafFiles}...`);
   const analysisData = await getAnalysisData(
     directoryWithVmafFiles,
@@ -66,7 +59,7 @@ export async function pairVmafWithResolutionAndBitrate(
   logger.info(
     `Loaded VMAF data from ${JSON.stringify(analysisData, null, 2)}.`
   );
-  analysisData.vmafList.forEach(({ filename, vmaf }) => {
+  analysisData.vmafList.forEach(({ filename, vmafScores }) => {
     const [resolutionStr, bitrateStr] = filename.split('_');
     const [widthStr, heightStr] = resolutionStr.split('x');
 
@@ -75,13 +68,18 @@ export async function pairVmafWithResolutionAndBitrate(
     const bitrate = bitrates ? bitrates[filename] : parseInt(bitrateStr);
     const cpuTime = cpuTimes ? cpuTimes[filename] : undefined;
     const qvbr = extractQVBRNumberFromFilename(filename);
+    const vmaf = vmafScores.vmaf;
+    const vmafHd = vmafScores.vmafHd;
+    const vmafHdPhone = vmafScores.vmafHdPhone;
 
-    if (filterFunction(bitrate, { width, height }, vmaf)) {
+    if (filterFunction(bitrate, { width, height }, vmafScores)) {
       if (pairs.has(bitrate)) {
         pairs.get(bitrate)?.push({
           resolution: { width, height },
           qvbr,
           vmaf,
+          vmafHd,
+          vmafHdPhone,
           cpuTime,
           vmafFile: filename
         });
@@ -91,6 +89,8 @@ export async function pairVmafWithResolutionAndBitrate(
             resolution: { width, height },
             qvbr,
             vmaf,
+            vmafHd,
+            vmafHdPhone,
             cpuTime,
             vmafFile: filename
           }

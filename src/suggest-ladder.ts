@@ -1,10 +1,12 @@
 import { Resolution } from './models/resolution';
 import { BitrateResolutionVMAF } from './models/bitrate-resolution-vmaf';
 import { pairVmafWithResolutionAndBitrate } from './pairVmaf';
+import { JsonVmafScores } from './models/json-vmaf-scores';
+import { VmafBitratePair } from './models/vmaf-bitrate-pair';
 
 interface LadderAndVmafPairs {
   ladder: BitrateResolutionVMAF[];
-  pairs: Map<number, { resolution: Resolution; vmaf: number }[]>;
+  pairs: Map<number, VmafBitratePair[]>;
 }
 
 /**
@@ -20,14 +22,15 @@ export default async function suggestLadder(
   filterFunction: (
     bitrate: number,
     resolution: Resolution,
-    vmaf: number
+    vmafScores: JsonVmafScores
   ) => boolean = () => true,
   includeAllBitrates: boolean = false,
   onProgress: (
     index: number,
     filename: string,
     total: number
-  ) => void = () => {}
+  ) => void = () => {},
+  model: string = 'vmafHd'
 ): Promise<LadderAndVmafPairs> {
   const pairs = await pairVmafWithResolutionAndBitrate(
     directoryWithVmafFiles,
@@ -40,9 +43,11 @@ export default async function suggestLadder(
   pairs.forEach((bitrateVmafPairs, bitrate) => {
     let bestVmaf = 0;
     let bestResolution: Resolution | undefined;
+
     for (let pair of bitrateVmafPairs) {
-      if (pair.vmaf > bestVmaf) {
-        bestVmaf = pair.vmaf;
+      const vmaf = pair[model] ? pair[model] : NaN;
+      if (vmaf > bestVmaf) {
+        bestVmaf = vmaf;
         bestResolution = pair.resolution;
       }
     }

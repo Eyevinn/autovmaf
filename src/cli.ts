@@ -192,6 +192,8 @@ async function exportWmafResultToCsv(argv) {
         resolution: `${resolutionVmaf.resolution.width}X${resolutionVmaf.resolution.height}`,
         qvbr: resolutionVmaf.qvbr,
         vmaf: resolutionVmaf.vmaf,
+        vmafHd: resolutionVmaf.vmafHd,
+        vmafHdPhone: resolutionVmaf.vmafHdPhone,
         bitrate: result[0],
         realTime: resolutionVmaf.cpuTime?.realTime,
         cpuTime: resolutionVmaf.cpuTime?.cpuTime

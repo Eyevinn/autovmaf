@@ -1,1 +1,3 @@
-export type VmafList = { filename: string; vmaf: number }[];
+import { JsonVmafScores } from './json-vmaf-scores';
+
+export type VmafList = { filename: string; vmafScores: JsonVmafScores }[];

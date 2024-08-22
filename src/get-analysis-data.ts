@@ -5,20 +5,26 @@ import fs from 'fs';
 import logger from './logger';
 import { VmafList } from './models/vmaf-list';
 import { BitrateList } from './models/bitrate-list';
+import { JsonVmafScores } from './models/json-vmaf-scores';
 
-function vmafFromJsonString(str: string): number {
-  try {
-    const data = JSON.parse(str);
-    if (data?.['pooled_metrics']?.['vmaf']) {
-      return data['pooled_metrics']['vmaf']['harmonic_mean'];
-    }
-    if (data?.['VMAF score']) {
-      return data['VMAF score'];
-    }
-    return data?.['pooled_metrics']?.['vmaf_hd']?.['harmonic_mean'];
-  } catch {
-    return NaN;
+function vmafFromJsonString(str: string): JsonVmafScores {
+  let scores = {};
+
+  const data = JSON.parse(str);
+  if (data?.['pooled_metrics']?.['vmaf']) {
+    scores['vmaf'] = data['pooled_metrics']['vmaf']['harmonic_mean'];
   }
+  if (data?.['VMAF score']) {
+    scores['vmaf'] = data['VMAF score'];
+  }
+  if (data?.['pooled_metrics']?.['vmaf_hd']) {
+    scores['vmafHd'] = data?.['pooled_metrics']?.['vmaf_hd']?.['harmonic_mean'];
+  }
+  if (data?.['pooled_metrics']?.['vmaf_hd_phone']) {
+    scores['vmafHdPhone'] =
+      data?.['pooled_metrics']?.['vmaf_hd_phone']?.['harmonic_mean'];
+  }
+  return scores;
 }
 
 function bitrateFromJsonString(str: string): number {
@@ -110,7 +116,7 @@ export default async function getAnalysisData(
       .filter((file) => !file.filename.includes('_metadata.json'))
       .map(({ filename, contents }) => ({
         filename,
-        vmaf: vmafFromJsonString(contents)
+        vmafScores: vmafFromJsonString(contents)
       }));
     const bitrateList = list
       .filter((file) => file.filename.includes('_metadata.json'))
@@ -122,7 +128,8 @@ export default async function getAnalysisData(
       }));
     return { vmafList, bitrateList };
   } else {
-    let bitrateList: {filename: string, bitrate: number}[] | undefined = undefined;
+    let bitrateList: { filename: string; bitrate: number }[] | undefined =
+      undefined;
     if (fs.lstatSync(filename).isDirectory()) {
       logger.info('Loading VMAF from directory...');
       const files = fs
@@ -132,30 +139,39 @@ export default async function getAnalysisData(
         files
           .filter((file) => !file.includes('_metadata.json'))
           .map(async (f) => {
-          const contents = fs.readFileSync(path.join(filename, f), 'utf-8');
-          const vmaf = vmafFromJsonString(contents);
-          return { filename: f, vmaf };
-        })
+            const contents = fs.readFileSync(path.join(filename, f), 'utf-8');
+            const vmafScores = vmafFromJsonString(contents);
+            return { filename: f, vmafScores: vmafScores };
+          })
       );
       bitrateList = await Promise.all(
         files
           .filter((file) => file.includes('_metadata.json'))
           .map(async (file) => {
-              const contents = fs.readFileSync(path.join(filename, file), 'utf-8');
-              const bitrate = bitrateFromJsonString(contents);
-              return {
-                filename: path.basename(file).replace('_metadata.json', '_vmaf.json'),
-                bitrate
-              };
-            }
-          )
+            const contents = fs.readFileSync(
+              path.join(filename, file),
+              'utf-8'
+            );
+            const bitrate = bitrateFromJsonString(contents);
+            return {
+              filename: path
+                .basename(file)
+                .replace('_metadata.json', '_vmaf.json'),
+              bitrate
+            };
+          })
       );
 
-      return { vmafList, bitrateList: bitrateList?.length > 0 ? bitrateList : undefined };
+      return {
+        vmafList,
+        bitrateList: bitrateList?.length > 0 ? bitrateList : undefined
+      };
     } else {
       const contents = fs.readFileSync(filename, 'utf-8');
-      const vmaf = vmafFromJsonString(contents);
-      const vmafList: VmafList = [{ filename: filename, vmaf: vmaf }];
+      const vmafScores = vmafFromJsonString(contents);
+      const vmafList: VmafList = [
+        { filename: filename, vmafScores: vmafScores }
+      ];
       // TODO: Read bitrate from metadata file
       return { vmafList, bitrateList };
     }

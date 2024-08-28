@@ -104,7 +104,7 @@ async function run() {
           type: 'string',
           describe: 'Folder with vmaf measurement results',
           demandOption: true
-        });
+        })
       },
       runSuggestLadder
     )
@@ -123,6 +123,10 @@ async function run() {
               type: 'boolean',
               description: 'Read bitrate of transcoded file with ffprobe',
               default: false
+            },
+            variables: {
+              type: 'string',
+              description: 'List of variables to include as columns in csv'
             }
           });
       },
@@ -186,19 +190,29 @@ async function exportWmafResultToCsv(argv) {
         argv.probeBitrate
       )
     ).flatMap((result) => {
-      return result[1].map((resolutionVmaf) => ({
-        folder,
-        filename: resolutionVmaf.vmafFile,
-        resolution: `${resolutionVmaf.resolution.width}X${resolutionVmaf.resolution.height}`,
-        qvbr: resolutionVmaf.qvbr,
-        vmaf: resolutionVmaf.vmaf,
-        vmafHd: resolutionVmaf.vmafHd,
-        vmafHdPhone: resolutionVmaf.vmafHdPhone,
-        bitrate: result[0],
-        realTime: resolutionVmaf.cpuTime?.realTime,
-        cpuTime: resolutionVmaf.cpuTime?.cpuTime
-      }));
+      return result[1].map((resolutionVmaf) => {
+        const obj = {
+          folder,
+          filename: resolutionVmaf.vmafFile,
+          resolution: `${resolutionVmaf.resolution.width}X${resolutionVmaf.resolution.height}`,
+          vmaf: resolutionVmaf.vmaf,
+          vmafHd: resolutionVmaf.vmafHd,
+          vmafHdPhone: resolutionVmaf.vmafHdPhone,
+          bitrate: result[0],
+          realTime: resolutionVmaf.cpuTime?.realTime,
+          cpuTime: resolutionVmaf.cpuTime?.cpuTime,
+          variables: Object.keys(resolutionVmaf.variables).map((k) => `${k}=${resolutionVmaf.variables[k]}`).join(':')
+        }
+        if (argv.variables) {
+          for (const v of argv.variables.split(',')) {
+            obj[v.toLowerCase()] = resolutionVmaf.variables[v] || '';
+          }
+        }
+        return obj;
+      });
     });
+
+    console.log(pairs);
 
     await new ObjectsToCsv(pairs).toDisk(`${argv.folder}/results.csv`, {
       allColumns: true,
@@ -221,9 +235,9 @@ async function transcodeAndAnalyse(argv) {
 
   logger.info(
     `saveAsCsv: ${job.saveAsCsv}, ` +
-      (job.saveAsCsv
-        ? `also saving results as a .csv file.`
-        : `will not save results as a .csv file.`)
+    (job.saveAsCsv
+      ? `also saving results as a .csv file.`
+      : `will not save results as a .csv file.`)
   );
   if (job.saveAsCsv) {
     models.forEach((model) =>

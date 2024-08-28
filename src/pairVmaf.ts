@@ -7,11 +7,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { VmafBitratePair } from './models/vmaf-bitrate-pair';
 
-function extractQVBRNumberFromFilename(filename: string): number | null {
-  const match = filename.match(/_QVBR_(\d+)_/);
-  return match ? parseInt(match[1], 10) : null;
-}
-
 export async function pairVmafWithResolutionAndBitrate(
   directoryWithVmafFiles: string,
   filterFunction: (
@@ -60,14 +55,14 @@ export async function pairVmafWithResolutionAndBitrate(
     `Loaded VMAF data from ${JSON.stringify(analysisData, null, 2)}.`
   );
   analysisData.vmafList.forEach(({ filename, vmafScores }) => {
-    const [resolutionStr, bitrateStr] = filename.split('_');
-    const [widthStr, heightStr] = resolutionStr.split('x');
-
-    const width = parseInt(widthStr);
-    const height = parseInt(heightStr);
-    const bitrate = bitrates ? bitrates[filename] : parseInt(bitrateStr);
+    const dataFromFilename = parseVmafFilename(filename);
+    if (!dataFromFilename) {
+      logger.error('Unable to parse data from filename: ', filename);
+      return;
+    }
+    const { width, height, bitrate: bitrateFromFile, variables } = dataFromFilename;
+    const bitrate = bitrates ? bitrates[filename] : bitrateFromFile;
     const cpuTime = cpuTimes ? cpuTimes[filename] : undefined;
-    const qvbr = extractQVBRNumberFromFilename(filename);
     const vmaf = vmafScores.vmaf;
     const vmafHd = vmafScores.vmafHd;
     const vmafHdPhone = vmafScores.vmafHdPhone;
@@ -76,7 +71,7 @@ export async function pairVmafWithResolutionAndBitrate(
       if (pairs.has(bitrate)) {
         pairs.get(bitrate)?.push({
           resolution: { width, height },
-          qvbr,
+          variables,
           vmaf,
           vmafHd,
           vmafHdPhone,
@@ -87,7 +82,7 @@ export async function pairVmafWithResolutionAndBitrate(
         pairs.set(bitrate, [
           {
             resolution: { width, height },
-            qvbr,
+            variables,
             vmaf,
             vmafHd,
             vmafHdPhone,
@@ -187,4 +182,32 @@ export async function runFfprobe(file) {
       }
     });
   });
+}
+
+const vmafFilenameRegex: RegExp = /(.*\/)?(?<width>\d+)x(?<height>\d+)_(?<bitrate>\d+)(?<variables>(_([A-Za-z0-9-]+)_([A-Za-z0-9.]+))*)?(_vmaf\.json|\.[A-Za-z0-9]+)/;
+
+export function parseVmafFilename(file): {
+  width: number,
+  height: number,
+  bitrate: number,
+  variables: Record<string,string>
+} | undefined {
+  const result = vmafFilenameRegex.exec(file);
+  if (!result) {
+    return undefined;
+  }
+  const groups = result.groups as { width: string, height: string, bitrate: string, variables: string };
+  const variables = {}
+  if (groups.variables) {
+    const variablesList = groups.variables.split('_').slice(1);
+    for (let i = 0; i < variablesList.length - 1; i += 2) {
+      variables[variablesList[i]] = variablesList[i + 1];
+    }
+  }
+  return {
+    width: parseInt(groups.width),
+    height: parseInt(groups.height),
+    bitrate: parseInt(groups.bitrate),
+    variables
+  };
 }

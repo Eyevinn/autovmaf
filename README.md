@@ -159,6 +159,7 @@ npm install -g @eyevinn/autovmaf
 ```
 
 ### Environments variables
+These are only needed if you are running transcodes and VMAF measurements locally
 
 - `EASYVMAF_PATH` - needs to point to the file `easyVmaf.py` from your
   easyVmaf installation.
@@ -203,16 +204,18 @@ Options:
                     key1=value1:key2=value2                             [string]
 ```
 
+### Running transcode and analysis
+
 Output files will be stored in a folder corresponding to the argument given to the `--name` option.
 If resolutions and/or bitrates are not specified default values will be used, [See above](#generate-vmaf-measurements).
 
-### Providing job definition in a json or yaml file
+#### Providing job definition in a json or yaml file
 
 With the `--job` option, a path to a yaml or json file with a job definition can be passed to to the cli. The values
 defined in the file can be overridden with other commandline options. For instance the `reference` video defined
 in the job file can be overridden by passing a source file on the command line.
 
-#### Using variables in the job definition
+##### Using variables in the job definition
 
 It is possible to iterate over other variables than bitrate and resolutions when running a local encode. For
 instance, to run transcode and vmaf analysis with x265 in CRF mode for a number of CRF values, a job definition
@@ -272,13 +275,91 @@ pipelineVariables:
     - 9
 ```
 
-### Generate VMAF measurements example
+#### Generate VMAF measurements example
 
 ```bash
 autovmaf --resolutions 1920x1080,1280x720,960x540 --bitrates 500k,800k,1200k,1600k,2000k,3000k,4000k --name my-autovmaf-test1 my-source-video.mp4
 ```
 
 With the above command, when the run is finished transcoded files will be available in the folder `my-autovmaf-test1`, and vmaf-data in the folder `my-autovmaf-test1/HD`.
+
+### Exporting results to csv
+To export results to csv, use the `export-csv` command.
+
+```
+autovmaf export-csv <folder>
+
+Export Vmaf results as csv
+
+Positionals:
+  folder  Folder with vmaf measurement results               [string] [required]
+
+Options:
+  --version       Show version number                                  [boolean]
+  --help          Show help                                            [boolean]
+  --probeBitrate  Read bitrate of transcoded file with ffprobe
+                                                      [boolean] [default: false]
+  --variables     List of variables to include as columns in csv        [string]
+```
+
+If your job uses variables ([See above](#using-variables-in-the-job-definition)), the variables that should
+be included in the csv data should be specified with the `--variables` option.
+
+### Export data to a sqlite database
+*_Note: It is first necessary to export the data to a csv file before importing it into a sqlite database._*
+
+```
+autovmaf create-db <dbfile>
+
+Import csv file into a sqlite3 database file
+
+Positionals:
+  dbfile  Path to db file                                    [string] [required]
+
+Options:
+  --version      Show version number                                   [boolean]
+  --help         Show help                                             [boolean]
+  --csv-file     Csv file to import                          [string] [required]
+  --aggregation  regex to use for aggregation. Regex will be run against folder,
+                 first capturing group will be used for aggregation     [string]
+```
+
+Use the `--aggregation` option to specify a regex that will be run against the folder name to get a grouping string that
+will be saved in its own column. This is useful if results for different clips from the same content are stored in
+different folder and you want to process them together with `ladder-stats` (see below)
+
+### Construct ladders from VMAF results
+*_Note: it is first necessary to export data to a sqlite database, see above._*
+
+The `ladder-stats` command can be used to get, for each test content, get a listing of vmaf and bitrate for each rung
+in a proposed transcoding ladder.
+
+```
+autovmaf ladder-stats <dbfile>
+
+Given a sqlite database file and/or a csv-file with results and a ladder
+definition, print vmaf and bitrates for each rung for each source
+
+Positionals:
+  dbfile  CSV file with results                              [string] [required]
+
+Options:
+  --version  Show version number                                       [boolean]
+  --help     Show help                                                 [boolean]
+  --ladder   ladder defianition on format
+             VARIABLE=VALUE,VARIABLE=VALUE:VARIABLE=VALUE,VARIABLE=VALUE:...
+                                                             [string] [required]
+```
+The `--ladder` option is used to specify how the ladder should be constructed. The format is a colon-separated list of
+rung definition, where each rung definition is a comma separated list of key-value pairs. The key is a column name
+in the database and the value is the value to select. The results presented will be average bitrate and vmaf for
+all rows matching the rung definition.
+
+
+*Example*
+```
+autovmaf ladder-stats my-results.sqlite --ladder 'resolution=1920x1080,crf=20:resolution=1280x720,crf=24:resolution=960x540,crf=28'
+```
 
 ## Development
 

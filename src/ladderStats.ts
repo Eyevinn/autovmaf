@@ -18,13 +18,15 @@ class AsyncStatement {
   }
 
   async finalize() {
-    return new Promise<void>((resolve, reject) => this.stmt.finalize((err) => {
-      if (!err) {
-        resolve();
-      } else {
-        reject(err)
-      }
-    }));
+    return new Promise<void>((resolve, reject) =>
+      this.stmt.finalize((err) => {
+        if (!err) {
+          resolve();
+        } else {
+          reject(err);
+        }
+      })
+    );
   }
 }
 
@@ -43,7 +45,7 @@ class AsyncDatabase {
         } else {
           reject(err);
         }
-      })
+      });
     });
   }
 
@@ -62,7 +64,6 @@ class AsyncDatabase {
   prepare(sql: string): AsyncStatement {
     return new AsyncStatement(this.db.prepare(sql));
   }
-
 }
 
 export async function createDb(argv) {
@@ -78,10 +79,14 @@ export async function createDb(argv) {
   //await db.run(`DROP TABLE IF EXISTS stats`);
   await db.run(`CREATE TABLE IF NOT EXISTS stats (${header},grouping)`);
 
-  const stmt = db.prepare(`INSERT INTO stats VALUES (${columns.map(() => '?').join(',')}, ?)`);
-  await Promise.all(data.map((row) => {
-    stmt.run([...row.split(','), '-']);
-  }));
+  const stmt = db.prepare(
+    `INSERT INTO stats VALUES (${columns.map(() => '?').join(',')}, ?)`
+  );
+  await Promise.all(
+    data.map((row) => {
+      stmt.run([...row.split(','), '-']);
+    })
+  );
   await stmt.finalize();
   if (argv.aggregation) {
     const aggregation = argv.aggregation;
@@ -89,25 +94,29 @@ export async function createDb(argv) {
     let folders: string[] = [];
     const rows = await db.all(query);
 
-    folders = rows.map(row => (row as { folder: string }).folder);
+    folders = rows.map((row) => (row as { folder: string }).folder);
 
     const aggRegex = new RegExp(aggregation);
     const contentMap = folders
-      .filter(folder => !!folder)
-      .map(folder => {
-      // Last part of folder is normally vmaf modelname (vmaf/4k), second last identifies the content
+      .filter((folder) => !!folder)
+      .map((folder) => {
+        // Last part of folder is normally vmaf modelname (vmaf/4k), second last identifies the content
         // Example path: /some/folder/My-Program/HD
-      const name = folder.split('/').slice(-2)[0];
-      const res = aggRegex.exec(name);
-      return {
-        folder,
-        grouping: res?.[1] || name
-      }
-    });
-    const updateStmt = db.prepare('UPDATE stats SET grouping = ? WHERE folder = ?');
-    await Promise.all(contentMap.map(({ folder, grouping }) =>
-      updateStmt.run([grouping, folder])
-    ));
+        const name = folder.split('/').slice(-2)[0];
+        const res = aggRegex.exec(name);
+        return {
+          folder,
+          grouping: res?.[1] || name
+        };
+      });
+    const updateStmt = db.prepare(
+      'UPDATE stats SET grouping = ? WHERE folder = ?'
+    );
+    await Promise.all(
+      contentMap.map(({ folder, grouping }) =>
+        updateStmt.run([grouping, folder])
+      )
+    );
   }
 }
 
@@ -122,23 +131,26 @@ export interface LadderRungStats {
 export async function ladderStats(argv) {
   const db = new AsyncDatabase(argv.dbfile);
 
-  const programs = (await db.all('SELECT DISTINCT grouping FROM stats'))
-    .map(row => (row as { grouping: string }).grouping);
+  const programs = (await db.all('SELECT DISTINCT grouping FROM stats')).map(
+    (row) => (row as { grouping: string }).grouping
+  );
 
-  const rungs = argv.ladder.split(':').map(selectors => {
-    return selectors.split(',').map(columnValue => {
+  const rungs = argv.ladder.split(':').map((selectors) => {
+    return selectors.split(',').map((columnValue) => {
       const [column, value] = columnValue.split('=');
       return { column, value };
-    })
-  })
+    });
+  });
 
   const allRungStats: Record<string, LadderRungStats[]> = {};
   for (let i = 0; i < rungs.length; i++) {
     const rungExpression = rungs[i];
-    const rungWhere = rungExpression.map(({ column, value }) => `${column} like '${value}'`).join(' AND ');
+    const rungWhere = rungExpression
+      .map(({ column, value }) => `${column} like '${value}'`)
+      .join(' AND ');
     const selectStatsSql = `SELECT grouping, AVG(bitrate), AVG(vmafHd) FROM stats WHERE ${rungWhere} GROUP BY grouping`;
     const rungStats = await db.all(selectStatsSql);
-    rungStats.forEach(rs => {
+    rungStats.forEach((rs) => {
       const content = rs.grouping;
       const statsList = allRungStats[content] || [];
       statsList.push({
@@ -155,13 +167,15 @@ export async function ladderStats(argv) {
   console.log('content,rung,selectors,vmaf,bitrate (kbit/s)');
   for (const content of Object.keys(allRungStats)) {
     const rungStats = allRungStats[content];
-    rungStats.forEach(rungStats => {
-      console.log(`${rungStats.content},${rungStats.rungNo},${rungStats.selectors},${rungStats.vmaf.toFixed(1)},${Math.round(rungStats.bitrate/1000)}`);
-    })
+    rungStats.forEach((rungStats) => {
+      console.log(
+        `${rungStats.content},${rungStats.rungNo},${rungStats.selectors},${rungStats.vmaf.toFixed(1)},${Math.round(rungStats.bitrate / 1000)}`
+      );
+    });
     console.log();
   }
 
-    //console.log(contentMap);
+  //console.log(contentMap);
 
   /*
   db.serialize(function () {

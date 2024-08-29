@@ -14,5 +14,5 @@
   "rules": {
     "prettier/prettier": "error"
   },
-  "ignorePatterns": ["node_modules/*", "dist/*",  "examples/*"]
+  "ignorePatterns": ["node_modules/*", "dist/*",  "examples/*", "local-types/*"]
 }

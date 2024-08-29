@@ -8,7 +8,7 @@ import { BitrateList } from './models/bitrate-list';
 import { JsonVmafScores } from './models/json-vmaf-scores';
 
 function vmafFromJsonString(str: string): JsonVmafScores {
-  let scores = {};
+  const scores = {};
 
   const data = JSON.parse(str);
   if (data?.['pooled_metrics']?.['vmaf']) {
@@ -56,11 +56,11 @@ async function dataFromS3(
   const uriObj = new URL(uri);
   const bucket = uriObj.hostname;
   const key = uriObj.pathname.substring(1);
-  let s3 = new S3({});
+  const s3 = new S3({});
   const listCommand = new ListObjectsV2Command({ Bucket: bucket, Prefix: key });
   const listResponse = await s3.send(listCommand);
 
-  let dataList: any = [];
+  const dataList: any = [];
 
   if (listResponse.Contents !== undefined) {
     const getCommands = listResponse.Contents?.map(
@@ -108,6 +108,7 @@ export default async function getAnalysisData(
     index: number,
     filename: string,
     total: number
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
   ) => void = () => {}
 ): Promise<{ vmafList: VmafList; bitrateList?: BitrateList }> {
   if (isS3URI(filename)) {

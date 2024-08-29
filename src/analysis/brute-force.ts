@@ -150,7 +150,7 @@ export default async function analyzeBruteForce(
         }))
       );
     } else {
-      let results: any = [];
+      const results: any = [];
       for (const model of models) {
         results.push({
           model,
@@ -173,7 +173,7 @@ export default async function analyzeBruteForce(
     return [];
   }
 
-  let qualityFiles = new Map<QualityAnalysisModel, string[]>();
+  const qualityFiles = new Map<QualityAnalysisModel, string[]>();
   if (concurrency === true) {
     (await Promise.all(pairs.map((pair) => analyzePair(pair))))
       .flat()
@@ -225,8 +225,8 @@ export function preparePairs(
 }
 
 function checkIfBitrateInRange(bitrate: number, range: BitrateRange): boolean {
-  let minBitrate = range.min ? range.min : defaultBitrates[0];
-  let maxBitrate = range.max
+  const minBitrate = range.min ? range.min : defaultBitrates[0];
+  const maxBitrate = range.max
     ? range.max
     : defaultBitrates[defaultBitrates.length - 1];
   return bitrate >= minBitrate && bitrate <= maxBitrate ? true : false;

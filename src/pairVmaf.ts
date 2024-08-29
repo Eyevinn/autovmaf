@@ -18,10 +18,11 @@ export async function pairVmafWithResolutionAndBitrate(
     index: number,
     filename: string,
     total: number
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
   ) => void = () => {},
-  probeBitrate: boolean = false
+  probeBitrate = false
 ) {
-  let pairs = new Map<number, VmafBitratePair[]>();
+  const pairs = new Map<number, VmafBitratePair[]>();
   logger.info(`Loading VMAF data from ${directoryWithVmafFiles}...`);
   const analysisData = await getAnalysisData(
     directoryWithVmafFiles,
@@ -60,7 +61,12 @@ export async function pairVmafWithResolutionAndBitrate(
       logger.error('Unable to parse data from filename: ', filename);
       return;
     }
-    const { width, height, bitrate: bitrateFromFile, variables } = dataFromFilename;
+    const {
+      width,
+      height,
+      bitrate: bitrateFromFile,
+      variables
+    } = dataFromFilename;
     const bitrate = bitrates ? bitrates[filename] : bitrateFromFile;
     const cpuTime = cpuTimes ? cpuTimes[filename] : undefined;
     const vmaf = vmafScores.vmaf;
@@ -184,20 +190,28 @@ export async function runFfprobe(file) {
   });
 }
 
-const vmafFilenameRegex: RegExp = /(.*\/)?(?<width>\d+)x(?<height>\d+)_(?<bitrate>\d+)(?<variables>(_([A-Za-z0-9-]+)_([A-Za-z0-9.]+))*)?(_vmaf\.json|\.[A-Za-z0-9]+)/;
+const vmafFilenameRegex =
+  /(.*\/)?(?<width>\d+)x(?<height>\d+)_(?<bitrate>\d+)(?<variables>(_([A-Za-z0-9-]+)_([A-Za-z0-9.]+))*)?(_vmaf\.json|\.[A-Za-z0-9]+)/;
 
-export function parseVmafFilename(file): {
-  width: number,
-  height: number,
-  bitrate: number,
-  variables: Record<string,string>
-} | undefined {
+export function parseVmafFilename(file):
+  | {
+      width: number;
+      height: number;
+      bitrate: number;
+      variables: Record<string, string>;
+    }
+  | undefined {
   const result = vmafFilenameRegex.exec(file);
   if (!result) {
     return undefined;
   }
-  const groups = result.groups as { width: string, height: string, bitrate: string, variables: string };
-  const variables = {}
+  const groups = result.groups as {
+    width: string;
+    height: string;
+    bitrate: string;
+    variables: string;
+  };
+  const variables = {};
   if (groups.variables) {
     const variablesList = groups.variables.split('_').slice(1);
     for (let i = 0; i < variablesList.length - 1; i += 2) {

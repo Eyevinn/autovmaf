@@ -105,7 +105,7 @@ async function run() {
           type: 'string',
           describe: 'Folder with vmaf measurement results',
           demandOption: true
-        })
+        });
       },
       runSuggestLadder
     )
@@ -137,10 +137,11 @@ async function run() {
       'create-db <dbfile>',
       'Import csv file into a sqlite3 database file',
       (yargs) => {
-        return yargs.positional('dbfile', {
-          type: 'string',
-          describe: 'Path to db file'
-        })
+        return yargs
+          .positional('dbfile', {
+            type: 'string',
+            describe: 'Path to db file'
+          })
           .options({
             'csv-file': {
               type: 'string',
@@ -149,9 +150,10 @@ async function run() {
             },
             aggregation: {
               type: 'string',
-              description: 'regex to use for aggregation. Regex will be run against folder, first capturing group will be used for aggregation'
-            },
-          })
+              description:
+                'regex to use for aggregation. Regex will be run against folder, first capturing group will be used for aggregation'
+            }
+          });
       },
       createDb
     )
@@ -159,15 +161,17 @@ async function run() {
       'ladder-stats <dbfile>',
       'Given a sqlite database file and/or a csv-file with results and a ladder definition, print vmaf and bitrates for each rung for each source',
       (yargs) => {
-        return yargs.positional('dbfile', {
-          type: 'string',
-          describe: 'CSV file with results',
-          demandOption: true
-        })
+        return yargs
+          .positional('dbfile', {
+            type: 'string',
+            describe: 'CSV file with results',
+            demandOption: true
+          })
           .options({
             ladder: {
               type: 'string',
-              description: 'ladder defianition on format VARIABLE=VALUE,VARIABLE=VALUE:VARIABLE=VALUE,VARIABLE=VALUE:...',
+              description:
+                'ladder defianition on format VARIABLE=VALUE,VARIABLE=VALUE:VARIABLE=VALUE,VARIABLE=VALUE:...',
               demandOption: true
             }
           });
@@ -233,6 +237,7 @@ async function exportWmafResultToCsv(argv) {
       await pairVmafWithResolutionAndBitrate(
         folder,
         () => true,
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         () => {},
         argv.probeBitrate
       )
@@ -248,8 +253,10 @@ async function exportWmafResultToCsv(argv) {
           bitrate: result[0],
           realTime: resolutionVmaf.cpuTime?.realTime,
           cpuTime: resolutionVmaf.cpuTime?.cpuTime,
-          variables: Object.keys(resolutionVmaf.variables).map((k) => `${k}=${resolutionVmaf.variables[k]}`).join(':')
-        }
+          variables: Object.keys(resolutionVmaf.variables)
+            .map((k) => `${k}=${resolutionVmaf.variables[k]}`)
+            .join(':')
+        };
         if (argv.variables) {
           for (const v of argv.variables.split(',')) {
             obj[v.toLowerCase()] = resolutionVmaf.variables[v] || '';
@@ -282,9 +289,9 @@ async function transcodeAndAnalyse(argv) {
 
   logger.info(
     `saveAsCsv: ${job.saveAsCsv}, ` +
-    (job.saveAsCsv
-      ? `also saving results as a .csv file.`
-      : `will not save results as a .csv file.`)
+      (job.saveAsCsv
+        ? `also saving results as a .csv file.`
+        : `will not save results as a .csv file.`)
   );
   if (job.saveAsCsv) {
     models.forEach((model) =>

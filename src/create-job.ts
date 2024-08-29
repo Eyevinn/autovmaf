@@ -51,7 +51,7 @@ export type JobDescription = {
   skipExisting?: boolean;
 
   /** Skip VMAF measurement */
-  skipVmaf?: boolean
+  skipVmaf?: boolean;
 };
 
 /**
@@ -116,7 +116,7 @@ export default async function createJob(
   description: JobDescription,
   pipelineData?: any,
   encodingProfileData?: any,
-  concurrency: boolean = true
+  concurrency = true
 ) {
   logger.info(`Creating job ${description.name}.`);
 

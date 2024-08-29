@@ -22,8 +22,8 @@ export const handler = async (event: ALBEvent): Promise<ALBResult> => {
       };
     }
     const job = body.job;
-    let pipelineS3Url = body['pipelineUrl'];
-    let encodingS3Url = body['encodingSettingsUrl'];
+    const pipelineS3Url = body['pipelineUrl'];
+    const encodingS3Url = body['encodingSettingsUrl'];
     let mediaConvertProfile = default_profile;
     let pipeline = default_pipeline;
     try {
@@ -108,8 +108,8 @@ async function loadFromS3(encodingS3Url: string): Promise<string> {
 }
 
 async function streamToString(stream: any): Promise<string> {
-  return new Promise(async (resolve, reject) => {
-    let responseDataChunks = [] as any;
+  return new Promise((resolve, reject) => {
+    const responseDataChunks = [] as any;
     stream.Body.once('error', (err) => reject(err));
     stream.Body.on('data', (chunk) => responseDataChunks.push(chunk));
     stream.Body.once('end', () => resolve(responseDataChunks.join('')));

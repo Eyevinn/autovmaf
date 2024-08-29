@@ -5,7 +5,7 @@ export type VmafBitratePair = {
   vmaf?: number;
   vmafHd?: number;
   vmafHdPhone?: number;
-  variables: Record<string,string>;
+  variables: Record<string, string>;
   cpuTime?: {
     realTime: number;
     cpuTime: number;

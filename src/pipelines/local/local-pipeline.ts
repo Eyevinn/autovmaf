@@ -11,7 +11,7 @@ import logger from '../../logger';
 
 const ffmpegAsync = async (
   command: ffmpeg.FfmpegCommand,
-  onProgress: (info: any) => void
+  onProgress: (info: { percent: number }) => void
 ) => {
   return new Promise<void>((resolve, reject) => {
     command
@@ -72,7 +72,8 @@ export default class LocalPipeline implements Pipeline {
       Object.entries(this.configuration.ffmpegOptions).forEach(
         ([key, value]) => {
           //let value = this.configuration.ffmpegOptions[key];
-          Object.entries(variables!!).forEach(([k, v]) => {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          Object.entries(variables!).forEach(([k, v]) => {
             value = value.replace('${' + `${k}` + '}', v);
           });
           ffmpegOptionsWithVariableSubstituted[key] = value;

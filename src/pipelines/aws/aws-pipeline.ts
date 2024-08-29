@@ -206,11 +206,7 @@ export default class AWSPipeline implements Pipeline {
       Object.entries(variables).forEach(([key, value]) => {
         const replace = '${' + `${key}` + '}';
         logger.debug(`Replacing ${replace} with ${value}`);
-        settingsStr = this.stringReplacement(
-          settingsStr,
-          replace,
-          value
-        );
+        settingsStr = this.stringReplacement(settingsStr, replace, value);
       });
     }
 
@@ -221,7 +217,12 @@ export default class AWSPipeline implements Pipeline {
       await this.fileExists(outputBucket, `${outputFolder}/${outputObject}`)
     ) {
       // File has already been transcoded.
-      if (! (await this.fileExists(outputBucket, this.transcodedUriToMetadataUri(`${outputFolder}/${outputObject}`)))) {
+      if (
+        !(await this.fileExists(
+          outputBucket,
+          this.transcodedUriToMetadataUri(`${outputFolder}/${outputObject}`)
+        ))
+      ) {
         await this.probeMetadata(outputBucket, outputFolder, outputObject);
       }
       return outputURI;
@@ -254,7 +255,11 @@ export default class AWSPipeline implements Pipeline {
     return outputURI;
   }
 
-  private async probeMetadata(outputBucket: string, outputFolder: string, outputObject: string) {
+  private async probeMetadata(
+    outputBucket: string,
+    outputFolder: string,
+    outputObject: string
+  ) {
     const url = await this.generatePresignedUrl(
       outputBucket,
       `${outputFolder}/${outputObject}`,
@@ -309,7 +314,7 @@ export default class AWSPipeline implements Pipeline {
       outputBucket,
       path.dirname(outputObject)
     );
-/*
+    /*
     let credentials: any = {};
     if (process.env.LOAD_CREDENTIALS_FROM_ENV) {
       logger.debug('Loading credentials from environment variables');
@@ -402,15 +407,25 @@ export default class AWSPipeline implements Pipeline {
     return outputURI;
   }
 
-  private async copyMetadataFile(outputBucket: string, distortedFilename: string, outputObject: string) {
-    let key = `results/${outputObject}`.replace('_vmaf.json', '_metadata.json');
-    if ( await this.fileExists(outputBucket, key)) {
+  private async copyMetadataFile(
+    outputBucket: string,
+    distortedFilename: string,
+    outputObject: string
+  ) {
+    const key = `results/${outputObject}`.replace(
+      '_vmaf.json',
+      '_metadata.json'
+    );
+    if (await this.fileExists(outputBucket, key)) {
       logger.debug(`Metadata file already exists: ${key}`);
       return;
     }
     const input = {
       Bucket: outputBucket,
-      CopySource: this.transcodedUriToMetadataUri(distortedFilename).replace('s3:/', ''),
+      CopySource: this.transcodedUriToMetadataUri(distortedFilename).replace(
+        's3:/',
+        ''
+      ),
       Key: key
     };
     logger.debug(`Uploading metadata: ${JSON.stringify(input)}`);

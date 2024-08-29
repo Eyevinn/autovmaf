@@ -159,6 +159,7 @@ npm install -g @eyevinn/autovmaf
 ```
 
 ### Environments variables
+
 These are only needed if you are running transcodes and VMAF measurements locally
 
 - `EASYVMAF_PATH` - needs to point to the file `easyVmaf.py` from your
@@ -284,6 +285,7 @@ autovmaf --resolutions 1920x1080,1280x720,960x540 --bitrates 500k,800k,1200k,160
 With the above command, when the run is finished transcoded files will be available in the folder `my-autovmaf-test1`, and vmaf-data in the folder `my-autovmaf-test1/HD`.
 
 ### Exporting results to csv
+
 To export results to csv, use the `export-csv` command.
 
 ```
@@ -306,7 +308,8 @@ If your job uses variables ([See above](#using-variables-in-the-job-definition))
 be included in the csv data should be specified with the `--variables` option.
 
 ### Export data to a sqlite database
-*_Note: It is first necessary to export the data to a csv file before importing it into a sqlite database._*
+
+_*Note: It is first necessary to export the data to a csv file before importing it into a sqlite database.*_
 
 ```
 autovmaf create-db <dbfile>
@@ -329,7 +332,8 @@ will be saved in its own column. This is useful if results for different clips f
 different folder and you want to process them together with `ladder-stats` (see below)
 
 ### Construct ladders from VMAF results
-*_Note: it is first necessary to export data to a sqlite database, see above._*
+
+_*Note: it is first necessary to export data to a sqlite database, see above.*_
 
 The `ladder-stats` command can be used to get, for each test content, get a listing of vmaf and bitrate for each rung
 in a proposed transcoding ladder.
@@ -350,13 +354,14 @@ Options:
              VARIABLE=VALUE,VARIABLE=VALUE:VARIABLE=VALUE,VARIABLE=VALUE:...
                                                              [string] [required]
 ```
+
 The `--ladder` option is used to specify how the ladder should be constructed. The format is a colon-separated list of
 rung definition, where each rung definition is a comma separated list of key-value pairs. The key is a column name
 in the database and the value is the value to select. The results presented will be average bitrate and vmaf for
 all rows matching the rung definition.
 
+_Example_
 
-*Example*
 ```
 autovmaf ladder-stats my-results.sqlite --ladder 'resolution=1920x1080,crf=20:resolution=1280x720,crf=24:resolution=960x540,crf=28'
 ```

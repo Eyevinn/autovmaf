@@ -24,27 +24,29 @@ export default async function suggestLadder(
     resolution: Resolution,
     vmafScores: JsonVmafScores
   ) => boolean = () => true,
-  includeAllBitrates: boolean = false,
+  includeAllBitrates = false,
   onProgress: (
     index: number,
     filename: string,
     total: number
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
   ) => void = () => {},
-  model: string = 'vmafHd'
+  model = 'vmafHd'
 ): Promise<LadderAndVmafPairs> {
   const pairs = await pairVmafWithResolutionAndBitrate(
     directoryWithVmafFiles,
     filterFunction,
     onProgress
   );
-  let optimal: { resolution: Resolution; vmaf: number; bitrate: number }[] = [];
+  const optimal: { resolution: Resolution; vmaf: number; bitrate: number }[] =
+    [];
 
   // Get optimal resolution for each bitrate
   pairs.forEach((bitrateVmafPairs, bitrate) => {
     let bestVmaf = 0;
     let bestResolution: Resolution | undefined;
 
-    for (let pair of bitrateVmafPairs) {
+    for (const pair of bitrateVmafPairs) {
       const vmaf = pair[model] ? pair[model] : NaN;
       if (vmaf > bestVmaf) {
         bestVmaf = vmaf;
@@ -64,7 +66,8 @@ export default async function suggestLadder(
     return { ladder: optimal.sort((a, b) => a.bitrate - b.bitrate), pairs };
   }
 
-  let ladder: { resolution: Resolution; vmaf: number; bitrate: number }[] = [];
+  const ladder: { resolution: Resolution; vmaf: number; bitrate: number }[] =
+    [];
   optimal
     .sort((a, b) => b.bitrate - a.bitrate)
     .forEach((pair) => {

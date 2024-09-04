@@ -155,7 +155,7 @@ describe('AWSPipeline', () => {
       's3Dir'
     );
 
-    expect(pipeline.fileExists).toReturnTimes(2);
+    expect(pipeline.fileExists).toReturnTimes(3);
     expect(mcMock.send).toHaveBeenCalled;
   });
 

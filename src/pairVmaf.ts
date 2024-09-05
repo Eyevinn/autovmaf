@@ -61,12 +61,7 @@ export async function pairVmafWithResolutionAndBitrate(
       logger.error('Unable to parse data from filename: ', filename);
       return;
     }
-    const {
-      width,
-      height,
-      targetBitrate,
-      variables
-    } = dataFromFilename;
+    const { width, height, targetBitrate, variables } = dataFromFilename;
 
     const actualBitrate = bitrates ? bitrates[filename] : 0;
     const cpuTime = cpuTimes ? cpuTimes[filename] : undefined;

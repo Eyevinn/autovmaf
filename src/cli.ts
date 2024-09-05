@@ -289,9 +289,9 @@ async function transcodeAndAnalyse(argv) {
 
   logger.info(
     `saveAsCsv: ${job.saveAsCsv}, ` +
-    (job.saveAsCsv
-      ? `also saving results as a .csv file.`
-      : `will not save results as a .csv file.`)
+      (job.saveAsCsv
+        ? `also saving results as a .csv file.`
+        : `will not save results as a .csv file.`)
   );
   if (job.saveAsCsv) {
     models.forEach((model) =>

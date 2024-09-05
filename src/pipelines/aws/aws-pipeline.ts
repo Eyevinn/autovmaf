@@ -231,10 +231,16 @@ export default class AWSPipeline implements Pipeline {
     // Transcode
     logger.info('Transcoding ' + inputFilename + ' to ' + outputURI + '...');
     try {
+      const accelerationSettings = this.configuration.accelerationMode
+        ? {
+            AccelerationSettings: { Mode: this.configuration.accelerationMode }
+          }
+        : {};
       await this.mediaConvert.send(
         new CreateJobCommand({
           Role: this.configuration.mediaConvertRole,
-          Settings: settings
+          Settings: settings,
+          ...accelerationSettings
         })
       );
     } catch (error) {

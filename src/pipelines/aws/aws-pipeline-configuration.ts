@@ -9,4 +9,5 @@ export type AWSPipelineConfiguration = {
   ecsCluster: string;
   ecsContainerName: string;
   ecsTaskDefinition: string;
+  accelerationMode?: string;
 };

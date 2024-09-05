@@ -320,18 +320,7 @@ export default class AWSPipeline implements Pipeline {
       outputBucket,
       path.dirname(outputObject)
     );
-    /*
-    let credentials: any = {};
-    if (process.env.LOAD_CREDENTIALS_FROM_ENV) {
-      logger.debug('Loading credentials from environment variables');
-      credentials['accessKeyId'] = process.env.AWS_ACCESS_KEY_ID;
-      credentials['secretAccessKey'] = process.env.AWS_SECRET_ACCESS_KEY;
-    } else {
-      logger.debug('Loading credentials from ~/.aws/credentials');
-      const credentialProvider = fromIni();
-      credentials = await credentialProvider();
-    }
-*/
+
     let additionalArgs: string[] = [];
     switch (model) {
       case QualityAnalysisModel.HD:
@@ -362,8 +351,8 @@ export default class AWSPipeline implements Pipeline {
             }
           },
           tags: [
-            { key: 'ReferenceFile', value: referenceFilename },
-            { key: 'Output', value: outputObject }
+            { key: 'ReferenceFile', value: cleanupTagValue(referenceFilename) },
+            { key: 'Output', value: cleanupTagValue(outputObject) }
           ],
           overrides: {
             containerOverrides: [
@@ -378,19 +367,6 @@ export default class AWSPipeline implements Pipeline {
                   outputURI,
                   ...additionalArgs
                 ]
-                /*,
-                environment: [
-                  {
-                    name: 'AWS_ACCESS_KEY_ID',
-                    value: credentials.accessKeyId
-                  },
-                  {
-                    name: 'AWS_SECRET_ACCESS_KEY',
-                    value: credentials.secretAccessKey
-                  }
-                ]
-
-                 */
               }
             ]
           }
@@ -438,4 +414,8 @@ export default class AWSPipeline implements Pipeline {
     const command = new CopyObjectCommand(input);
     await this.s3.send(command);
   }
+}
+
+export function cleanupTagValue(tagValue: string) {
+  return tagValue.replace(/[^A-Za-z0-9_./=+:@ -]/g, '_');
 }

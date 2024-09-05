@@ -33,11 +33,18 @@ export default async function suggestLadder(
   ) => void = () => {},
   model = 'vmafHd'
 ): Promise<LadderAndVmafPairs> {
-  const pairs = await pairVmafWithResolutionAndBitrate(
-    directoryWithVmafFiles,
-    filterFunction,
-    onProgress
-  );
+  const pairs: Map<number, VmafBitratePair[]> = (
+    await pairVmafWithResolutionAndBitrate(
+      directoryWithVmafFiles,
+      filterFunction,
+      onProgress
+    )
+  ).reduce<Map<number, VmafBitratePair[]>>((map, pair) => {
+    const list = map.get(pair.targetBitrate) ?? [];
+    list.push(pair);
+    map.set(pair.targetBitrate, list);
+    return map;
+  }, new Map());
   const optimal: { resolution: Resolution; vmaf: number; bitrate: number }[] =
     [];
 

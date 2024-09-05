@@ -12,6 +12,7 @@ import suggestLadder from './suggest-ladder';
 import ObjectsToCsv from 'objects-to-csv';
 import { pairVmafWithResolutionAndBitrate } from './pairVmaf';
 import { createDb, ladderStats } from './ladderStats';
+import { VmafBitratePair } from './models/vmaf-bitrate-pair';
 
 class ValidationError extends Error {
   constructor(message) {
@@ -233,7 +234,7 @@ async function exportWmafResultToCsv(argv) {
     argv.folder
   );
   for (const folder of foldersWithoutSubdirectories) {
-    const pairs = Array.from(
+    const pairs = (
       await pairVmafWithResolutionAndBitrate(
         folder,
         () => true,
@@ -241,29 +242,28 @@ async function exportWmafResultToCsv(argv) {
         () => {},
         argv.probeBitrate
       )
-    ).flatMap((result) => {
-      return result[1].map((resolutionVmaf) => {
-        const obj = {
-          folder,
-          filename: resolutionVmaf.vmafFile,
-          resolution: `${resolutionVmaf.resolution.width}X${resolutionVmaf.resolution.height}`,
-          vmaf: resolutionVmaf.vmaf,
-          vmafHd: resolutionVmaf.vmafHd,
-          vmafHdPhone: resolutionVmaf.vmafHdPhone,
-          bitrate: result[0],
-          realTime: resolutionVmaf.cpuTime?.realTime,
-          cpuTime: resolutionVmaf.cpuTime?.cpuTime,
-          variables: Object.keys(resolutionVmaf.variables)
-            .map((k) => `${k}=${resolutionVmaf.variables[k]}`)
-            .join(':')
-        };
-        if (argv.variables) {
-          for (const v of argv.variables.split(',')) {
-            obj[v.toLowerCase()] = resolutionVmaf.variables[v] || '';
-          }
+    ).flatMap((resolutionVmaf: VmafBitratePair) => {
+      const obj = {
+        folder,
+        filename: resolutionVmaf.vmafFile,
+        resolution: `${resolutionVmaf.resolution.width}X${resolutionVmaf.resolution.height}`,
+        vmaf: resolutionVmaf.vmaf,
+        vmafHd: resolutionVmaf.vmafHd,
+        vmafHdPhone: resolutionVmaf.vmafHdPhone,
+        targetBitrate: resolutionVmaf.targetBitrate,
+        actualBitrate: resolutionVmaf.actualBitrate,
+        realTime: resolutionVmaf.cpuTime?.realTime,
+        cpuTime: resolutionVmaf.cpuTime?.cpuTime,
+        variables: Object.keys(resolutionVmaf.variables)
+          .map((k) => `${k}=${resolutionVmaf.variables[k]}`)
+          .join(':')
+      };
+      if (argv.variables) {
+        for (const v of argv.variables.split(',')) {
+          obj[v.toLowerCase()] = resolutionVmaf.variables[v] || '';
         }
-        return obj;
-      });
+      }
+      return obj;
     });
 
     console.log(pairs);
@@ -289,9 +289,9 @@ async function transcodeAndAnalyse(argv) {
 
   logger.info(
     `saveAsCsv: ${job.saveAsCsv}, ` +
-      (job.saveAsCsv
-        ? `also saving results as a .csv file.`
-        : `will not save results as a .csv file.`)
+    (job.saveAsCsv
+      ? `also saving results as a .csv file.`
+      : `will not save results as a .csv file.`)
   );
   if (job.saveAsCsv) {
     models.forEach((model) =>

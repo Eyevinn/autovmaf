@@ -21,8 +21,8 @@ export async function pairVmafWithResolutionAndBitrate(
     // eslint-disable-next-line @typescript-eslint/no-empty-function
   ) => void = () => {},
   probeBitrate = false
-) {
-  const pairs = new Map<number, VmafBitratePair[]>();
+): Promise<VmafBitratePair[]> {
+  const pairs: VmafBitratePair[] = [];
   logger.info(`Loading VMAF data from ${directoryWithVmafFiles}...`);
   const analysisData = await getAnalysisData(
     directoryWithVmafFiles,
@@ -64,39 +64,28 @@ export async function pairVmafWithResolutionAndBitrate(
     const {
       width,
       height,
-      bitrate: bitrateFromFile,
+      targetBitrate,
       variables
     } = dataFromFilename;
-    const bitrate = bitrates ? bitrates[filename] : bitrateFromFile;
+
+    const actualBitrate = bitrates ? bitrates[filename] : 0;
     const cpuTime = cpuTimes ? cpuTimes[filename] : undefined;
     const vmaf = vmafScores.vmaf;
     const vmafHd = vmafScores.vmafHd;
     const vmafHdPhone = vmafScores.vmafHdPhone;
 
-    if (filterFunction(bitrate, { width, height }, vmafScores)) {
-      if (pairs.has(bitrate)) {
-        pairs.get(bitrate)?.push({
-          resolution: { width, height },
-          variables,
-          vmaf,
-          vmafHd,
-          vmafHdPhone,
-          cpuTime,
-          vmafFile: filename
-        });
-      } else {
-        pairs.set(bitrate, [
-          {
-            resolution: { width, height },
-            variables,
-            vmaf,
-            vmafHd,
-            vmafHdPhone,
-            cpuTime,
-            vmafFile: filename
-          }
-        ]);
-      }
+    if (filterFunction(targetBitrate, { width, height }, vmafScores)) {
+      pairs.push({
+        targetBitrate,
+        actualBitrate,
+        resolution: { width, height },
+        variables,
+        vmaf,
+        vmafHd,
+        vmafHdPhone,
+        cpuTime,
+        vmafFile: filename
+      });
     }
 
     logger.info(
@@ -197,7 +186,7 @@ export function parseVmafFilename(file):
   | {
       width: number;
       height: number;
-      bitrate: number;
+      targetBitrate: number;
       variables: Record<string, string>;
     }
   | undefined {
@@ -221,7 +210,7 @@ export function parseVmafFilename(file):
   return {
     width: parseInt(groups.width),
     height: parseInt(groups.height),
-    bitrate: parseInt(groups.bitrate),
+    targetBitrate: parseInt(groups.bitrate),
     variables
   };
 }

@@ -5,7 +5,7 @@ describe('parseFilename', () => {
     expect(parseVmafFilename('1920x1080_0.mp4')).toEqual({
       width: 1920,
       height: 1080,
-      bitrate: 0,
+      targetBitrate: 0,
       variables: {}
     });
   });
@@ -14,7 +14,7 @@ describe('parseFilename', () => {
     expect(parseVmafFilename('/apa/bepa/1920x1080_0.mp4')).toEqual({
       width: 1920,
       height: 1080,
-      bitrate: 0,
+      targetBitrate: 0,
       variables: {}
     });
   });
@@ -25,7 +25,7 @@ describe('parseFilename', () => {
     ).toEqual({
       width: 1920,
       height: 1080,
-      bitrate: 0,
+      targetBitrate: 0,
       variables: {
         VAR1: 'value1',
         VAR2: 'value2'
@@ -39,7 +39,7 @@ describe('parseFilename', () => {
     ).toEqual({
       width: 1920,
       height: 1080,
-      bitrate: 0,
+      targetBitrate: 0,
       variables: {
         VAR1: 'value1',
         VAR2: 'value2'

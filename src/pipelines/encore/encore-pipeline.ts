@@ -5,12 +5,16 @@ import { AWSPipelineConfiguration } from '../aws/aws-pipeline-configuration';
 import { EncorePipelineConfiguration } from './encore-pipeline-configuration';
 import { QualityAnalysisModel } from '../../models/quality-analysis-model';
 import { EncoreInstance } from '../../models/encoreInstance';
-import { EncoreJobs, EncoreJob } from '../../models/encoreJobs';
+import { EncoreJob, EncoreJobs } from '../../models/encoreJobs';
 import logger from '../../logger';
 import fs from 'fs';
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const ISOBoxer = require('codem-isoboxer');
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { Readable } = require('stream'); //Typescript import library contains different functions.
 //If someone knows how to achieve the same functionality in Typescript syntax let me know.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { finished } = require('stream/promises'); //Same as above.
 
 export function delay(ms: number): Promise<void> {
@@ -25,10 +29,15 @@ export class EncorePipeline implements Pipeline {
   }
 
   async transcode(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     input: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     targetResolution: Resolution,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     targetBitrate: number,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     output: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     variables?: Record<string, string>
   ): Promise<string> {
     return 'todo';
@@ -54,13 +63,7 @@ export class EncorePipeline implements Pipeline {
     };
 
     const awsPipe = new AWSPipeline(AWSConf);
-    const result: string = await awsPipe.analyzeQuality(
-      reference,
-      distorted,
-      output,
-      model
-    );
-    return result;
+    return await awsPipe.analyzeQuality(reference, distorted, output, model);
   }
 
   /**
@@ -75,7 +78,7 @@ export class EncorePipeline implements Pipeline {
     token: string,
     instanceId: string,
     profile: string
-  ): Promise<any> {
+  ): Promise<unknown> {
     const url = `${apiAddress}/encoreinstance`;
     const headerObj = {
       accept: 'application/json',
@@ -142,7 +145,7 @@ export class EncorePipeline implements Pipeline {
   async createEncoreJob(
     encoreInstance: EncoreInstance,
     mediaFileAddress: string
-  ): Promise<any> {
+  ): Promise<EncoreJob> {
     const url = encoreInstance.resources.enqueueJob.url;
     const headerObj = {
       accept: 'application/json',
@@ -195,6 +198,7 @@ export class EncorePipeline implements Pipeline {
     enqueuedJobIds: string[]
   ): Promise<any> {
     logger.info('polling until successful job');
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       logger.info(`Enqueued jobs: ${enqueuedJobIds}`);
       if (enqueuedJobIds.length < 1 || enqueuedJobIds === undefined) {
@@ -206,20 +210,20 @@ export class EncorePipeline implements Pipeline {
         logger.info('getEncoreJobs returned empty list');
         break;
       }
-      for (let job of jobs) {
+      for (const job of jobs) {
         logger.info(`Encore Job Transcoding Status: ${job.status}`);
         const jobShouldBeProcessed: number = enqueuedJobIds.indexOf(job.id);
         if (job.status === 'SUCCESSFUL' && jobShouldBeProcessed != -1) {
-          for (let outputObj of job.output) {
+          for (const outputObj of job.output) {
             let filePath: string = outputObj.file;
-            let url: string = `${encoreInstance.url}${filePath}`;
+            const url = `${encoreInstance.url}${filePath}`;
             if (filePath[0] == '/') {
               const trimmedInstanceUrl: string = encoreInstance.url.substring(
                 0,
                 encoreInstance.url.length - 1
               );
               // Remove final '/' in url to enable combining with filename path
-              const url: string = `${trimmedInstanceUrl}${filePath}`;
+              const url = `${trimmedInstanceUrl}${filePath}`;
               const splitFilename = filePath.split('/');
               filePath = splitFilename[splitFilename.length - 1];
             }
@@ -282,12 +286,12 @@ export class EncorePipeline implements Pipeline {
     });
 
     logger.info(`File to download: ${filename}`);
-    const dir: string = `./${this.configuration.baseName}`;
+    const dir = `./${this.configuration.baseName}`;
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
       logger.debug('Directory created:', dir);
     }
-    const destinationPath: string = `${dir}/${filename}`;
+    const destinationPath = `${dir}/${filename}`;
     const stream = fs.createWriteStream(destinationPath);
     const { body } = await fetch(request);
     await finished(Readable.fromWeb(body).pipe(stream));
@@ -295,18 +299,18 @@ export class EncorePipeline implements Pipeline {
   }
 
   async runTranscodeThenAnalyze(instance: EncoreInstance) {
-    let jobIds: string[] = [];
-    let references: string[] = [];
+    const jobIds: string[] = [];
+    const references: string[] = [];
 
-    for (let input of this.configuration.inputs) {
+    for (const input of this.configuration.inputs) {
       const job: EncoreJob = await this.createEncoreJob(instance, input);
       jobIds.push(job.id);
-      const referenceFilename: string = `${job.id}_reference.mp4`;
+      const referenceFilename = `${job.id}_reference.mp4`;
       references.push(referenceFilename);
       await this.downloadFile(input, referenceFilename);
       await this.pollUntilAllJobsCompleted(instance, jobIds);
 
-      const dir: string = `./${this.configuration.baseName}`;
+      const dir = `./${this.configuration.baseName}`;
       fs.readdir(dir, (err, files) => {
         files.forEach((file) => {
           if (file.includes('.mp4') && !file.includes('reference')) {
@@ -315,7 +319,7 @@ export class EncorePipeline implements Pipeline {
             ).buffer;
             const parsedFile = ISOBoxer.parseBuffer(arrayBuffer);
             const hdlrs = parsedFile.fetchAll('hdlr');
-            let isVideo: boolean = false;
+            let isVideo = false;
             hdlrs.forEach((hldr) => {
               if (hldr.handler_type == 'vide') {
                 logger.debug(`Contains video track: ${file}`);

@@ -11,6 +11,7 @@ import logger from './logger';
 import suggestLadder from './suggest-ladder';
 import ObjectsToCsv from 'objects-to-csv';
 import { pairVmafWithResolutionAndBitrate } from './pairVmaf';
+import { VmafBitratePair } from './models/vmaf-bitrate-pair';
 
 class ValidationError extends Error {
   constructor(message) {
@@ -76,6 +77,17 @@ async function run() {
               description: 'Read bitrate of transcoded file with ffprobe',
               default: false
             },
+            parallel: {
+              type: 'boolean',
+              description:
+                'Run multiple encodes / vmaf measurements in parallel',
+              default: false
+            },
+            skipVmaf: {
+              type: 'boolean',
+              description: 'Skip VMAF measurement',
+              default: false
+            },
             'ffmpeg-options': {
               type: 'string',
               description:
@@ -112,6 +124,10 @@ async function run() {
               type: 'boolean',
               description: 'Read bitrate of transcoded file with ffprobe',
               default: false
+            },
+            variables: {
+              type: 'string',
+              description: 'List of variables to include as columns in csv'
             }
           });
       },
@@ -123,51 +139,109 @@ async function run() {
 
 async function runSuggestLadder(argv) {
   const { ladder, pairs } = await suggestLadder(argv.folder);
-  console.log(`ladder: ${ladder}`);
+  logger.info(`ladder: ${ladder}`);
   ladder.forEach((rung) => {
-    console.log(rung);
+    logger.info(rung);
   });
 }
 
-async function exportWmafResultToCsv(argv) {
-  const folder = argv.folder.split('/').slice('-2').join('/');
-  const pairs = Array.from(
-    await pairVmafWithResolutionAndBitrate(
-      argv.folder,
-      () => true,
-      () => {},
-      argv.probeBitrate
-    )
-  ).flatMap((result) => {
-    return result[1].map((resolutionVmaf) => ({
-      folder,
-      filename: resolutionVmaf.vmafFile,
-      resolution: `${resolutionVmaf.resolution.width}X${resolutionVmaf.resolution.height}`,
-      vmaf: resolutionVmaf.vmaf,
-      bitrate: result[0],
-      realTime: resolutionVmaf.cpuTime?.realTime,
-      cpuTime: resolutionVmaf.cpuTime?.cpuTime
-    }));
-  });
+/*
+async function ladderStats(argv) {
+  logger.info('ladder stats', argv);
+}
+*/
+async function findFoldersWithoutSubdirectories(
+  folderPath: string
+): Promise<string[]> {
+  let foldersWithoutSubdirs: string[] = [];
 
-  await new ObjectsToCsv(pairs).toDisk(`${argv.folder}/results.csv`, {
-    allColumns: true
-  });
+  try {
+    const files = await fs.readdir(folderPath);
+    let hasSubdirectories = false;
+
+    for (const file of files) {
+      const fullPath = path.join(folderPath, file);
+      const stats = await fs.stat(fullPath);
+      if (stats.isDirectory()) {
+        hasSubdirectories = true;
+        // Recursively call the function
+        const subFoldersWithoutSubdirs =
+          await findFoldersWithoutSubdirectories(fullPath);
+        foldersWithoutSubdirs = foldersWithoutSubdirs.concat(
+          subFoldersWithoutSubdirs
+        );
+      }
+    }
+
+    if (!hasSubdirectories) {
+      foldersWithoutSubdirs.push(folderPath);
+    }
+  } catch (err) {
+    console.error(`Error reading directory ${folderPath}: ${err}`);
+  }
+
+  return foldersWithoutSubdirs;
+}
+
+async function exportWmafResultToCsv(argv) {
+  const foldersWithoutSubdirectories = await findFoldersWithoutSubdirectories(
+    argv.folder
+  );
+  for (const folder of foldersWithoutSubdirectories) {
+    const pairs = (
+      await pairVmafWithResolutionAndBitrate(
+        folder,
+        () => true,
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        () => {},
+        argv.probeBitrate
+      )
+    ).flatMap((resolutionVmaf: VmafBitratePair) => {
+      const obj = {
+        folder,
+        filename: resolutionVmaf.vmafFile,
+        resolution: `${resolutionVmaf.resolution.width}X${resolutionVmaf.resolution.height}`,
+        vmaf: resolutionVmaf.vmaf,
+        vmafHd: resolutionVmaf.vmafHd,
+        vmafHdPhone: resolutionVmaf.vmafHdPhone,
+        targetBitrate: resolutionVmaf.targetBitrate,
+        actualBitrate: resolutionVmaf.actualBitrate,
+        realTime: resolutionVmaf.cpuTime?.realTime,
+        cpuTime: resolutionVmaf.cpuTime?.cpuTime,
+        variables: Object.keys(resolutionVmaf.variables)
+          .map((k) => `${k}=${resolutionVmaf.variables[k]}`)
+          .join(':')
+      };
+      if (argv.variables) {
+        for (const v of argv.variables.split(',')) {
+          obj[v.toLowerCase()] = resolutionVmaf.variables[v] || '';
+        }
+      }
+      return obj;
+    });
+
+    console.log(pairs);
+
+    await new ObjectsToCsv(pairs).toDisk(`${argv.folder}/results.csv`, {
+      allColumns: true,
+      append: true
+    });
+  }
 }
 
 async function transcodeAndAnalyse(argv) {
   const job: any = await updateJobDefinition(argv);
   const models: string[] = job.models;
-  console.log('Running job: ', job);
+  logger.info('Running job: ', job);
 
   const vmafScores = await createJob(
     job as JobDescription,
     undefined,
     undefined,
-    false
+    argv.parallel
   );
 
-  console.log(
+  logger.info(
     `saveAsCsv: ${job.saveAsCsv}, ` +
       (job.saveAsCsv
         ? `also saving results as a .csv file.`
@@ -187,6 +261,7 @@ async function updateJobDefinition(argv) {
   const job: any = argv.job ? await readJobDefinition(argv.job) : {};
   job.skipTranscode = argv.skipTranscode;
   job.skipExisting = argv.skipExisting;
+  job.skipVmaf = argv.skipVmaf;
   if (argv.source) {
     job.reference = argv.source;
   }
@@ -225,13 +300,17 @@ async function updateJobDefinition(argv) {
     throw new ValidationError('No input file selected');
   }
 
+  // TODO: Make conditional
+  /*
   const { pythonPath, ffmpegPath, easyVmafPath } = await getExecutablePaths();
   job.pipeline.pythonPath = job.pipeline.pythonPath || pythonPath;
   job.pipeline.ffmpegPath = job.pipeline.ffmpegPath || ffmpegPath;
   job.pipeline.easyVmafPath = job.pipeline.easyVmafPath || easyVmafPath;
-  console.log('Python path: ', pythonPath);
-  console.log('FFmpeg path: ', ffmpegPath);
-  console.log('EasyVmaf path: ', easyVmafPath);
+  logger.info('Python path: ', pythonPath);
+  logger.info('FFmpeg path: ', ffmpegPath);
+  logger.info('EasyVmaf path: ', easyVmafPath);
+
+   */
   job.method = job.method || 'bruteForce';
 
   return job;
@@ -247,7 +326,7 @@ async function readJobDefinition(file) {
   const baseName = definition.name;
   let i = 1;
   while (await pathExists(definition.name)) {
-    console.log(definition.name);
+    logger.info(definition.name);
     definition.name = `${baseName}-${i}`;
     i++;
   }

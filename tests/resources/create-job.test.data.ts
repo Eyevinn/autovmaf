@@ -1,5 +1,4 @@
 import { JobDescription } from '../../src/create-job';
-import { PipelineProfile } from '../../src/load-pipeline';
 
 export const job: JobDescription = {
   name: 'test-job',

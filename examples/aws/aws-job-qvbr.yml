@@ -1,0 +1,17 @@
+name: job-name
+pipeline: pipeline.yml
+encodingProfile: encoding-profile-qvbr.json
+reference: reference.mp4
+models:
+  - HD
+resolutions:
+  - width: 1920
+    height: 1080
+bitrates:
+  - 0
+pipelineVariables:
+  QVBR:
+    - 6
+    - 7
+    - 8
+    - 9

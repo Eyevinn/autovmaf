@@ -21,8 +21,10 @@
             "CodecSettings": {
               "Codec": "H_264",
               "H264Settings": {
-                "RateControlMode": "CBR",
-                "Bitrate": "${BITRATE}",
+                "RateControlMode": "QVBR",
+                "QvbrSettings": {
+                  "QvbrQualityLevel": "${QVBR}"
+                },
                 "CodecProfile": "HIGH"
               }
             },

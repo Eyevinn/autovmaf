@@ -41,14 +41,17 @@ export type JobDescription = {
   /** The method to use when analyzing the videos. Either `bruteForce` or `walkTheHull`. By default `bruteForce`. NOTE: `walkTheHull` is not implemented at the moment. */
   method?: 'bruteForce' | 'walkTheHull';
 
-  /** Values that will be substituted into the encoding options. Currently only supported for local pipeline */
+  /** Values that will be substituted into the encoding options. */
   pipelineVariables?: { [key: string]: string[] };
 
-  /** Skip transcode and run analysis only, files are assumed to be already present */
+  /** Skip transcode and run analysis only, files are assumed to be already present. */
   skipTranscode?: boolean;
 
-  /** Skip transcode if outfile already exists */
+  /** Skip transcode if outfile already exists. */
   skipExisting?: boolean;
+
+  /** Skip VMAF measurement */
+  skipVmaf?: boolean;
 };
 
 /**
@@ -113,7 +116,7 @@ export default async function createJob(
   description: JobDescription,
   pipelineData?: any,
   encodingProfileData?: any,
-  concurrency: boolean = true
+  concurrency = true
 ) {
   logger.info(`Creating job ${description.name}.`);
 
@@ -163,6 +166,7 @@ export default async function createJob(
       pipelineVariables: description.pipelineVariables,
       skipTranscode: !!description.skipTranscode,
       skipExisting: !!description.skipExisting,
+      skipVmaf: !!description.skipVmaf,
       filterFunction:
         description.bitrates !== undefined &&
         description.resolutions !== undefined

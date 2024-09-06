@@ -160,6 +160,8 @@ npm install -g @eyevinn/autovmaf
 
 ### Environments variables
 
+These are only needed if you are running transcodes and VMAF measurements locally
+
 - `EASYVMAF_PATH` - needs to point to the file `easyVmaf.py` from your
   easyVmaf installation.
 - `FFMPEG_PATH` - only needs to be set if ffmpeg is not in your path.
@@ -203,16 +205,18 @@ Options:
                     key1=value1:key2=value2                             [string]
 ```
 
+### Running transcode and analysis
+
 Output files will be stored in a folder corresponding to the argument given to the `--name` option.
 If resolutions and/or bitrates are not specified default values will be used, [See above](#generate-vmaf-measurements).
 
-### Providing job definition in a json or yaml file
+#### Providing job definition in a json or yaml file
 
 With the `--job` option, a path to a yaml or json file with a job definition can be passed to to the cli. The values
 defined in the file can be overridden with other commandline options. For instance the `reference` video defined
 in the job file can be overridden by passing a source file on the command line.
 
-#### Using variables in the job definition
+##### Using variables in the job definition
 
 It is possible to iterate over other variables than bitrate and resolutions when running a local encode. For
 instance, to run transcode and vmaf analysis with x265 in CRF mode for a number of CRF values, a job definition
@@ -233,7 +237,7 @@ pipeline:
   ffmpegOptions:
     '-pix_fmt': 'yuv420p'
     '-preset': 'veryslow'
-    '-x265-params': 'crf=%CRF%:scenecut=0:keyint=50:min-keyint=50:open-gop=0'
+    '-x265-params': 'crf=${CRF}:scenecut=0:keyint=50:min-keyint=50:open-gop=0'
   easyVmafExtraArgs:
     '-threads': 20
 pipelineVariables:
@@ -245,18 +249,63 @@ pipelineVariables:
 ```
 
 This will run transcode and vmaf analysis for CRF values 22,26,30, and 34. Variables are used in the ffmpeg options
-by insterting `%VARIABLENAME%`. This string will then be substituted with a value from the list of values from
+by inserting `${VARIABLENAME}`. This string will then be substituted with a value from the list of values from
 `pipelineVariables.VARIABLENAME`. Note that when running CRF encode or other non-ABR mode, `skipDefaultOptions` must
 be set to avoid injecting bitrate options to ffmpeg. Also note that the cli needs to be run with the `--probe-bitrate`
 option to get the correct bitrate from the transcoded files.
 
-### Generate VMAF measurements example
+It is also possible to use pipelineVariables with the AWSPipeline. The following example will run transcode and vmaf analysis using the AWS MediaCOnvert QVBR levels 6, 7, 8 and 9.
+
+```yaml
+name: job-name
+pipeline: pipeline.yml
+encodingProfile: encoding-profile.json
+reference: reference.mp4
+models:
+  - HD
+resolutions:
+  - width: 1920
+    height: 1080
+bitrates:
+  - 0
+pipelineVariables:
+  QVBR:
+    - 6
+    - 7
+    - 8
+    - 9
+```
+
+#### Generate VMAF measurements example
 
 ```bash
 autovmaf --resolutions 1920x1080,1280x720,960x540 --bitrates 500k,800k,1200k,1600k,2000k,3000k,4000k --name my-autovmaf-test1 my-source-video.mp4
 ```
 
 With the above command, when the run is finished transcoded files will be available in the folder `my-autovmaf-test1`, and vmaf-data in the folder `my-autovmaf-test1/HD`.
+
+### Exporting results to csv
+
+To export results to csv, use the `export-csv` command.
+
+```
+autovmaf export-csv <folder>
+
+Export Vmaf results as csv
+
+Positionals:
+  folder  Folder with vmaf measurement results               [string] [required]
+
+Options:
+  --version       Show version number                                  [boolean]
+  --help          Show help                                            [boolean]
+  --probeBitrate  Read bitrate of transcoded file with ffprobe
+                                                      [boolean] [default: false]
+  --variables     List of variables to include as columns in csv        [string]
+```
+
+If your job uses variables ([See above](#using-variables-in-the-job-definition)), the variables that should
+be included in the csv data should be specified with the `--variables` option.
 
 ## Development
 

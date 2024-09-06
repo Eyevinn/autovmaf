@@ -19,6 +19,7 @@ export type AnalysisOptions = {
   pipelineVariables?: { [key: string]: string[] };
   skipTranscode?: boolean;
   skipExisting?: boolean;
+  skipVmaf?: boolean;
 };
 
 const defaultModels = [QualityAnalysisModel.HD];
@@ -83,15 +84,14 @@ export default async function analyzeBruteForce(
     // Create all combinations of bitrate, resolution, and variables
     Object.entries(options.pipelineVariables).forEach(
       ([variableName, values]) => {
-        //console.log(`variableName: ${variableName}`);
         pairs = pairs.flatMap(
           (pair) =>
             values.map((value) => {
-              const variables = pair.ffmpegOptionVariables
-                ? { ...pair.ffmpegOptionVariables }
+              const variables = pair.pipelineVariables
+                ? { ...pair.pipelineVariables }
                 : {};
               variables[variableName] = value;
-              return { ...pair, ffmpegOptionVariables: variables };
+              return { ...pair, pipelineVariables: variables };
             }) as BitrateResolutionPair[]
         );
       }
@@ -100,20 +100,18 @@ export default async function analyzeBruteForce(
 
   const analyzePair = async (pair: BitrateResolutionPair) => {
     let outFile = `${directory}/${pair.resolution.width}x${pair.resolution.height}_${pair.bitrate}`;
-    if (pair.ffmpegOptionVariables) {
-      Object.entries(pair.ffmpegOptionVariables).forEach(
-        ([variable, value]) => {
-          outFile = outFile + `_${variable}_${value}`;
-        }
-      );
+    if (pair.pipelineVariables) {
+      Object.entries(pair.pipelineVariables).forEach(([variable, value]) => {
+        outFile = outFile + `_${variable}_${value}`;
+      });
     }
     outFile = outFile + '.mp4';
     const skip =
       options.skipTranscode || (options.skipExisting && fs.existsSync(outFile));
     if (options.skipTranscode) {
-      console.log(`Skipping transcode for ${outFile}`);
+      logger.info(`Skipping transcode for ${outFile}`);
     } else if (options.skipExisting && fs.existsSync(outFile)) {
-      console.log(`Skipping transcode for ${outFile} because file exists`);
+      logger.info(`Skipping transcode for ${outFile} because file exists`);
     }
     const variant = skip
       ? outFile
@@ -122,7 +120,7 @@ export default async function analyzeBruteForce(
           pair.resolution,
           pair.bitrate,
           outFile,
-          pair.ffmpegOptionVariables
+          pair.pipelineVariables
         );
 
     if (variant === '') {
@@ -131,6 +129,11 @@ export default async function analyzeBruteForce(
     }
 
     const qualityFile = variant.replace('.mp4', '_vmaf.json');
+
+    if (options.skipVmaf) {
+      logger.info('Skipping VMAF analysis');
+      return [];
+    }
 
     if (concurrency) {
       return await Promise.all(
@@ -147,7 +150,7 @@ export default async function analyzeBruteForce(
         }))
       );
     } else {
-      let results: any = [];
+      const results: any = [];
       for (const model of models) {
         results.push({
           model,
@@ -170,7 +173,7 @@ export default async function analyzeBruteForce(
     return [];
   }
 
-  let qualityFiles = new Map<QualityAnalysisModel, string[]>();
+  const qualityFiles = new Map<QualityAnalysisModel, string[]>();
   if (concurrency === true) {
     (await Promise.all(pairs.map((pair) => analyzePair(pair))))
       .flat()
@@ -222,8 +225,8 @@ export function preparePairs(
 }
 
 function checkIfBitrateInRange(bitrate: number, range: BitrateRange): boolean {
-  let minBitrate = range.min ? range.min : defaultBitrates[0];
-  let maxBitrate = range.max
+  const minBitrate = range.min ? range.min : defaultBitrates[0];
+  const maxBitrate = range.max
     ? range.max
     : defaultBitrates[defaultBitrates.length - 1];
   return bitrate >= minBitrate && bitrate <= maxBitrate ? true : false;

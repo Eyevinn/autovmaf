@@ -5,9 +5,12 @@ import {
 } from '@aws-sdk/client-mediaconvert';
 import {
   HeadObjectCommand,
+  GetObjectCommand,
   S3Client,
-  waitUntilObjectExists
+  waitUntilObjectExists,
+  CopyObjectCommand
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Resolution } from '../../models/resolution';
 import { Pipeline } from '../pipeline';
 import { AWSPipelineConfiguration } from './aws-pipeline-configuration';
@@ -20,6 +23,7 @@ import {
   qualityAnalysisModelToString
 } from '../../models/quality-analysis-model';
 import logger from '../../logger';
+import { runFfprobe } from '../../pairVmaf';
 
 export function isS3URI(url: string): boolean {
   try {
@@ -121,6 +125,25 @@ export default class AWSPipeline implements Pipeline {
     return input.split(search).join(replacement);
   }
 
+  async generatePresignedUrl(
+    bucketName: string,
+    keyPath: string,
+    expiresIn: number
+  ): Promise<string> {
+    const command = new GetObjectCommand({
+      Bucket: bucketName,
+      Key: keyPath
+    });
+
+    const url = await getSignedUrl(this.s3, command, { expiresIn });
+    return url;
+  }
+
+  transcodedUriToMetadataUri(uri: string): string {
+    const outputMetadataUri = uri.replace(path.extname(uri), '_metadata.json');
+    return outputMetadataUri;
+  }
+
   async transcode(
     input: string,
     targetResolution: Resolution,
@@ -142,33 +165,50 @@ export default class AWSPipeline implements Pipeline {
 
     // Parse settings
     let settingsStr = JSON.stringify(this.configuration.mediaConvertSettings);
-    settingsStr = this.stringReplacement(settingsStr, '$INPUT', inputFilename);
     settingsStr = this.stringReplacement(
       settingsStr,
-      '$OUTPUT',
+      '${INPUT}',
+      inputFilename
+    );
+    settingsStr = this.stringReplacement(
+      settingsStr,
+      '${OUTPUT}',
       outputURI.replace(path.extname(outputURI), '')
     );
     settingsStr = this.stringReplacement(
       settingsStr,
-      '$WIDTH',
+      '${WIDTH}',
       targetResolution.width.toString()
     );
     settingsStr = this.stringReplacement(
       settingsStr,
-      '$HEIGHT',
+      '${HEIGHT}',
       targetResolution.height.toString()
     );
-    settingsStr = this.stringReplacement(
-      settingsStr,
-      '$BITRATE',
-      targetBitrate.toString()
-    );
+    if (settingsStr.includes('${BITRATE}')) {
+      settingsStr = this.stringReplacement(
+        settingsStr,
+        '${BITRATE}',
+        targetBitrate.toString()
+      );
+    }
+
     // HEVC specific settings
     settingsStr = this.stringReplacement(
       settingsStr,
-      '$HRDBUFFER',
+      '${HRDBUFFER}',
       (targetBitrate * 2).toString()
     );
+
+    logger.debug(`variables: ${JSON.stringify(variables)}`);
+    //Handle pipelineVariables given in the JobDescription
+    if (variables) {
+      Object.entries(variables).forEach(([key, value]) => {
+        const replace = '${' + `${key}` + '}';
+        logger.debug(`Replacing ${replace} with ${value}`);
+        settingsStr = this.stringReplacement(settingsStr, replace, value);
+      });
+    }
 
     const settings = JSON.parse(settingsStr);
     logger.debug('Settings Json: ' + JSON.stringify(settings));
@@ -177,16 +217,30 @@ export default class AWSPipeline implements Pipeline {
       await this.fileExists(outputBucket, `${outputFolder}/${outputObject}`)
     ) {
       // File has already been transcoded.
+      if (
+        !(await this.fileExists(
+          outputBucket,
+          this.transcodedUriToMetadataUri(`${outputFolder}/${outputObject}`)
+        ))
+      ) {
+        await this.probeMetadata(outputBucket, outputFolder, outputObject);
+      }
       return outputURI;
     }
 
     // Transcode
     logger.info('Transcoding ' + inputFilename + ' to ' + outputURI + '...');
     try {
+      const accelerationSettings = this.configuration.accelerationMode
+        ? {
+            AccelerationSettings: { Mode: this.configuration.accelerationMode }
+          }
+        : {};
       await this.mediaConvert.send(
         new CreateJobCommand({
           Role: this.configuration.mediaConvertRole,
-          Settings: settings
+          Settings: settings,
+          ...accelerationSettings
         })
       );
     } catch (error) {
@@ -201,9 +255,34 @@ export default class AWSPipeline implements Pipeline {
       `${outputFolder}/${outputObject}`
     );
     if (!s3Status) return '';
+    await this.probeMetadata(outputBucket, outputFolder, outputObject);
 
     logger.info('Finished transcoding ' + inputFilename + '.');
     return outputURI;
+  }
+
+  private async probeMetadata(
+    outputBucket: string,
+    outputFolder: string,
+    outputObject: string
+  ) {
+    const url = await this.generatePresignedUrl(
+      outputBucket,
+      `${outputFolder}/${outputObject}`,
+      5
+    );
+    const metadata = await runFfprobe(url);
+    const outputMetadataFilename =
+      this.transcodedUriToMetadataUri(outputObject);
+    const upload = new Upload({
+      client: this.s3,
+      params: {
+        Bucket: outputBucket,
+        Key: `${outputFolder}/${outputMetadataFilename}`,
+        Body: JSON.stringify(metadata)
+      }
+    });
+    await upload.done();
   }
 
   async analyzeQuality(
@@ -227,6 +306,7 @@ export default class AWSPipeline implements Pipeline {
 
     if (await this.fileExists(outputBucket, `results/${outputObject}`)) {
       logger.info(`Quality analysis already done for ${outputURI}`);
+      await this.copyMetadataFile(outputBucket, distorted, outputObject);
       return outputURI;
     }
 
@@ -240,17 +320,6 @@ export default class AWSPipeline implements Pipeline {
       outputBucket,
       path.dirname(outputObject)
     );
-
-    let credentials: any = {};
-    if (process.env.LOAD_CREDENTIALS_FROM_ENV) {
-      logger.debug('Loading credentials from environment variables');
-      credentials['accessKeyId'] = process.env.AWS_ACCESS_KEY_ID;
-      credentials['secretAccessKey'] = process.env.AWS_SECRET_ACCESS_KEY;
-    } else {
-      logger.debug('Loading credentials from ~/.aws/credentials');
-      const credentialProvider = fromIni();
-      credentials = await credentialProvider();
-    }
 
     let additionalArgs: string[] = [];
     switch (model) {
@@ -282,8 +351,8 @@ export default class AWSPipeline implements Pipeline {
             }
           },
           tags: [
-            { key: 'ReferenceFile', value: referenceFilename },
-            { key: 'Output', value: outputObject }
+            { key: 'ReferenceFile', value: cleanupTagValue(referenceFilename) },
+            { key: 'Output', value: cleanupTagValue(outputObject) }
           ],
           overrides: {
             containerOverrides: [
@@ -297,16 +366,6 @@ export default class AWSPipeline implements Pipeline {
                   '-o',
                   outputURI,
                   ...additionalArgs
-                ],
-                environment: [
-                  {
-                    name: 'AWS_ACCESS_KEY_ID',
-                    value: credentials.accessKeyId
-                  },
-                  {
-                    name: 'AWS_SECRET_ACCESS_KEY',
-                    value: credentials.secretAccessKey
-                  }
                 ]
               }
             ]
@@ -323,9 +382,40 @@ export default class AWSPipeline implements Pipeline {
       `results/${outputObject}`
     );
     if (!s3Status) return '';
+    await this.copyMetadataFile(outputBucket, distortedFilename, outputObject);
 
     logger.info(`Finished analyzing ${distorted}.`);
 
     return outputURI;
   }
+
+  private async copyMetadataFile(
+    outputBucket: string,
+    distortedFilename: string,
+    outputObject: string
+  ) {
+    const key = `results/${outputObject}`.replace(
+      '_vmaf.json',
+      '_metadata.json'
+    );
+    if (await this.fileExists(outputBucket, key)) {
+      logger.debug(`Metadata file already exists: ${key}`);
+      return;
+    }
+    const input = {
+      Bucket: outputBucket,
+      CopySource: this.transcodedUriToMetadataUri(distortedFilename).replace(
+        's3:/',
+        ''
+      ),
+      Key: key
+    };
+    logger.debug(`Uploading metadata: ${JSON.stringify(input)}`);
+    const command = new CopyObjectCommand(input);
+    await this.s3.send(command);
+  }
+}
+
+export function cleanupTagValue(tagValue: string) {
+  return tagValue.replace(/[^A-Za-z0-9_./=+:@ -]/g, '_');
 }

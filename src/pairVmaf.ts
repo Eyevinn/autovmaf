@@ -1,71 +1,91 @@
-import getVmaf from './get-vmaf';
+import getAnalysisData from './get-analysis-data';
 import logger from './logger';
+import { JsonVmafScores } from './models/json-vmaf-scores';
 import { Resolution } from './models/resolution';
 import ffmpeg from 'fluent-ffmpeg';
 import * as fs from 'fs';
 import * as path from 'path';
+import { VmafBitratePair } from './models/vmaf-bitrate-pair';
 
 export async function pairVmafWithResolutionAndBitrate(
   directoryWithVmafFiles: string,
   filterFunction: (
     bitrate: number,
     resolution: Resolution,
-    vmaf: number
+    vmafScores: JsonVmafScores
   ) => boolean = () => true,
   onProgress: (
     index: number,
     filename: string,
     total: number
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
   ) => void = () => {},
-  probeBitrate: boolean = false
-) {
-  let pairs = new Map<
-    number,
-    {
-      resolution: Resolution;
-      vmaf: number;
-      cpuTime?: { realTime: number; cpuTime: number };
-      vmafFile: string;
-    }[]
-  >();
+  probeBitrate = false
+): Promise<VmafBitratePair[]> {
+  const pairs: VmafBitratePair[] = [];
   logger.info(`Loading VMAF data from ${directoryWithVmafFiles}...`);
-  const vmafs = await getVmaf(directoryWithVmafFiles, onProgress);
+  const analysisData = await getAnalysisData(
+    directoryWithVmafFiles,
+    onProgress
+  );
   let counter = 1;
-  const bitrates: Record<string, number> | undefined = probeBitrate
-    ? await getBitrates(
-        vmafs.map((vmaf) => path.resolve(directoryWithVmafFiles, vmaf.filename))
+  // Reinterpret bitrateList as a Record type
+  const bitrates: Record<string, number> | undefined = analysisData.bitrateList
+    ? analysisData.bitrateList.reduce<Record<string, number>>(
+        (record, file) => {
+          record[file.filename] = file.bitrate;
+          return record;
+        },
+        {}
       )
-    : undefined;
+    : probeBitrate
+      ? await getBitrates(
+          analysisData.vmafList.map((vmaf) =>
+            path.resolve(directoryWithVmafFiles, vmaf.filename)
+          )
+        )
+      : undefined;
   const cpuTimes:
     | Record<string, { realTime: number; cpuTime: number }>
     | undefined = await getCpuTimes(
-    vmafs.map((vmaf) => path.resolve(directoryWithVmafFiles, vmaf.filename))
+    analysisData.vmafList.map((vmaf) =>
+      path.resolve(directoryWithVmafFiles, vmaf.filename)
+    )
   );
-  vmafs.forEach(({ filename, vmaf }) => {
-    const [resolutionStr, bitrateStr] = filename.split('_');
-    const [widthStr, heightStr] = resolutionStr.split('x');
+  logger.info(
+    `Loaded VMAF data from ${JSON.stringify(analysisData, null, 2)}.`
+  );
+  analysisData.vmafList.forEach(({ filename, vmafScores }) => {
+    const dataFromFilename = parseVmafFilename(filename);
+    if (!dataFromFilename) {
+      logger.error('Unable to parse data from filename: ', filename);
+      return;
+    }
+    const { width, height, targetBitrate, variables } = dataFromFilename;
 
-    const width = parseInt(widthStr);
-    const height = parseInt(heightStr);
-    const bitrate = bitrates ? bitrates[filename] : parseInt(bitrateStr);
+    const actualBitrate = bitrates ? bitrates[filename] : 0;
     const cpuTime = cpuTimes ? cpuTimes[filename] : undefined;
+    const vmaf = vmafScores.vmaf;
+    const vmafHd = vmafScores.vmafHd;
+    const vmafHdPhone = vmafScores.vmafHdPhone;
 
-    if (filterFunction(bitrate, { width, height }, vmaf)) {
-      if (pairs.has(bitrate)) {
-        pairs.get(bitrate)?.push({
-          resolution: { width, height },
-          vmaf,
-          cpuTime,
-          vmafFile: filename
-        });
-      } else {
-        pairs.set(bitrate, [
-          { resolution: { width, height }, vmaf, cpuTime, vmafFile: filename }
-        ]);
-      }
+    if (filterFunction(targetBitrate, { width, height }, vmafScores)) {
+      pairs.push({
+        targetBitrate,
+        actualBitrate,
+        resolution: { width, height },
+        variables,
+        vmaf,
+        vmafHd,
+        vmafHdPhone,
+        cpuTime,
+        vmafFile: filename
+      });
     }
 
-    logger.info(`Finished loading VMAF ${counter}/${vmafs.length}.`);
+    logger.info(
+      `Finished loading VMAF ${counter}/${analysisData.vmafList.length}.`
+    );
     counter += 1;
   });
   return pairs;
@@ -89,9 +109,10 @@ async function getCpuTime(file: string) {
     );
   }
   if (!fileExists(timeFile)) {
-    throw new Error(
+    logger.info(
       `Unable to find corresponding cpu-time file: ${timeFile} for vmaf file: ${file}`
     );
+    return { realTime: 0, cpuTime: 0 };
   }
 
   const metadata = JSON.parse(fs.readFileSync(timeFile, 'utf8'));
@@ -141,7 +162,7 @@ function fileExists(file) {
   return fs.existsSync(file);
 }
 
-async function runFfprobe(file) {
+export async function runFfprobe(file) {
   return new Promise((resolve, reject) => {
     ffmpeg.ffprobe(file, (err, metadata) => {
       if (err) {
@@ -151,4 +172,40 @@ async function runFfprobe(file) {
       }
     });
   });
+}
+
+const vmafFilenameRegex =
+  /(.*\/)?(?<width>\d+)x(?<height>\d+)_(?<bitrate>\d+)(?<variables>(_([A-Za-z0-9-]+)_([A-Za-z0-9.]+))*)?(_vmaf\.json|\.[A-Za-z0-9]+)/;
+
+export function parseVmafFilename(file):
+  | {
+      width: number;
+      height: number;
+      targetBitrate: number;
+      variables: Record<string, string>;
+    }
+  | undefined {
+  const result = vmafFilenameRegex.exec(file);
+  if (!result) {
+    return undefined;
+  }
+  const groups = result.groups as {
+    width: string;
+    height: string;
+    bitrate: string;
+    variables: string;
+  };
+  const variables = {};
+  if (groups.variables) {
+    const variablesList = groups.variables.split('_').slice(1);
+    for (let i = 0; i < variablesList.length - 1; i += 2) {
+      variables[variablesList[i]] = variablesList[i + 1];
+    }
+  }
+  return {
+    width: parseInt(groups.width),
+    height: parseInt(groups.height),
+    targetBitrate: parseInt(groups.bitrate),
+    variables
+  };
 }

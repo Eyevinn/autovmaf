@@ -1,3 +1,5 @@
+import { AccelerationMode } from '@aws-sdk/client-mediaconvert';
+
 export type AWSPipelineConfiguration = {
   inputBucket: string;
   outputBucket: string;
@@ -9,5 +11,5 @@ export type AWSPipelineConfiguration = {
   ecsCluster: string;
   ecsContainerName: string;
   ecsTaskDefinition: string;
-  accelerationMode?: string;
+  accelerationMode?: AccelerationMode;
 };

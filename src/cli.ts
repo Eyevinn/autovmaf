@@ -11,7 +11,6 @@ import logger from './logger';
 import suggestLadder from './suggest-ladder';
 import ObjectsToCsv from 'objects-to-csv';
 import { pairVmafWithResolutionAndBitrate } from './pairVmaf';
-import { createDb, ladderStats } from './ladderStats';
 import { VmafBitratePair } from './models/vmaf-bitrate-pair';
 
 class ValidationError extends Error {
@@ -133,51 +132,6 @@ async function run() {
           });
       },
       exportWmafResultToCsv
-    )
-    .command(
-      'create-db <dbfile>',
-      'Import csv file into a sqlite3 database file',
-      (yargs) => {
-        return yargs
-          .positional('dbfile', {
-            type: 'string',
-            describe: 'Path to db file'
-          })
-          .options({
-            'csv-file': {
-              type: 'string',
-              description: 'Csv file to import',
-              demandOption: true
-            },
-            aggregation: {
-              type: 'string',
-              description:
-                'regex to use for aggregation. Regex will be run against folder, first capturing group will be used for aggregation'
-            }
-          });
-      },
-      createDb
-    )
-    .command(
-      'ladder-stats <dbfile>',
-      'Given a sqlite database file and/or a csv-file with results and a ladder definition, print vmaf and bitrates for each rung for each source',
-      (yargs) => {
-        return yargs
-          .positional('dbfile', {
-            type: 'string',
-            describe: 'CSV file with results',
-            demandOption: true
-          })
-          .options({
-            ladder: {
-              type: 'string',
-              description:
-                'ladder defianition on format VARIABLE=VALUE,VARIABLE=VALUE:VARIABLE=VALUE,VARIABLE=VALUE:...',
-              demandOption: true
-            }
-          });
-      },
-      ladderStats
     )
     .help()
     .parse();

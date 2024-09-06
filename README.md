@@ -307,65 +307,6 @@ Options:
 If your job uses variables ([See above](#using-variables-in-the-job-definition)), the variables that should
 be included in the csv data should be specified with the `--variables` option.
 
-### Export data to a sqlite database
-
-_*Note: It is first necessary to export the data to a csv file before importing it into a sqlite database.*_
-
-```
-autovmaf create-db <dbfile>
-
-Import csv file into a sqlite3 database file
-
-Positionals:
-  dbfile  Path to db file                                    [string] [required]
-
-Options:
-  --version      Show version number                                   [boolean]
-  --help         Show help                                             [boolean]
-  --csv-file     Csv file to import                          [string] [required]
-  --aggregation  regex to use for aggregation. Regex will be run against folder,
-                 first capturing group will be used for aggregation     [string]
-```
-
-Use the `--aggregation` option to specify a regex that will be run against the folder name to get a grouping string that
-will be saved in its own column. This is useful if results for different clips from the same content are stored in
-different folder and you want to process them together with `ladder-stats` (see below)
-
-### Construct ladders from VMAF results
-
-_*Note: it is first necessary to export data to a sqlite database, see above.*_
-
-The `ladder-stats` command can be used to get, for each test content, get a listing of vmaf and bitrate for each rung
-in a proposed transcoding ladder.
-
-```
-autovmaf ladder-stats <dbfile>
-
-Given a sqlite database file and/or a csv-file with results and a ladder
-definition, print vmaf and bitrates for each rung for each source
-
-Positionals:
-  dbfile  CSV file with results                              [string] [required]
-
-Options:
-  --version  Show version number                                       [boolean]
-  --help     Show help                                                 [boolean]
-  --ladder   ladder defianition on format
-             VARIABLE=VALUE,VARIABLE=VALUE:VARIABLE=VALUE,VARIABLE=VALUE:...
-                                                             [string] [required]
-```
-
-The `--ladder` option is used to specify how the ladder should be constructed. The format is a colon-separated list of
-rung definition, where each rung definition is a comma separated list of key-value pairs. The key is a column name
-in the database and the value is the value to select. The results presented will be average bitrate and vmaf for
-all rows matching the rung definition.
-
-_Example_
-
-```
-autovmaf ladder-stats my-results.sqlite --ladder 'resolution=1920x1080,crf=20:resolution=1280x720,crf=24:resolution=960x540,crf=28'
-```
-
 ## Development
 
 ### Run tests

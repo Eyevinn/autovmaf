@@ -181,6 +181,8 @@ Commands:
                                     videofile source                   [default]
   autovmaf suggest-ladder <folder>  Suggest bitrate ladder given vmaf results
   autovmaf export-csv <folder>      Export Vmaf results as csv
+  autovmaf vmaf                     Use pipeline to run VMAF for the given
+                                    distorted and reference files
 
 Positionals:
   source  SOURCEFILE                                                    [string]
@@ -306,6 +308,25 @@ Options:
 
 If your job uses variables ([See above](#using-variables-in-the-job-definition)), the variables that should
 be included in the csv data should be specified with the `--variables` option.
+
+### Run VMAF only
+
+This command allows using a configured pipeline to run VMAF measurements on any files without a related autovmaf job.
+In case of an aws pipeline, output will be written to the `outputBucket` configured in the pipeline.
+
+```
+autovmaf vmaf
+
+Use pipeline to run VMAF for the given distorted and reference files
+
+Options:
+  --version    Show version number                                     [boolean]
+  --help       Show help                                               [boolean]
+  --pipeline   Path to pipeline file                         [string] [required]
+  --reference  Uri or path to reference file                 [string] [required]
+  --distorted  Uri or path to distorted file                 [string] [required]
+  --model      VMAF model to use                        [string] [default: "HD"]
+```
 
 ## Development
 

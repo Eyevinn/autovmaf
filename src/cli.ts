@@ -12,6 +12,11 @@ import suggestLadder from './suggest-ladder';
 import ObjectsToCsv from 'objects-to-csv';
 import { pairVmafWithResolutionAndBitrate } from './pairVmaf';
 import { VmafBitratePair } from './models/vmaf-bitrate-pair';
+import { loadPipeline } from './load-pipeline';
+import {
+  QualityAnalysisModel,
+  stringToQualityAnalysisModel
+} from './models/quality-analysis-model';
 
 class ValidationError extends Error {
   constructor(message) {
@@ -133,8 +138,55 @@ async function run() {
       },
       exportWmafResultToCsv
     )
+    .command(
+      'vmaf',
+      'Use pipeline to run VMAF for the given distorted and reference files',
+      (yargs) => {
+        return yargs.options({
+          pipeline: {
+            type: 'string',
+            description: 'Path to pipeline file',
+            required: true
+          },
+          reference: {
+            type: 'string',
+            description: 'Uri or path to reference file',
+            required: true
+          },
+          distorted: {
+            type: 'string',
+            description: 'Uri or path to distorted file',
+            required: true
+          },
+          model: {
+            type: 'string',
+            description: 'VMAF model to use',
+            default: 'HD'
+          }
+        });
+      },
+      runVmaf
+    )
     .help()
     .parse();
+}
+
+async function runVmaf(argv) {
+  const reference = argv.reference;
+  const distorted = argv.distorted;
+  const pipeline = await loadPipeline(argv.pipeline);
+  const qualityFile = argv.distorted.replace('.mp4', '_vmaf.json');
+  const model: QualityAnalysisModel = stringToQualityAnalysisModel(argv.model);
+  const jobDescription = `${model},${reference},${distorted},${qualityFile}`;
+  pipeline
+    .analyzeQuality(reference, distorted, qualityFile, model)
+    .then(() => {
+      logger.info(`Finished VMAF measurement for ${jobDescription}`);
+    })
+    .catch((err) => {
+      logger.error(`Error running VMAF for ${jobDescription}: ${err}`);
+    });
+  logger.info(`Started VMAF measurement for ${jobDescription}`);
 }
 
 async function runSuggestLadder(argv) {

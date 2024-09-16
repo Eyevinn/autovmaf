@@ -311,7 +311,7 @@ be included in the csv data should be specified with the `--variables` option.
 
 ### Run VMAF only
 
-This command allows using a configured pipeline to run VMAF measurements on any files without an related autovmaf job.
+This command allows using a configured pipeline to run VMAF measurements on any files without a related autovmaf job.
 In case of an aws pipeline, output will be written to the `outputBucket` configured in the pipeline.
 
 ```

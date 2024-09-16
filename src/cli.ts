@@ -175,7 +175,10 @@ async function runVmaf(argv) {
   const reference = argv.reference;
   const distorted = argv.distorted;
   const pipeline = await loadPipeline(argv.pipeline);
-  const qualityFile = argv.distorted.replace('.mp4', '_vmaf.json');
+  const qualityFile = argv.distorted.replace(
+    path.extname(argv.distorted),
+    '_vmaf.json'
+  );
   const model: QualityAnalysisModel = stringToQualityAnalysisModel(argv.model);
   const jobDescription = `${model},${reference},${distorted},${qualityFile}`;
   pipeline

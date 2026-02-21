@@ -56,12 +56,12 @@
     "typescript": "^4.6.2"
   },
   "dependencies": {
-    "@aws-sdk/client-ecs": "^3.36.0",
-    "@aws-sdk/client-mediaconvert": "^3.36.0",
-    "@aws-sdk/client-s3": "^3.629.0",
-    "@aws-sdk/credential-providers": "^3.36.0",
+    "@aws-sdk/client-ecs": "^3.995.0",
+    "@aws-sdk/client-mediaconvert": "^3.995.0",
+    "@aws-sdk/client-s3": "^3.995.0",
+    "@aws-sdk/credential-providers": "^3.995.0",
     "@aws-sdk/lib-storage": "^3.36.0",
-    "@aws-sdk/s3-request-presigner": "^3.629.0",
+    "@aws-sdk/s3-request-presigner": "^3.995.0",
     "@types/aws-lambda": "^8.10.86",
     "aws-sdk": "^2.1584.0",
     "fluent-ffmpeg": "https://github.com/Eyevinn/node-fluent-ffmpeg.git#measure-cpu",
